@@ -232,7 +232,7 @@ libglsl = static_library(
   gnu_symbol_visibility : 'hidden',
   link_with : [libglsl_util, libglcpp_standalone, libmesa_format],
   include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux, inc_compiler],
-  dependencies : [idep_nir, idep_getopt, idep_mesautil],
+  dependencies : [idep_nir],
   # name_suffix: 'dll',
   build_by_default : false,
 )
