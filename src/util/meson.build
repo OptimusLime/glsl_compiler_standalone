@@ -183,7 +183,7 @@ if with_platform_android
   )
 endif
 
-_libmesa_util = static_library(
+_libmesa_util = shared_library(
   'mesa_util',
   [files_mesa_util, files_debug_stack, format_srgb],
   include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux],
@@ -191,6 +191,7 @@ _libmesa_util = static_library(
   link_with: libmesa_format,
   c_args : [c_msvc_compat_args],
   gnu_symbol_visibility : 'hidden',
+  name_suffix : 'dll',
   build_by_default : false
 )
 
@@ -205,7 +206,7 @@ if not (with_platform_android or with_platform_windows)
   xmlconfig_deps += dep_expat
 endif
 
-_libxmlconfig = static_library(
+_libxmlconfig = shared_library(
   'xmlconfig',
   files_xmlconfig,
   include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux],
@@ -220,6 +221,7 @@ _libxmlconfig = static_library(
     ),
   ],
   gnu_symbol_visibility : 'hidden',
+  name_suffix : 'dll',
   build_by_default : false,
 )
 

@@ -336,7 +336,7 @@ _libnir = static_library(
   include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux, inc_compiler, include_directories('../spirv')],
   c_args : [c_msvc_compat_args, no_override_init_args, _libnir_args],
   gnu_symbol_visibility : 'hidden',
-  dependencies : dep_valgrind,
+  dependencies : [dep_valgrind, idep_mesautil],
   link_with : libcompiler,
   build_by_default : false,
 )

@@ -110,10 +110,10 @@ if host_machine.system() == 'windows'
     with_gles2 = 'disabled'
   endif
 endif
-with_opengl = get_option('opengl')
+with_opengl = true# get_option('opengl')
 
 # Default shared glapi off for windows, on elsewhere.
-_sg = get_option('shared-glapi')
+_sg = 'enabled'# get_option('shared-glapi')
 if _sg == 'true'
   _sg = 'enabled'
   warning('shared-glapi option "true" deprecated, please use "enabled" instead.')
@@ -126,6 +126,9 @@ if _sg == 'auto'
 else
   with_shared_glapi = _sg == 'enabled'
 endif
+
+warning('Check shared: @0@', with_shared_glapi)
+with_shared_glapi = true
 
 # shared-glapi is required if at least two OpenGL APIs are being built
 if not with_shared_glapi
@@ -381,13 +384,13 @@ if with_glx == 'dri'
    endif
 endif
 
-if not (with_dri or with_gallium or with_glx != 'disabled')
-  with_gles1 = false
-  with_gles2 = false
-  with_opengl = false
-  with_any_opengl = false
-  with_shared_glapi = false
-endif
+# if not (with_dri or with_gallium or with_glx != 'disabled')
+#   with_gles1 = false
+#   with_gles2 = false
+#   with_opengl = false
+#   with_any_opengl = false
+#   with_shared_glapi = false
+# endif
 
 _gbm = get_option('gbm')
 if _gbm == 'true'
