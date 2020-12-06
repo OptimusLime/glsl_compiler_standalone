@@ -1121,6 +1121,11 @@ if host_machine.system() == 'windows'
         '/incremental:no',
         language : ['c', 'cpp'],
       )
+    # else 
+    #   add_project_link_arguments(
+    #     '/debug:full',
+    #     language : ['c', 'cpp'],
+    #   )
     endif
   else
     add_project_link_arguments(

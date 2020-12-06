@@ -245,7 +245,7 @@ libglsl_standalone = shared_library(
   gnu_symbol_visibility : 'hidden',
   include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux],
   link_with : [libglsl, libglsl_util, libglcpp_standalone, libmesa_format],
-  dependencies : [idep_mesautil, idep_getopt],
+  dependencies : [idep_mesautil, idep_getopt, dep_clock, dep_thread],
   name_suffix: 'dll',
   build_by_default : false,
 )

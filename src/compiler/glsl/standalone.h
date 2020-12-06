@@ -25,28 +25,37 @@
 #define GLSL_STANDALONE_H
 
 #ifdef __cplusplus
-extern "C" {
+
+#include <string>
+#include <vector>
+extern "C"
+{
+
 #endif
 
-struct standalone_options {
-   int glsl_version;
-   int dump_ast;
-   int dump_hir;
-   int dump_lir;
-   int dump_builder;
-   int do_link;
-   int just_log;
-   int lower_precision;
-};
+      struct standalone_options
+      {
+            int glsl_version;
+            int dump_ast;
+            int dump_hir;
+            int dump_lir;
+            int dump_builder;
+            int do_link;
+            int just_log;
+            int lower_precision;
+      };
 
-struct gl_shader_program;
+      struct gl_shader_program;
 
-struct gl_shader_program * standalone_compile_shader(
-      const struct standalone_options *options,
-      unsigned num_files, char* const* files,
-      struct gl_context *ctx);
-
-void standalone_compiler_cleanup(struct gl_shader_program *prog);
+      struct gl_shader_program *standalone_compile_shader(
+          const struct standalone_options *options,
+          unsigned num_files, char *const *files,
+          struct gl_context *ctx);
+      struct gl_shader_program *standalone_compile_shader_files(
+          const struct standalone_options *options,
+          std::vector<std::string> files,
+          struct gl_context *ctx);
+      void standalone_compiler_cleanup(struct gl_shader_program *prog);
 
 #ifdef __cplusplus
 }
