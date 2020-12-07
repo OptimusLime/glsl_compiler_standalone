@@ -230,25 +230,26 @@ libglsl = static_library(
   c_args : [c_msvc_compat_args, no_override_init_args],
   cpp_args : [cpp_msvc_compat_args],
   gnu_symbol_visibility : 'hidden',
-  link_with : [libglsl_util, libglcpp_standalone, libmesa_format],
+  link_with : libglcpp,
   include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux, inc_compiler],
-  dependencies : [idep_nir],
-  # name_suffix: 'dll',
+  dependencies : idep_nir,
   build_by_default : false,
 )
 
-libglsl_standalone = shared_library(
+libglsl_standalone = both_libraries(
   'glsl_standalone',
   [files_libglsl_standalone, ir_expression_operation_h],
   c_args : [c_msvc_compat_args, no_override_init_args],
   cpp_args : [cpp_msvc_compat_args],
   gnu_symbol_visibility : 'hidden',
   include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux],
-  link_with : [libglsl, libglsl_util, libglcpp_standalone, libmesa_format],
-  dependencies : [idep_mesautil, idep_getopt, dep_clock, dep_thread],
-  name_suffix: 'dll',
-  build_by_default : false,
+  link_with : [libglsl, libglsl_util, libglcpp_standalone],
+  dependencies : [idep_mesautil, idep_getopt],
+  # name_suffix : 'dll',
+  build_by_default : true,
 )
+
+# libglsl_standalone.get_shared_lib().name_suffix = 'dll'
 
 glsl_compiler = executable(
   'glsl_compiler',
@@ -258,24 +259,24 @@ glsl_compiler = executable(
   gnu_symbol_visibility : 'hidden',
   dependencies : [dep_clock, dep_thread, idep_getopt, idep_mesautil],
   include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux],
-  link_with : [libglsl_standalone, libglsl, libglsl_util, libglcpp_standalone, libmesa_format],
+  link_with : [libglsl_standalone.get_static_lib()],
   build_by_default : with_tools.contains('glsl'),
   install : with_tools.contains('glsl'),
 )
 
-# glsl_test = executable(
-#   'glsl_test',
-#   ['test.cpp', 'test_optpass.cpp', 'test_optpass.h',
-#    ir_expression_operation_h],
-#   c_args : [c_msvc_compat_args, no_override_init_args],
-#   cpp_args : [cpp_msvc_compat_args],
-#   gnu_symbol_visibility : 'hidden',
-#   include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux],
-#   dependencies : [dep_clock, dep_thread, idep_getopt, idep_mesautil],
-#   link_with : [libglsl_standalone, libglsl_util],
-#   build_by_default : with_tools.contains('glsl'),
-#   install : with_tools.contains('glsl'),
-# )
+glsl_test = executable(
+  'glsl_test',
+  ['test.cpp', 'test_optpass.cpp', 'test_optpass.h',
+   ir_expression_operation_h],
+  c_args : [c_msvc_compat_args, no_override_init_args],
+  cpp_args : [cpp_msvc_compat_args],
+  gnu_symbol_visibility : 'hidden',
+  include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux],
+  dependencies : [dep_clock, dep_thread, idep_getopt, idep_mesautil],
+  link_with : [libglsl, libglsl_standalone.get_static_lib(), libglsl_util],
+  build_by_default : with_tools.contains('glsl'),
+  install : with_tools.contains('glsl'),
+)
 
 if with_any_opengl and with_tests
   subdir('tests')

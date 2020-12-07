@@ -51,6 +51,7 @@ if 'PROCESSOR_ARCHITECTURE' in os.environ:
     host_machine = os.environ['PROCESSOR_ARCHITECTURE']
 else:
     host_machine = _platform.machine()
+    
 host_machine = _machine_map.get(host_machine, 'generic')
 # MSYS2 default machine selection.
 if _platform.system().lower().startswith('mingw') and 'MSYSTEM' in os.environ:

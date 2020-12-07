@@ -638,7 +638,7 @@ fail:
 
 extern "C" struct gl_shader_program *
 standalone_compile_shader_files(const struct standalone_options *_options,
-                                std::vector<std::string> files, struct gl_context *ctx)
+                                const char *file, struct gl_context *ctx)
 {
    int status = EXIT_SUCCESS;
    bool glsl_es = false;
@@ -706,7 +706,7 @@ standalone_compile_shader_files(const struct standalone_options *_options,
    whole_program->FragDataBindings = new string_to_uint_map;
    whole_program->FragDataIndexBindings = new string_to_uint_map;
 
-   for (unsigned i = 0; i < files.size(); i++)
+   for (unsigned i = 0; i < 1; i++)
    {
       whole_program->Shaders =
           reralloc(whole_program, whole_program->Shaders,
@@ -718,11 +718,11 @@ standalone_compile_shader_files(const struct standalone_options *_options,
       whole_program->Shaders[whole_program->NumShaders] = shader;
       whole_program->NumShaders++;
 
-      const unsigned len = files[i].length();
+      const unsigned len = strlen(file); //files[i].length();
       if (len < 6)
          goto fail;
 
-      const char *const ext = &files[i][len - 5];
+      const char *const ext = &file[len - 5]; //&files[i][len - 5];
       /* TODO add support to read a .shader_test */
       if (strncmp(".vert", ext, 5) == 0 || strncmp(".glsl", ext, 5) == 0)
          shader->Type = GL_VERTEX_SHADER;
@@ -740,10 +740,10 @@ standalone_compile_shader_files(const struct standalone_options *_options,
          goto fail;
       shader->Stage = _mesa_shader_enum_to_shader_stage(shader->Type);
 
-      shader->Source = load_text_file(whole_program, files[i].c_str());
+      shader->Source = load_text_file(whole_program, file); //files[i].c_str());
       if (shader->Source == NULL)
       {
-         printf("File \"%s\" does not exist.\n", files[i]);
+         printf("File \"%s\" does not exist.\n", file); // files[i]);
          exit(EXIT_FAILURE);
       }
 
@@ -752,7 +752,7 @@ standalone_compile_shader_files(const struct standalone_options *_options,
       if (strlen(shader->InfoLog) > 0)
       {
          if (!options->just_log)
-            printf("Info log for %s:\n", files[i]);
+            printf("Info log for %s:\n", file); // files[i]);
 
          printf("%s", shader->InfoLog);
          if (!options->just_log)

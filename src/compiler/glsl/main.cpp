@@ -96,8 +96,8 @@ int main(int argc, char *const *argv)
    struct gl_shader_program *whole_program;
    static struct gl_context local_ctx;
 
-   std::vector<std::string> files = {"test_vertex.vert"};
-   whole_program = standalone_compile_shader_files(&options, files, &local_ctx);
+   std::vector<std::string> files = {"tests/test_vertex.vert"};
+   whole_program = standalone_compile_shader_files(&options, files[0].c_str(), &local_ctx);
 
    // whole_program = standalone_compile_shader(&options, argc - optind,
    //                                           &argv[optind], &local_ctx);

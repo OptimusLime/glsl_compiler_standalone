@@ -191,7 +191,6 @@ _libmesa_util = static_library(
   link_with: libmesa_format,
   c_args : [c_msvc_compat_args],
   gnu_symbol_visibility : 'hidden',
-  # name_suffix : 'dll',
   build_by_default : false
 )
 
@@ -221,7 +220,6 @@ _libxmlconfig = static_library(
     ),
   ],
   gnu_symbol_visibility : 'hidden',
-  # name_suffix : 'dll',
   build_by_default : false,
 )
 

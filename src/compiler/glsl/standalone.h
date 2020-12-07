@@ -53,8 +53,12 @@ extern "C"
           struct gl_context *ctx);
       struct gl_shader_program *standalone_compile_shader_files(
           const struct standalone_options *options,
-          std::vector<std::string> files,
+          const char *file,
           struct gl_context *ctx);
+      // struct gl_shader_program *standalone_compile_shader_files(
+      //     const struct standalone_options *options,
+      //     std::vector<std::string> files,
+      //     struct gl_context *ctx);
       void standalone_compiler_cleanup(struct gl_shader_program *prog);
 
 #ifdef __cplusplus

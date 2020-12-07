@@ -57,7 +57,7 @@ with_glx_direct = get_option('glx-direct')
 with_osmesa = get_option('osmesa')
 with_swr_arches = get_option('swr-arches')
 with_vulkan_overlay_layer = get_option('vulkan-overlay-layer')
-with_tools = ['glsl']# get_option('tools')
+with_tools = get_option('tools')
 if with_tools.contains('all')
   with_tools = [
     'drm-shim',
@@ -110,10 +110,10 @@ if host_machine.system() == 'windows'
     with_gles2 = 'disabled'
   endif
 endif
-with_opengl = true# get_option('opengl')
+with_opengl = get_option('opengl')
 
 # Default shared glapi off for windows, on elsewhere.
-_sg = 'enabled'# get_option('shared-glapi')
+_sg = get_option('shared-glapi')
 if _sg == 'true'
   _sg = 'enabled'
   warning('shared-glapi option "true" deprecated, please use "enabled" instead.')
@@ -126,9 +126,6 @@ if _sg == 'auto'
 else
   with_shared_glapi = _sg == 'enabled'
 endif
-
-warning('Check shared: @0@', with_shared_glapi)
-with_shared_glapi = true
 
 # shared-glapi is required if at least two OpenGL APIs are being built
 if not with_shared_glapi
@@ -384,13 +381,13 @@ if with_glx == 'dri'
    endif
 endif
 
-# if not (with_dri or with_gallium or with_glx != 'disabled')
-#   with_gles1 = false
-#   with_gles2 = false
-#   with_opengl = false
-#   with_any_opengl = false
-#   with_shared_glapi = false
-# endif
+if not (with_dri or with_gallium or with_glx != 'disabled')
+  with_gles1 = false
+  with_gles2 = false
+  with_opengl = false
+  with_any_opengl = false
+  with_shared_glapi = false
+endif
 
 _gbm = get_option('gbm')
 if _gbm == 'true'
@@ -972,6 +969,8 @@ if cc.compiles('__uint128_t foo(void) { return 0; }',
   pre_args += '-DHAVE_UINT128'
 endif
 
+warning('ID: @0@\n\n'.format(cc.get_id()))
+
 # TODO: this is very incomplete
 if ['linux', 'cygwin', 'gnu', 'freebsd', 'gnu/kfreebsd'].contains(host_machine.system())
   pre_args += '-D_GNU_SOURCE'
@@ -1000,7 +999,11 @@ elif host_machine.system() == 'windows'
 elif host_machine.system() == 'openbsd'
   pre_args += '-D_ISOC11_SOURCE'
 endif
-
+  if cc.get_id() == 'msvc'
+    warning('\nMSVC ACTIVATE\n\n\n')
+    else
+    warning('\nNO MSVC ACTIVATED :*(\n\n\n')
+    endif
 # Check for generic C arguments
 c_args = []
 c_msvc_compat_args = []
@@ -1121,11 +1124,6 @@ if host_machine.system() == 'windows'
         '/incremental:no',
         language : ['c', 'cpp'],
       )
-    # else 
-    #   add_project_link_arguments(
-    #     '/debug:full',
-    #     language : ['c', 'cpp'],
-    #   )
     endif
   else
     add_project_link_arguments(

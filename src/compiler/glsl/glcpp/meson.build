@@ -20,7 +20,6 @@
 
 glcpp_parse = custom_target(
   'glcpp-parse.[ch]',
-  build_by_default : true,
   input : 'glcpp-parse.y',
   output : ['glcpp-parse.c', 'glcpp-parse.h'],
   command : [
@@ -29,15 +28,12 @@ glcpp_parse = custom_target(
   ],
 )
 
-
-warning('shared full path: @0@', glcpp_parse.full_path())
 glcpp_lex = custom_target(
   'glcpp-lex.c',
   input : 'glcpp-lex.l',
   output : 'glcpp-lex.c',
   command : [prog_flex, '-o', '@OUTPUT@', '@INPUT@'],
 )
-
 
 _extra_args = []
 if cpp.get_id() == 'msvc'
@@ -51,15 +47,12 @@ endif
 
 libglcpp = static_library(
   'glcpp',
-  ['pp_standalone_scaffolding.c', glcpp_lex, glcpp_parse, files('glcpp.h', 'pp.c')],
-  # [glcpp_lex.full_path(), glcpp_parse.full_path(), files('glcpp.h', 'pp.c')],
-  # ['glcpp-lex.c', ['glcpp-parse.c', 'glcpp-parse.h'], files('glcpp.h', 'pp.c')],
+  [glcpp_lex, glcpp_parse, files('glcpp.h', 'pp.c')],
   dependencies : idep_mesautil,
   include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux],
   c_args : [no_override_init_args, c_msvc_compat_args, _extra_args],
   cpp_args : [cpp_msvc_compat_args, _extra_args],
   gnu_symbol_visibility : 'hidden',
-  # name_suffix : 'dll',
   build_by_default : false,
 )
 
@@ -72,7 +65,6 @@ libglcpp_standalone = static_library(
   c_args : [no_override_init_args, c_msvc_compat_args, _extra_args],
   cpp_args : [cpp_msvc_compat_args, _extra_args],
   gnu_symbol_visibility : 'hidden',
-  # name_suffix : 'dll',
   build_by_default : false,
 )
 
