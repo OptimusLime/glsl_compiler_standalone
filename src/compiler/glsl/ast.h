@@ -29,6 +29,7 @@
 #include "glsl_parser_extras.h"
 #include "compiler/glsl_types.h"
 #include "util/bitset.h"
+#include <cereal/archives/json.hpp>
 
 struct _mesa_glsl_parse_state;
 
@@ -48,7 +49,8 @@ struct YYLTYPE;
 /**
  * Base class of all abstract syntax tree nodes
  */
-class ast_node {
+class ast_node
+{
 public:
    DECLARE_LINEAR_ZALLOC_CXX_OPERATORS(ast_node);
 
@@ -61,7 +63,7 @@ public:
     * Convert the AST node to the high-level intermediate representation
     */
    virtual ir_rvalue *hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state);
+                          struct _mesa_glsl_parse_state *state);
 
    virtual bool has_sequence_subexpression() const;
 
@@ -120,18 +122,29 @@ public:
    /**
     * Source location of the AST node.
     */
-   struct {
-      char *path;               /**< GLSL shader include path. */
-      unsigned source;          /**< GLSL source number. */
-      unsigned first_line;      /**< First line number within the source string. */
-      unsigned first_column;    /**< First column in the first line. */
-      unsigned last_line;       /**< Last line number within the source string. */
-      unsigned last_column;     /**< Last column in the last line. */
+   struct
+   {
+      char *path;            /**< GLSL shader include path. */
+      unsigned source;       /**< GLSL source number. */
+      unsigned first_line;   /**< First line number within the source string. */
+      unsigned first_column; /**< First column in the first line. */
+      unsigned last_line;    /**< Last line number within the source string. */
+      unsigned last_column;  /**< Last column in the last line. */
    } location;
 
    exec_node link;
 
    virtual void set_is_lhs(bool);
+
+   // this is serialization with JSON archive
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
+
+   // This method lets cereal know which data members to serialize
+   template <class Archive>
+   void serialize(Archive &archive)
+   {
+      this->serializeToJSON(static_cast<cereal::JSONOutputArchive &>(archive));
+   }
 
 protected:
    /**
@@ -141,13 +154,13 @@ protected:
    ast_node(void);
 };
 
-
 /**
  * Operators for AST expression nodes.
  */
-enum ast_operators {
+enum ast_operators
+{
    ast_assign,
-   ast_plus,        /**< Unary + operator. */
+   ast_plus, /**< Unary + operator. */
    ast_neg,
    ast_add,
    ast_sub,
@@ -206,26 +219,26 @@ enum ast_operators {
    ast_sequence,
    ast_aggregate
 
-   /**
+/**
     * Number of possible operators for an ast_expression
     *
     * This is done as a define instead of as an additional value in the enum so
     * that the compiler won't generate spurious messages like "warning:
     * enumeration value ‘ast_num_operators’ not handled in switch"
     */
-   #define AST_NUM_OPERATORS (ast_aggregate + 1)
+#define AST_NUM_OPERATORS (ast_aggregate + 1)
 };
 
 /**
  * Representation of any sort of expression.
  */
-class ast_expression : public ast_node {
+class ast_expression : public ast_node
+{
 public:
    ast_expression(int oper, ast_expression *,
-		  ast_expression *, ast_expression *);
+                  ast_expression *, ast_expression *);
 
-   ast_expression(const char *identifier) :
-      oper(ast_identifier)
+   ast_expression(const char *identifier) : oper(ast_identifier)
    {
       subexpressions[0] = NULL;
       subexpressions[1] = NULL;
@@ -238,7 +251,7 @@ public:
    static const char *operator_string(enum ast_operators op);
 
    virtual ir_rvalue *hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state);
+                          struct _mesa_glsl_parse_state *state);
 
    virtual void hir_no_rvalue(exec_list *instructions,
                               struct _mesa_glsl_parse_state *state);
@@ -250,12 +263,14 @@ public:
                      bool needs_rvalue);
 
    virtual void print(void) const;
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 
    enum ast_operators oper;
 
    ast_expression *subexpressions[3];
 
-   union {
+   union
+   {
       const char *identifier;
       int int_constant;
       float float_constant;
@@ -265,7 +280,6 @@ public:
       uint64_t uint64_constant;
       int64_t int64_constant;
    } primary_expression;
-
 
    /**
     * List of expressions for an \c ast_sequence or parameters for an
@@ -291,30 +305,33 @@ private:
    bool is_lhs;
 };
 
-class ast_expression_bin : public ast_expression {
+class ast_expression_bin : public ast_expression
+{
 public:
    ast_expression_bin(int oper, ast_expression *, ast_expression *);
 
    virtual void print(void) const;
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
 /**
  * Subclass of expressions for function calls
  */
-class ast_function_expression : public ast_expression {
+class ast_function_expression : public ast_expression
+{
 public:
    ast_function_expression(ast_expression *callee)
-      : ast_expression(ast_function_call, callee,
-		       NULL, NULL),
-	cons(false)
+       : ast_expression(ast_function_call, callee,
+                        NULL, NULL),
+         cons(false)
    {
       /* empty */
    }
 
    ast_function_expression(class ast_type_specifier *type)
-      : ast_expression(ast_function_call, (ast_expression *) type,
-		       NULL, NULL),
-	cons(true)
+       : ast_expression(ast_function_call, (ast_expression *)type,
+                        NULL, NULL),
+         cons(true)
    {
       /* empty */
    }
@@ -325,12 +342,13 @@ public:
    }
 
    virtual ir_rvalue *hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state);
+                          struct _mesa_glsl_parse_state *state);
 
    virtual void hir_no_rvalue(exec_list *instructions,
                               struct _mesa_glsl_parse_state *state);
 
    virtual bool has_sequence_subexpression() const;
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 
 private:
    /**
@@ -347,9 +365,13 @@ class ast_subroutine_list : public ast_node
 public:
    virtual void print(void) const;
    exec_list declarations;
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-class ast_array_specifier : public ast_node {
+class ast_array_specifier : public ast_node
+{
 public:
    ast_array_specifier(const struct YYLTYPE &locp, ast_expression *dim)
    {
@@ -374,9 +396,13 @@ public:
     * array dimensions in outermost-to-innermost order.
     */
    exec_list array_dimensions;
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-class ast_layout_expression : public ast_node {
+class ast_layout_expression : public ast_node
+{
 public:
    ast_layout_expression(const struct YYLTYPE &locp, ast_expression *expr)
    {
@@ -394,6 +420,9 @@ public:
    }
 
    exec_list layout_const_expressions;
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
 /**
@@ -407,11 +436,12 @@ public:
  *
  * \sa _mesa_ast_set_aggregate_type
  */
-class ast_aggregate_initializer : public ast_expression {
+class ast_aggregate_initializer : public ast_expression
+{
 public:
    ast_aggregate_initializer()
-      : ast_expression(ast_aggregate, NULL, NULL, NULL),
-        constructor_type(NULL)
+       : ast_expression(ast_aggregate, NULL, NULL, NULL),
+         constructor_type(NULL)
    {
       /* empty */
    }
@@ -431,22 +461,27 @@ public:
 
    virtual void hir_no_rvalue(exec_list *instructions,
                               struct _mesa_glsl_parse_state *state);
+   // virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-
-class ast_compound_statement : public ast_node {
+class ast_compound_statement : public ast_node
+{
 public:
    ast_compound_statement(int new_scope, ast_node *statements);
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state);
+                          struct _mesa_glsl_parse_state *state);
 
    int new_scope;
    exec_list statements;
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-class ast_declaration : public ast_node {
+class ast_declaration : public ast_node
+{
 public:
    ast_declaration(const char *identifier,
                    ast_array_specifier *array_specifier,
@@ -458,17 +493,21 @@ public:
    ast_array_specifier *array_specifier;
 
    ast_expression *initializer;
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-
-enum {
+enum
+{
    ast_precision_none = 0, /**< Absence of precision qualifier. */
    ast_precision_high,
    ast_precision_medium,
    ast_precision_low
 };
 
-enum {
+enum
+{
    ast_depth_none = 0, /**< Absence of depth qualifier. */
    ast_depth_any,
    ast_depth_greater,
@@ -476,7 +515,8 @@ enum {
    ast_depth_unchanged
 };
 
-struct ast_type_qualifier {
+struct ast_type_qualifier
+{
    DECLARE_RALLOC_CXX_OPERATORS(ast_type_qualifier);
    /* Note: this bitset needs to have at least as many bits as the 'q'
     * struct has flags, below.  Previously, the size was 128 instead of 96.
@@ -486,189 +526,191 @@ struct ast_type_qualifier {
     */
    DECLARE_BITSET_T(bitset_t, 96);
 
-   union flags {
-      struct {
-	 unsigned invariant:1;
-         unsigned precise:1;
-	 unsigned constant:1;
-	 unsigned attribute:1;
-	 unsigned varying:1;
-	 unsigned in:1;
-	 unsigned out:1;
-	 unsigned centroid:1;
-         unsigned sample:1;
-	 unsigned patch:1;
-	 unsigned uniform:1;
-	 unsigned buffer:1;
-	 unsigned shared_storage:1;
-	 unsigned smooth:1;
-	 unsigned flat:1;
-	 unsigned noperspective:1;
+   union flags
+   {
+      struct
+      {
+         unsigned invariant : 1;
+         unsigned precise : 1;
+         unsigned constant : 1;
+         unsigned attribute : 1;
+         unsigned varying : 1;
+         unsigned in : 1;
+         unsigned out : 1;
+         unsigned centroid : 1;
+         unsigned sample : 1;
+         unsigned patch : 1;
+         unsigned uniform : 1;
+         unsigned buffer : 1;
+         unsigned shared_storage : 1;
+         unsigned smooth : 1;
+         unsigned flat : 1;
+         unsigned noperspective : 1;
 
-	 /** \name Layout qualifiers for GL_ARB_fragment_coord_conventions */
-	 /*@{*/
-	 unsigned origin_upper_left:1;
-	 unsigned pixel_center_integer:1;
-	 /*@}*/
+         /** \name Layout qualifiers for GL_ARB_fragment_coord_conventions */
+         /*@{*/
+         unsigned origin_upper_left : 1;
+         unsigned pixel_center_integer : 1;
+         /*@}*/
 
          /**
           * Flag set if GL_ARB_enhanced_layouts "align" layout qualifier is
           * used.
           */
-         unsigned explicit_align:1;
+         unsigned explicit_align : 1;
 
-	 /**
+         /**
 	  * Flag set if GL_ARB_explicit_attrib_location "location" layout
 	  * qualifier is used.
 	  */
-	 unsigned explicit_location:1;
-	 /**
+         unsigned explicit_location : 1;
+         /**
 	  * Flag set if GL_ARB_explicit_attrib_location "index" layout
 	  * qualifier is used.
 	  */
-	 unsigned explicit_index:1;
+         unsigned explicit_index : 1;
 
-	 /**
+         /**
 	  * Flag set if GL_ARB_enhanced_layouts "component" layout
 	  * qualifier is used.
 	  */
-	 unsigned explicit_component:1;
+         unsigned explicit_component : 1;
 
          /**
           * Flag set if GL_ARB_shading_language_420pack "binding" layout
           * qualifier is used.
           */
-         unsigned explicit_binding:1;
+         unsigned explicit_binding : 1;
 
          /**
           * Flag set if GL_ARB_shader_atomic counter "offset" layout
           * qualifier is used.
           */
-         unsigned explicit_offset:1;
+         unsigned explicit_offset : 1;
 
          /** \name Layout qualifiers for GL_AMD_conservative_depth */
          /** \{ */
-         unsigned depth_type:1;
+         unsigned depth_type : 1;
          /** \} */
 
-	 /** \name Layout qualifiers for GL_ARB_uniform_buffer_object */
-	 /** \{ */
-         unsigned std140:1;
-         unsigned std430:1;
-         unsigned shared:1;
-         unsigned packed:1;
-         unsigned column_major:1;
-         unsigned row_major:1;
-	 /** \} */
+         /** \name Layout qualifiers for GL_ARB_uniform_buffer_object */
+         /** \{ */
+         unsigned std140 : 1;
+         unsigned std430 : 1;
+         unsigned shared : 1;
+         unsigned packed : 1;
+         unsigned column_major : 1;
+         unsigned row_major : 1;
+         /** \} */
 
-	 /** \name Layout qualifiers for GLSL 1.50 geometry shaders */
-	 /** \{ */
-	 unsigned prim_type:1;
-	 unsigned max_vertices:1;
-	 /** \} */
+         /** \name Layout qualifiers for GLSL 1.50 geometry shaders */
+         /** \{ */
+         unsigned prim_type : 1;
+         unsigned max_vertices : 1;
+         /** \} */
 
          /**
           * local_size_{x,y,z} flags for compute shaders.  Bit 0 represents
           * local_size_x, and so on.
           */
-         unsigned local_size:3;
+         unsigned local_size : 3;
 
-	 /** \name Layout qualifiers for ARB_compute_variable_group_size. */
-	 /** \{ */
-	 unsigned local_size_variable:1;
-	 /** \} */
+         /** \name Layout qualifiers for ARB_compute_variable_group_size. */
+         /** \{ */
+         unsigned local_size_variable : 1;
+         /** \} */
 
-	 /** \name Layout and memory qualifiers for ARB_shader_image_load_store. */
-	 /** \{ */
-	 unsigned early_fragment_tests:1;
-	 unsigned explicit_image_format:1;
-	 unsigned coherent:1;
-	 unsigned _volatile:1;
-	 unsigned restrict_flag:1;
-	 unsigned read_only:1; /**< "readonly" qualifier. */
-	 unsigned write_only:1; /**< "writeonly" qualifier. */
-	 /** \} */
+         /** \name Layout and memory qualifiers for ARB_shader_image_load_store. */
+         /** \{ */
+         unsigned early_fragment_tests : 1;
+         unsigned explicit_image_format : 1;
+         unsigned coherent : 1;
+         unsigned _volatile : 1;
+         unsigned restrict_flag : 1;
+         unsigned read_only : 1;  /**< "readonly" qualifier. */
+         unsigned write_only : 1; /**< "writeonly" qualifier. */
+                                  /** \} */
 
          /** \name Layout qualifiers for GL_ARB_gpu_shader5 */
          /** \{ */
-         unsigned invocations:1;
-         unsigned stream:1; /**< Has stream value assigned  */
-         unsigned explicit_stream:1; /**< stream value assigned explicitly by shader code */
+         unsigned invocations : 1;
+         unsigned stream : 1;          /**< Has stream value assigned  */
+         unsigned explicit_stream : 1; /**< stream value assigned explicitly by shader code */
          /** \} */
 
          /** \name Layout qualifiers for GL_ARB_enhanced_layouts */
          /** \{ */
-         unsigned explicit_xfb_offset:1; /**< xfb_offset value assigned explicitly by shader code */
-         unsigned xfb_buffer:1; /**< Has xfb_buffer value assigned  */
-         unsigned explicit_xfb_buffer:1; /**< xfb_buffer value assigned explicitly by shader code */
-         unsigned xfb_stride:1; /**< Is xfb_stride value yet to be merged with global values  */
-         unsigned explicit_xfb_stride:1; /**< xfb_stride value assigned explicitly by shader code */
+         unsigned explicit_xfb_offset : 1; /**< xfb_offset value assigned explicitly by shader code */
+         unsigned xfb_buffer : 1;          /**< Has xfb_buffer value assigned  */
+         unsigned explicit_xfb_buffer : 1; /**< xfb_buffer value assigned explicitly by shader code */
+         unsigned xfb_stride : 1;          /**< Is xfb_stride value yet to be merged with global values  */
+         unsigned explicit_xfb_stride : 1; /**< xfb_stride value assigned explicitly by shader code */
+                                           /** \} */
+
+         /** \name Layout qualifiers for GL_ARB_tessellation_shader */
+         /** \{ */
+         /* tess eval input layout */
+         /* gs prim_type reused for primitive mode */
+         unsigned vertex_spacing : 1;
+         unsigned ordering : 1;
+         unsigned point_mode : 1;
+         /* tess control output layout */
+         unsigned vertices : 1;
          /** \} */
 
-	 /** \name Layout qualifiers for GL_ARB_tessellation_shader */
-	 /** \{ */
-	 /* tess eval input layout */
-	 /* gs prim_type reused for primitive mode */
-	 unsigned vertex_spacing:1;
-	 unsigned ordering:1;
-	 unsigned point_mode:1;
-	 /* tess control output layout */
-	 unsigned vertices:1;
-	 /** \} */
-
          /** \name Qualifiers for GL_ARB_shader_subroutine */
-	 /** \{ */
-         unsigned subroutine:1;  /**< Is this marked 'subroutine' */
-	 /** \} */
+         /** \{ */
+         unsigned subroutine : 1; /**< Is this marked 'subroutine' */
+                                  /** \} */
 
          /** \name Qualifiers for GL_KHR_blend_equation_advanced */
          /** \{ */
-         unsigned blend_support:1; /**< Are there any blend_support_ qualifiers */
+         unsigned blend_support : 1; /**< Are there any blend_support_ qualifiers */
          /** \} */
 
          /**
           * Flag set if GL_ARB_post_depth_coverage layout qualifier is used.
           */
-         unsigned post_depth_coverage:1;
+         unsigned post_depth_coverage : 1;
 
          /**
           * Flags for the layout qualifers added by ARB_fragment_shader_interlock
           */
 
-         unsigned pixel_interlock_ordered:1;
-         unsigned pixel_interlock_unordered:1;
-         unsigned sample_interlock_ordered:1;
-         unsigned sample_interlock_unordered:1;
+         unsigned pixel_interlock_ordered : 1;
+         unsigned pixel_interlock_unordered : 1;
+         unsigned sample_interlock_ordered : 1;
+         unsigned sample_interlock_unordered : 1;
 
          /**
           * Flag set if GL_INTEL_conservartive_rasterization layout qualifier
           * is used.
           */
-         unsigned inner_coverage:1;
+         unsigned inner_coverage : 1;
 
          /** \name Layout qualifiers for GL_ARB_bindless_texture */
          /** \{ */
-         unsigned bindless_sampler:1;
-         unsigned bindless_image:1;
-         unsigned bound_sampler:1;
-         unsigned bound_image:1;
+         unsigned bindless_sampler : 1;
+         unsigned bindless_image : 1;
+         unsigned bound_sampler : 1;
+         unsigned bound_image : 1;
          /** \} */
 
          /** \name Layout qualifiers for GL_EXT_shader_framebuffer_fetch_non_coherent */
          /** \{ */
-         unsigned non_coherent:1;
+         unsigned non_coherent : 1;
          /** \} */
 
          /** \name Layout qualifiers for NV_compute_shader_derivatives */
          /** \{ */
-         unsigned derivative_group:1;
+         unsigned derivative_group : 1;
          /** \} */
 
          /**
           * Flag set if GL_NV_viewport_array2 viewport_relative layout
           * qualifier is used.
           */
-         unsigned viewport_relative:1;
+         unsigned viewport_relative : 1;
       }
       /** \brief Set of flags, accessed by name. */
       q;
@@ -678,10 +720,10 @@ struct ast_type_qualifier {
    } flags;
 
    /** Precision of the type (highp/medium/lowp). */
-   unsigned precision:2;
+   unsigned precision : 2;
 
    /** Type of layout qualifiers for GL_AMD_conservative_depth. */
-   unsigned depth_type:3;
+   unsigned depth_type : 3;
 
    /**
     * Alignment specified via GL_ARB_enhanced_layouts "align" layout qualifier
@@ -828,7 +870,7 @@ struct ast_type_qualifier {
    bool is_subroutine_decl() const;
 
    bool merge_qualifier(YYLTYPE *loc,
-			_mesa_glsl_parse_state *state,
+                        _mesa_glsl_parse_state *state,
                         const ast_type_qualifier &q,
                         bool is_single_layout_merge,
                         bool is_multiple_layouts_merge = false);
@@ -844,7 +886,7 @@ struct ast_type_qualifier {
     */
    bool merge_into_out_qualifier(YYLTYPE *loc,
                                  _mesa_glsl_parse_state *state,
-                                 ast_node* &node);
+                                 ast_node *&node);
 
    /**
     * Validate current qualifier against the global in one.
@@ -857,7 +899,7 @@ struct ast_type_qualifier {
     */
    bool merge_into_in_qualifier(YYLTYPE *loc,
                                 _mesa_glsl_parse_state *state,
-                                ast_node* &node);
+                                ast_node *&node);
 
    /**
     * Push pending layout qualifiers to the global values.
@@ -875,14 +917,15 @@ struct ast_type_qualifier {
 
 class ast_declarator_list;
 
-class ast_struct_specifier : public ast_node {
+class ast_struct_specifier : public ast_node
+{
 public:
    ast_struct_specifier(const char *identifier,
                         ast_declarator_list *declarator_list);
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state);
+                          struct _mesa_glsl_parse_state *state);
 
    const char *name;
    ast_type_qualifier *layout;
@@ -890,38 +933,40 @@ public:
    exec_list declarations;
    bool is_declaration;
    const glsl_type *type;
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-
-
-class ast_type_specifier : public ast_node {
+class ast_type_specifier : public ast_node
+{
 public:
    /** Construct a type specifier from a type name */
-   ast_type_specifier(const char *name) 
-      : type(NULL), type_name(name), structure(NULL), array_specifier(NULL),
-	default_precision(ast_precision_none)
+   ast_type_specifier(const char *name)
+       : type(NULL), type_name(name), structure(NULL), array_specifier(NULL),
+         default_precision(ast_precision_none)
    {
       /* empty */
    }
 
    /** Construct a type specifier from a structure definition */
    ast_type_specifier(ast_struct_specifier *s)
-      : type(NULL), type_name(s->name), structure(s), array_specifier(NULL),
-	default_precision(ast_precision_none)
+       : type(NULL), type_name(s->name), structure(s), array_specifier(NULL),
+         default_precision(ast_precision_none)
    {
       /* empty */
    }
 
    ast_type_specifier(const glsl_type *t)
-      : type(t), type_name(t->name), structure(NULL), array_specifier(NULL),
-        default_precision(ast_precision_none)
+       : type(t), type_name(t->name), structure(NULL), array_specifier(NULL),
+         default_precision(ast_precision_none)
    {
       /* empty */
    }
 
    const struct glsl_type *glsl_type(const char **name,
-				     struct _mesa_glsl_parse_state *state)
-      const;
+                                     struct _mesa_glsl_parse_state *state)
+       const;
 
    virtual void print(void) const;
 
@@ -934,11 +979,14 @@ public:
    ast_array_specifier *array_specifier;
 
    /** For precision statements, this is the given precision; otherwise none. */
-   unsigned default_precision:2;
+   unsigned default_precision : 2;
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-
-class ast_fully_specified_type : public ast_node {
+class ast_fully_specified_type : public ast_node
+{
 public:
    virtual void print(void) const;
    bool has_qualifiers(_mesa_glsl_parse_state *state) const;
@@ -948,21 +996,24 @@ public:
    }
 
    const struct glsl_type *glsl_type(const char **name,
-				     struct _mesa_glsl_parse_state *state)
-      const;
+                                     struct _mesa_glsl_parse_state *state)
+       const;
 
    ast_type_qualifier qualifier;
    ast_type_specifier *specifier;
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-
-class ast_declarator_list : public ast_node {
+class ast_declarator_list : public ast_node
+{
 public:
    ast_declarator_list(ast_fully_specified_type *);
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state);
+                          struct _mesa_glsl_parse_state *state);
 
    ast_fully_specified_type *type;
    /** List of 'ast_declaration *' */
@@ -972,19 +1023,21 @@ public:
     * Flags for redeclarations. In these cases, no type is specified, to
     * `type` is allowed to be NULL. In all other cases, this would be an error.
     */
-   int invariant;     /** < `invariant` redeclaration */
-   int precise;       /** < `precise` redeclaration */
+   int invariant; /** < `invariant` redeclaration */
+   int precise;   /** < `precise` redeclaration */
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-
-class ast_parameter_declarator : public ast_node {
+class ast_parameter_declarator : public ast_node
+{
 public:
-   ast_parameter_declarator() :
-      type(NULL),
-      identifier(NULL),
-      array_specifier(NULL),
-      formal_parameter(false),
-      is_void(false)
+   ast_parameter_declarator() : type(NULL),
+                                identifier(NULL),
+                                array_specifier(NULL),
+                                formal_parameter(false),
+                                is_void(false)
    {
       /* empty */
    }
@@ -992,15 +1045,18 @@ public:
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state);
+                          struct _mesa_glsl_parse_state *state);
 
    ast_fully_specified_type *type;
    const char *identifier;
    ast_array_specifier *array_specifier;
 
    static void parameters_to_hir(exec_list *ast_parameters,
-				 bool formal, exec_list *ir_parameters,
-				 struct _mesa_glsl_parse_state *state);
+                                 bool formal, exec_list *ir_parameters,
+                                 struct _mesa_glsl_parse_state *state);
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 
 private:
    /** Is this parameter declaration part of a formal parameter list? */
@@ -1014,20 +1070,23 @@ private:
    bool is_void;
 };
 
-
-class ast_function : public ast_node {
+class ast_function : public ast_node
+{
 public:
    ast_function(void);
 
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state);
+                          struct _mesa_glsl_parse_state *state);
 
    ast_fully_specified_type *return_type;
    const char *identifier;
 
    exec_list parameters;
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 
 private:
    /**
@@ -1053,56 +1112,65 @@ private:
    friend class ast_function_definition;
 };
 
-
-class ast_expression_statement : public ast_node {
+class ast_expression_statement : public ast_node
+{
 public:
    ast_expression_statement(ast_expression *);
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state);
+                          struct _mesa_glsl_parse_state *state);
 
    ast_expression *expression;
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-
-class ast_case_label : public ast_node {
+class ast_case_label : public ast_node
+{
 public:
    ast_case_label(ast_expression *test_value);
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state);
+                          struct _mesa_glsl_parse_state *state);
 
    /**
     * An test value of NULL means 'default'.
     */
    ast_expression *test_value;
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-
-class ast_case_label_list : public ast_node {
+class ast_case_label_list : public ast_node
+{
 public:
    ast_case_label_list(void);
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state);
+                          struct _mesa_glsl_parse_state *state);
 
    /**
     * A list of case labels.
     */
    exec_list labels;
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-
-class ast_case_statement : public ast_node {
+class ast_case_statement : public ast_node
+{
 public:
    ast_case_statement(ast_case_label_list *labels);
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state);
+                          struct _mesa_glsl_parse_state *state);
 
    ast_case_label_list *labels;
 
@@ -1110,83 +1178,98 @@ public:
     * A list of statements.
     */
    exec_list stmts;
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-
-class ast_case_statement_list : public ast_node {
+class ast_case_statement_list : public ast_node
+{
 public:
    ast_case_statement_list(void);
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state);
+                          struct _mesa_glsl_parse_state *state);
 
    /**
     * A list of cases.
     */
    exec_list cases;
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-
-class ast_switch_body : public ast_node {
+class ast_switch_body : public ast_node
+{
 public:
    ast_switch_body(ast_case_statement_list *stmts);
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state);
+                          struct _mesa_glsl_parse_state *state);
 
    ast_case_statement_list *stmts;
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-
-class ast_selection_statement : public ast_node {
+class ast_selection_statement : public ast_node
+{
 public:
    ast_selection_statement(ast_expression *condition,
-			   ast_node *then_statement,
-			   ast_node *else_statement);
+                           ast_node *then_statement,
+                           ast_node *else_statement);
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state);
+                          struct _mesa_glsl_parse_state *state);
 
    ast_expression *condition;
    ast_node *then_statement;
    ast_node *else_statement;
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-
-class ast_switch_statement : public ast_node {
+class ast_switch_statement : public ast_node
+{
 public:
    ast_switch_statement(ast_expression *test_expression,
-			ast_node *body);
+                        ast_node *body);
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state);
+                          struct _mesa_glsl_parse_state *state);
 
    ast_expression *test_expression;
    ast_node *body;
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 
 protected:
    void test_to_hir(exec_list *, struct _mesa_glsl_parse_state *);
 };
 
-class ast_iteration_statement : public ast_node {
+class ast_iteration_statement : public ast_node
+{
 public:
    ast_iteration_statement(int mode, ast_node *init, ast_node *condition,
-			   ast_expression *rest_expression, ast_node *body);
+                           ast_expression *rest_expression, ast_node *body);
 
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *, struct _mesa_glsl_parse_state *);
 
-   enum ast_iteration_modes {
+   enum ast_iteration_modes
+   {
       ast_for,
       ast_while,
       ast_do_while
    } mode;
-   
 
    ast_node *init_statement;
    ast_node *condition;
@@ -1201,18 +1284,22 @@ public:
     * test at the top (for and while), and others have it at the end (do-while).
     */
    void condition_to_hir(exec_list *, struct _mesa_glsl_parse_state *);
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-
-class ast_jump_statement : public ast_node {
+class ast_jump_statement : public ast_node
+{
 public:
    ast_jump_statement(int mode, ast_expression *return_value);
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state);
+                          struct _mesa_glsl_parse_state *state);
 
-   enum ast_jump_modes {
+   enum ast_jump_modes
+   {
       ast_continue,
       ast_break,
       ast_return,
@@ -1220,20 +1307,26 @@ public:
    } mode;
 
    ast_expression *opt_return_value;
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-
-class ast_demote_statement : public ast_node {
+class ast_demote_statement : public ast_node
+{
 public:
    ast_demote_statement(void) {}
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
                           struct _mesa_glsl_parse_state *state);
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-
-class ast_function_definition : public ast_node {
+class ast_function_definition : public ast_node
+{
 public:
    ast_function_definition() : prototype(NULL), body(NULL)
    {
@@ -1242,23 +1335,27 @@ public:
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state);
+                          struct _mesa_glsl_parse_state *state);
 
    ast_function *prototype;
    ast_compound_statement *body;
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 };
 
-class ast_interface_block : public ast_node {
+class ast_interface_block : public ast_node
+{
 public:
    ast_interface_block(const char *instance_name,
                        ast_array_specifier *array_specifier)
-   : block_name(NULL), instance_name(instance_name),
-     array_specifier(array_specifier)
+       : block_name(NULL), instance_name(instance_name),
+         array_specifier(array_specifier)
    {
    }
 
    virtual ir_rvalue *hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state);
+                          struct _mesa_glsl_parse_state *state);
 
    ast_type_qualifier default_layout;
    ast_type_qualifier layout;
@@ -1282,8 +1379,10 @@ public:
     * is unsized, this field will be \c NULL.
     */
    ast_array_specifier *array_specifier;
-};
 
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
+};
 
 /**
  * AST node representing a declaration of the output layout for tessellation
@@ -1299,8 +1398,10 @@ public:
 
    virtual ir_rvalue *hir(exec_list *instructions,
                           struct _mesa_glsl_parse_state *state);
-};
 
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
+};
 
 /**
  * AST node representing a declaration of the input layout for geometry
@@ -1310,7 +1411,7 @@ class ast_gs_input_layout : public ast_node
 {
 public:
    ast_gs_input_layout(const struct YYLTYPE &locp, GLenum prim_type)
-      : prim_type(prim_type)
+       : prim_type(prim_type)
    {
       set_location(locp);
    }
@@ -1318,10 +1419,12 @@ public:
    virtual ir_rvalue *hir(exec_list *instructions,
                           struct _mesa_glsl_parse_state *state);
 
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
+
 private:
    const GLenum prim_type;
 };
-
 
 /**
  * AST node representing a decalaration of the input layout for compute
@@ -1333,7 +1436,8 @@ public:
    ast_cs_input_layout(const struct YYLTYPE &locp,
                        ast_layout_expression *const *local_size)
    {
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < 3; i++)
+      {
          this->local_size[i] = local_size[i];
       }
       set_location(locp);
@@ -1342,20 +1446,27 @@ public:
    virtual ir_rvalue *hir(exec_list *instructions,
                           struct _mesa_glsl_parse_state *state);
 
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
+
 private:
    ast_layout_expression *local_size[3];
 };
 
-class ast_warnings_toggle : public ast_node {
+class ast_warnings_toggle : public ast_node
+{
 public:
    ast_warnings_toggle(bool _enable)
-      : enable(_enable)
+       : enable(_enable)
    {
       /* empty */
    }
 
    virtual ir_rvalue *hir(exec_list *instructions,
                           struct _mesa_glsl_parse_state *state);
+
+   // This method lets cereal know which data members to serialize
+   virtual void serializeToJSON(cereal::JSONOutputArchive &archive);
 
 private:
    bool enable;
@@ -1367,21 +1478,20 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state);
 
 extern ir_rvalue *
 _mesa_ast_field_selection_to_hir(const ast_expression *expr,
-				 exec_list *instructions,
-				 struct _mesa_glsl_parse_state *state);
+                                 exec_list *instructions,
+                                 struct _mesa_glsl_parse_state *state);
 
 extern ir_rvalue *
 _mesa_ast_array_index_to_hir(void *mem_ctx,
-			     struct _mesa_glsl_parse_state *state,
-			     ir_rvalue *array, ir_rvalue *idx,
-			     YYLTYPE &loc, YYLTYPE &idx_loc);
+                             struct _mesa_glsl_parse_state *state,
+                             ir_rvalue *array, ir_rvalue *idx,
+                             YYLTYPE &loc, YYLTYPE &idx_loc);
 
 extern void
 _mesa_ast_set_aggregate_type(const glsl_type *type,
                              ast_expression *expr);
 
-void
-emit_function(_mesa_glsl_parse_state *state, ir_function *f);
+void emit_function(_mesa_glsl_parse_state *state, ir_function *f);
 
 extern void
 check_builtin_array_max_size(const char *name, unsigned size,

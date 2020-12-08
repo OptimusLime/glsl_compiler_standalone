@@ -100,7 +100,8 @@ public:
       if (!var || var->data.mode != ir_var_shader_storage)
          return visit_continue;
 
-      if (var->data.memory_write_only) {
+      if (var->data.memory_write_only)
+      {
          found = var;
          return visit_stop;
       }
@@ -108,7 +109,8 @@ public:
       return visit_continue;
    }
 
-   ir_variable *get_variable() {
+   ir_variable *get_variable()
+   {
       return found;
    }
 
@@ -125,8 +127,7 @@ private:
    ir_variable *found;
 };
 
-void
-_mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
+void _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
 {
    _mesa_glsl_initialize_variables(instructions, state);
 
@@ -155,8 +156,8 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
     */
    state->symbols->push_scope();
 
-   foreach_list_typed (ast_node, ast, link, & state->translation_unit)
-      ast->hir(instructions, state);
+   foreach_list_typed(ast_node, ast, link, &state->translation_unit)
+       ast->hir(instructions, state);
 
    verify_subroutine_associated_funcs(state);
    detect_recursion_unlinked(state, instructions);
@@ -172,7 +173,8 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
     * applications depend on this behavior, and it matches what nearly all
     * other drivers do.
     */
-   foreach_in_list_safe(ir_instruction, node, instructions) {
+   foreach_in_list_safe(ir_instruction, node, instructions)
+   {
       ir_variable *const var = node->as_variable();
 
       if (var == NULL)
@@ -225,7 +227,8 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
    read_from_write_only_variable_visitor v;
    v.run(instructions);
    ir_variable *error_var = v.get_variable();
-   if (error_var) {
+   if (error_var)
+   {
       /* It would be nice to have proper location information, but for that
        * we would need to check this as we process each kind of AST node
        */
@@ -236,61 +239,83 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
    }
 }
 
-
 static ir_expression_operation
 get_implicit_conversion_operation(const glsl_type *to, const glsl_type *from,
                                   struct _mesa_glsl_parse_state *state)
 {
-   switch (to->base_type) {
+   switch (to->base_type)
+   {
    case GLSL_TYPE_FLOAT:
-      switch (from->base_type) {
-      case GLSL_TYPE_INT: return ir_unop_i2f;
-      case GLSL_TYPE_UINT: return ir_unop_u2f;
-      default: return (ir_expression_operation)0;
+      switch (from->base_type)
+      {
+      case GLSL_TYPE_INT:
+         return ir_unop_i2f;
+      case GLSL_TYPE_UINT:
+         return ir_unop_u2f;
+      default:
+         return (ir_expression_operation)0;
       }
 
    case GLSL_TYPE_UINT:
       if (!state->has_implicit_int_to_uint_conversion())
          return (ir_expression_operation)0;
-      switch (from->base_type) {
-         case GLSL_TYPE_INT: return ir_unop_i2u;
-         default: return (ir_expression_operation)0;
+      switch (from->base_type)
+      {
+      case GLSL_TYPE_INT:
+         return ir_unop_i2u;
+      default:
+         return (ir_expression_operation)0;
       }
 
    case GLSL_TYPE_DOUBLE:
       if (!state->has_double())
          return (ir_expression_operation)0;
-      switch (from->base_type) {
-      case GLSL_TYPE_INT: return ir_unop_i2d;
-      case GLSL_TYPE_UINT: return ir_unop_u2d;
-      case GLSL_TYPE_FLOAT: return ir_unop_f2d;
-      case GLSL_TYPE_INT64: return ir_unop_i642d;
-      case GLSL_TYPE_UINT64: return ir_unop_u642d;
-      default: return (ir_expression_operation)0;
+      switch (from->base_type)
+      {
+      case GLSL_TYPE_INT:
+         return ir_unop_i2d;
+      case GLSL_TYPE_UINT:
+         return ir_unop_u2d;
+      case GLSL_TYPE_FLOAT:
+         return ir_unop_f2d;
+      case GLSL_TYPE_INT64:
+         return ir_unop_i642d;
+      case GLSL_TYPE_UINT64:
+         return ir_unop_u642d;
+      default:
+         return (ir_expression_operation)0;
       }
 
    case GLSL_TYPE_UINT64:
       if (!state->has_int64())
          return (ir_expression_operation)0;
-      switch (from->base_type) {
-      case GLSL_TYPE_INT: return ir_unop_i2u64;
-      case GLSL_TYPE_UINT: return ir_unop_u2u64;
-      case GLSL_TYPE_INT64: return ir_unop_i642u64;
-      default: return (ir_expression_operation)0;
+      switch (from->base_type)
+      {
+      case GLSL_TYPE_INT:
+         return ir_unop_i2u64;
+      case GLSL_TYPE_UINT:
+         return ir_unop_u2u64;
+      case GLSL_TYPE_INT64:
+         return ir_unop_i642u64;
+      default:
+         return (ir_expression_operation)0;
       }
 
    case GLSL_TYPE_INT64:
       if (!state->has_int64())
          return (ir_expression_operation)0;
-      switch (from->base_type) {
-      case GLSL_TYPE_INT: return ir_unop_i2i64;
-      default: return (ir_expression_operation)0;
+      switch (from->base_type)
+      {
+      case GLSL_TYPE_INT:
+         return ir_unop_i2i64;
+      default:
+         return (ir_expression_operation)0;
       }
 
-   default: return (ir_expression_operation)0;
+   default:
+      return (ir_expression_operation)0;
    }
 }
-
 
 /**
  * If a conversion is available, convert one operand to a different type
@@ -306,7 +331,7 @@ get_implicit_conversion_operation(const glsl_type *to, const glsl_type *from,
  * Otherwise \c false is returned.
  */
 static bool
-apply_implicit_conversion(const glsl_type *to, ir_rvalue * &from,
+apply_implicit_conversion(const glsl_type *to, ir_rvalue *&from,
                           struct _mesa_glsl_parse_state *state)
 {
    void *ctx = state;
@@ -334,17 +359,19 @@ apply_implicit_conversion(const glsl_type *to, ir_rvalue * &from,
                                 from->type->matrix_columns);
 
    ir_expression_operation op = get_implicit_conversion_operation(to, from->type, state);
-   if (op) {
-      from = new(ctx) ir_expression(op, to, from, NULL);
+   if (op)
+   {
+      from = new (ctx) ir_expression(op, to, from, NULL);
       return true;
-   } else {
+   }
+   else
+   {
       return false;
    }
 }
 
-
 static const struct glsl_type *
-arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
+arithmetic_result_type(ir_rvalue *&value_a, ir_rvalue *&value_b,
                        bool multiply,
                        struct _mesa_glsl_parse_state *state, YYLTYPE *loc)
 {
@@ -357,19 +384,19 @@ arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
     *    multiply (*), and divide (/) operate on integer and
     *    floating-point scalars, vectors, and matrices."
     */
-   if (!type_a->is_numeric() || !type_b->is_numeric()) {
+   if (!type_a->is_numeric() || !type_b->is_numeric())
+   {
       _mesa_glsl_error(loc, state,
                        "operands to arithmetic operators must be numeric");
       return glsl_type::error_type;
    }
 
-
    /*    "If one operand is floating-point based and the other is
     *    not, then the conversions from Section 4.1.10 "Implicit
     *    Conversions" are applied to the non-floating-point-based operand."
     */
-   if (!apply_implicit_conversion(type_a, value_b, state)
-       && !apply_implicit_conversion(type_b, value_a, state)) {
+   if (!apply_implicit_conversion(type_a, value_b, state) && !apply_implicit_conversion(type_b, value_a, state))
+   {
       _mesa_glsl_error(loc, state,
                        "could not implicitly convert operands to "
                        "arithmetic operator");
@@ -387,7 +414,8 @@ arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
     * type is not one of these, so now the base types need only be tested for
     * equality.
     */
-   if (type_a->base_type != type_b->base_type) {
+   if (type_a->base_type != type_b->base_type)
+   {
       _mesa_glsl_error(loc, state,
                        "base type mismatch for arithmetic operator");
       return glsl_type::error_type;
@@ -409,10 +437,13 @@ arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
     *      component of the vector or matrix, resulting in the same size
     *      vector or matrix."
     */
-   if (type_a->is_scalar()) {
+   if (type_a->is_scalar())
+   {
       if (!type_b->is_scalar())
          return type_b;
-   } else if (type_b->is_scalar()) {
+   }
+   else if (type_b->is_scalar())
+   {
       return type_a;
    }
 
@@ -427,10 +458,14 @@ arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
     *      operation is done component-wise resulting in the same size
     *      vector."
     */
-   if (type_a->is_vector() && type_b->is_vector()) {
-      if (type_a == type_b) {
+   if (type_a->is_vector() && type_b->is_vector())
+   {
+      if (type_a == type_b)
+      {
          return type_a;
-      } else {
+      }
+      else
+      {
          _mesa_glsl_error(loc, state,
                           "vector size mismatch for arithmetic operator");
          return glsl_type::error_type;
@@ -462,13 +497,17 @@ arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
     *      operand. Section 5.10 "Vector and Matrix Operations" explains in
     *      more detail how vectors and matrices are operated on."
     */
-   if (! multiply) {
+   if (!multiply)
+   {
       if (type_a == type_b)
          return type_a;
-   } else {
+   }
+   else
+   {
       const glsl_type *type = glsl_type::get_mul_type(type_a, type_b);
 
-      if (type == glsl_type::error_type) {
+      if (type == glsl_type::error_type)
+      {
          _mesa_glsl_error(loc, state,
                           "size mismatch for matrix multiplication");
       }
@@ -476,13 +515,11 @@ arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
       return type;
    }
 
-
    /*    "All other cases are illegal."
     */
    _mesa_glsl_error(loc, state, "type mismatch");
    return glsl_type::error_type;
 }
-
 
 static const struct glsl_type *
 unary_arithmetic_result_type(const struct glsl_type *type,
@@ -496,7 +533,8 @@ unary_arithmetic_result_type(const struct glsl_type *type,
     *     component-wise on their operands. These result with the same type
     *     they operated on."
     */
-   if (!type->is_numeric()) {
+   if (!type->is_numeric())
+   {
       _mesa_glsl_error(loc, state,
                        "operands to arithmetic operators must be numeric");
       return glsl_type::error_type;
@@ -515,14 +553,15 @@ unary_arithmetic_result_type(const struct glsl_type *type,
  * \param value_b RHS of bit-logic op
  */
 static const struct glsl_type *
-bit_logic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
+bit_logic_result_type(ir_rvalue *&value_a, ir_rvalue *&value_b,
                       ast_operators op,
                       struct _mesa_glsl_parse_state *state, YYLTYPE *loc)
 {
    const glsl_type *type_a = value_a->type;
    const glsl_type *type_b = value_b->type;
 
-   if (!state->check_bitwise_operations_allowed(loc)) {
+   if (!state->check_bitwise_operations_allowed(loc))
+   {
       return glsl_type::error_type;
    }
 
@@ -532,12 +571,14 @@ bit_logic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
     *     (|). The operands must be of type signed or unsigned integers or
     *     integer vectors."
     */
-   if (!type_a->is_integer_32_64()) {
+   if (!type_a->is_integer_32_64())
+   {
       _mesa_glsl_error(loc, state, "LHS of `%s' must be an integer",
-                        ast_expression::operator_string(op));
+                       ast_expression::operator_string(op));
       return glsl_type::error_type;
    }
-   if (!type_b->is_integer_32_64()) {
+   if (!type_b->is_integer_32_64())
+   {
       _mesa_glsl_error(loc, state, "RHS of `%s' must be an integer",
                        ast_expression::operator_string(op));
       return glsl_type::error_type;
@@ -554,15 +595,18 @@ bit_logic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
     *
     * See https://www.khronos.org/bugzilla/show_bug.cgi?id=1405
     */
-   if (type_a->base_type != type_b->base_type) {
-      if (!apply_implicit_conversion(type_a, value_b, state)
-          && !apply_implicit_conversion(type_b, value_a, state)) {
+   if (type_a->base_type != type_b->base_type)
+   {
+      if (!apply_implicit_conversion(type_a, value_b, state) && !apply_implicit_conversion(type_b, value_a, state))
+      {
          _mesa_glsl_error(loc, state,
                           "could not implicitly convert operands to "
                           "`%s` operator",
                           ast_expression::operator_string(op));
          return glsl_type::error_type;
-      } else {
+      }
+      else
+      {
          _mesa_glsl_warning(loc, state,
                             "some implementations may not support implicit "
                             "int -> uint conversions for `%s' operators; "
@@ -576,18 +620,22 @@ bit_logic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
    /*     "The fundamental types of the operands (signed or unsigned) must
     *     match,"
     */
-   if (type_a->base_type != type_b->base_type) {
+   if (type_a->base_type != type_b->base_type)
+   {
       _mesa_glsl_error(loc, state, "operands of `%s' must have the same "
-                       "base type", ast_expression::operator_string(op));
+                                   "base type",
+                       ast_expression::operator_string(op));
       return glsl_type::error_type;
    }
 
    /*     "The operands cannot be vectors of differing size." */
    if (type_a->is_vector() &&
        type_b->is_vector() &&
-       type_a->vector_elements != type_b->vector_elements) {
+       type_a->vector_elements != type_b->vector_elements)
+   {
       _mesa_glsl_error(loc, state, "operands of `%s' cannot be vectors of "
-                       "different sizes", ast_expression::operator_string(op));
+                                   "different sizes",
+                       ast_expression::operator_string(op));
       return glsl_type::error_type;
    }
 
@@ -597,20 +645,21 @@ bit_logic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
     *     resulting fundamental type."
     */
    if (type_a->is_scalar())
-       return type_b;
+      return type_b;
    else
-       return type_a;
+      return type_a;
 }
 
 static const struct glsl_type *
-modulus_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
+modulus_result_type(ir_rvalue *&value_a, ir_rvalue *&value_b,
                     struct _mesa_glsl_parse_state *state, YYLTYPE *loc)
 {
    const glsl_type *type_a = value_a->type;
    const glsl_type *type_b = value_b->type;
 
    if (!state->EXT_gpu_shader4_enable &&
-       !state->check_version(130, 300, loc, "operator '%%' is reserved")) {
+       !state->check_version(130, 300, loc, "operator '%%' is reserved"))
+   {
       return glsl_type::error_type;
    }
 
@@ -619,11 +668,13 @@ modulus_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
     *    "The operator modulus (%) operates on signed or unsigned integers or
     *    integer vectors."
     */
-   if (!type_a->is_integer_32_64()) {
+   if (!type_a->is_integer_32_64())
+   {
       _mesa_glsl_error(loc, state, "LHS of operator %% must be an integer");
       return glsl_type::error_type;
    }
-   if (!type_b->is_integer_32_64()) {
+   if (!type_b->is_integer_32_64())
+   {
       _mesa_glsl_error(loc, state, "RHS of operator %% must be an integer");
       return glsl_type::error_type;
    }
@@ -641,7 +692,8 @@ modulus_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
     *    "The operand types must both be signed or unsigned."
     */
    if (!apply_implicit_conversion(type_a, value_b, state) &&
-       !apply_implicit_conversion(type_b, value_a, state)) {
+       !apply_implicit_conversion(type_b, value_a, state))
+   {
       _mesa_glsl_error(loc, state,
                        "could not implicitly convert operands to "
                        "modulus (%%) operator");
@@ -655,11 +707,12 @@ modulus_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
     *    wise to the vector, resulting in the same type as the vector. If both
     *    are vectors of the same size, the result is computed component-wise."
     */
-   if (type_a->is_vector()) {
-      if (!type_b->is_vector()
-          || (type_a->vector_elements == type_b->vector_elements))
-      return type_a;
-   } else
+   if (type_a->is_vector())
+   {
+      if (!type_b->is_vector() || (type_a->vector_elements == type_b->vector_elements))
+         return type_a;
+   }
+   else
       return type_b;
 
    /*    "The operator modulus (%) is not defined for any other data types
@@ -669,9 +722,8 @@ modulus_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
    return glsl_type::error_type;
 }
 
-
 static const struct glsl_type *
-relational_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
+relational_result_type(ir_rvalue *&value_a, ir_rvalue *&value_b,
                        struct _mesa_glsl_parse_state *state, YYLTYPE *loc)
 {
    const glsl_type *type_a = value_a->type;
@@ -682,10 +734,8 @@ relational_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
     *    than or equal (>=), and less than or equal (<=) operate only on
     *    scalar integer and scalar floating-point expressions."
     */
-   if (!type_a->is_numeric()
-       || !type_b->is_numeric()
-       || !type_a->is_scalar()
-       || !type_b->is_scalar()) {
+   if (!type_a->is_numeric() || !type_b->is_numeric() || !type_a->is_scalar() || !type_b->is_scalar())
+   {
       _mesa_glsl_error(loc, state,
                        "operands to relational operators must be scalar and "
                        "numeric");
@@ -696,8 +746,8 @@ relational_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
     *    Section 4.1.10 "Implicit Conversions" will be applied to the integer
     *    operand, after which the types must match."
     */
-   if (!apply_implicit_conversion(type_a, value_b, state)
-       && !apply_implicit_conversion(type_b, value_a, state)) {
+   if (!apply_implicit_conversion(type_a, value_b, state) && !apply_implicit_conversion(type_b, value_a, state))
+   {
       _mesa_glsl_error(loc, state,
                        "could not implicitly convert operands to "
                        "relational operator");
@@ -706,7 +756,8 @@ relational_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
    type_a = value_a->type;
    type_b = value_b->type;
 
-   if (type_a->base_type != type_b->base_type) {
+   if (type_a->base_type != type_b->base_type)
+   {
       _mesa_glsl_error(loc, state, "base type mismatch");
       return glsl_type::error_type;
    }
@@ -731,7 +782,8 @@ shift_result_type(const struct glsl_type *type_a,
                   ast_operators op,
                   struct _mesa_glsl_parse_state *state, YYLTYPE *loc)
 {
-   if (!state->check_bitwise_operations_allowed(loc)) {
+   if (!state->check_bitwise_operations_allowed(loc))
+   {
       return glsl_type::error_type;
    }
 
@@ -741,38 +793,43 @@ shift_result_type(const struct glsl_type *type_a,
     *     must be signed or unsigned integers or integer vectors. One operand
     *     can be signed while the other is unsigned."
     */
-   if (!type_a->is_integer_32_64()) {
+   if (!type_a->is_integer_32_64())
+   {
       _mesa_glsl_error(loc, state, "LHS of operator %s must be an integer or "
-                       "integer vector", ast_expression::operator_string(op));
-     return glsl_type::error_type;
-
+                                   "integer vector",
+                       ast_expression::operator_string(op));
+      return glsl_type::error_type;
    }
-   if (!type_b->is_integer_32()) {
+   if (!type_b->is_integer_32())
+   {
       _mesa_glsl_error(loc, state, "RHS of operator %s must be an integer or "
-                       "integer vector", ast_expression::operator_string(op));
-     return glsl_type::error_type;
+                                   "integer vector",
+                       ast_expression::operator_string(op));
+      return glsl_type::error_type;
    }
 
    /*     "If the first operand is a scalar, the second operand has to be
     *     a scalar as well."
     */
-   if (type_a->is_scalar() && !type_b->is_scalar()) {
+   if (type_a->is_scalar() && !type_b->is_scalar())
+   {
       _mesa_glsl_error(loc, state, "if the first operand of %s is scalar, the "
-                       "second must be scalar as well",
+                                   "second must be scalar as well",
                        ast_expression::operator_string(op));
-     return glsl_type::error_type;
+      return glsl_type::error_type;
    }
 
    /* If both operands are vectors, check that they have same number of
     * elements.
     */
    if (type_a->is_vector() &&
-      type_b->is_vector() &&
-      type_a->vector_elements != type_b->vector_elements) {
+       type_b->is_vector() &&
+       type_a->vector_elements != type_b->vector_elements)
+   {
       _mesa_glsl_error(loc, state, "vector operands to operator %s must "
-                       "have same number of elements",
+                                   "have same number of elements",
                        ast_expression::operator_string(op));
-     return glsl_type::error_type;
+      return glsl_type::error_type;
    }
 
    /*     "In all cases, the resulting type will be the same type as the left
@@ -791,11 +848,14 @@ static ir_rvalue *
 find_innermost_array_index(ir_rvalue *rv)
 {
    ir_dereference_array *last = NULL;
-   while (rv) {
-      if (rv->as_dereference_array()) {
+   while (rv)
+   {
+      if (rv->as_dereference_array())
+      {
          last = rv->as_dereference_array();
          rv = last->array;
-      } else if (rv->as_dereference_record())
+      }
+      else if (rv->as_dereference_record())
          rv = rv->as_dereference_record()->record;
       else if (rv->as_swizzle())
          rv = rv->as_swizzle()->val;
@@ -841,12 +901,15 @@ validate_assignment(struct _mesa_glsl_parse_state *state,
     * if the expression indicating the vertex number is not the identifier
     * `gl_InvocationID`.
     */
-   if (state->stage == MESA_SHADER_TESS_CTRL && !lhs->type->is_error()) {
+   if (state->stage == MESA_SHADER_TESS_CTRL && !lhs->type->is_error())
+   {
       ir_variable *var = lhs->variable_referenced();
-      if (var && var->data.mode == ir_var_shader_out && !var->data.patch) {
+      if (var && var->data.mode == ir_var_shader_out && !var->data.patch)
+      {
          ir_rvalue *index = find_innermost_array_index(lhs);
          ir_variable *index_var = index ? index->variable_referenced() : NULL;
-         if (!index_var || strcmp(index_var->name, "gl_InvocationID") != 0) {
+         if (!index_var || strcmp(index_var->name, "gl_InvocationID") != 0)
+         {
             _mesa_glsl_error(&loc, state,
                              "Tessellation control shader outputs can only "
                              "be indexed by gl_InvocationID");
@@ -870,31 +933,42 @@ validate_assignment(struct _mesa_glsl_parse_state *state,
    const glsl_type *lhs_t = lhs->type;
    const glsl_type *rhs_t = rhs->type;
    bool unsized_array = false;
-   while(lhs_t->is_array()) {
+   while (lhs_t->is_array())
+   {
       if (rhs_t == lhs_t)
          break; /* the rest of the inner arrays match so break out early */
-      if (!rhs_t->is_array()) {
+      if (!rhs_t->is_array())
+      {
          unsized_array = false;
          break; /* number of dimensions mismatch */
       }
-      if (lhs_t->length == rhs_t->length) {
+      if (lhs_t->length == rhs_t->length)
+      {
          lhs_t = lhs_t->fields.array;
          rhs_t = rhs_t->fields.array;
          continue;
-      } else if (lhs_t->is_unsized_array()) {
+      }
+      else if (lhs_t->is_unsized_array())
+      {
          unsized_array = true;
-      } else {
+      }
+      else
+      {
          unsized_array = false;
          break; /* sized array mismatch */
       }
       lhs_t = lhs_t->fields.array;
       rhs_t = rhs_t->fields.array;
    }
-   if (unsized_array) {
-      if (is_initializer) {
+   if (unsized_array)
+   {
+      if (is_initializer)
+      {
          if (rhs->type->get_scalar_type() == lhs->type->get_scalar_type())
             return rhs;
-      } else {
+      }
+      else
+      {
          _mesa_glsl_error(&loc, state,
                           "implicitly sized arrays cannot be assigned");
          return NULL;
@@ -902,7 +976,8 @@ validate_assignment(struct _mesa_glsl_parse_state *state,
    }
 
    /* Check for implicit conversion in GLSL 1.20 */
-   if (apply_implicit_conversion(lhs->type, rhs, state)) {
+   if (apply_implicit_conversion(lhs->type, rhs, state))
+   {
       if (rhs->type == lhs->type)
          return rhs;
    }
@@ -921,7 +996,8 @@ mark_whole_array_access(ir_rvalue *access)
 {
    ir_dereference_variable *deref = access->as_dereference_variable();
 
-   if (deref && deref->var) {
+   if (deref && deref->var)
+   {
       deref->var->data.max_array_access = deref->type->length - 1;
    }
 }
@@ -941,15 +1017,19 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
    if (lhs_var)
       lhs_var->data.assigned = true;
 
-   if (!error_emitted) {
-      if (non_lvalue_description != NULL) {
+   if (!error_emitted)
+   {
+      if (non_lvalue_description != NULL)
+      {
          _mesa_glsl_error(&lhs_loc, state,
                           "assignment to %s",
                           non_lvalue_description);
          error_emitted = true;
-      } else if (lhs_var != NULL && (lhs_var->data.read_only ||
-                 (lhs_var->data.mode == ir_var_shader_storage &&
-                  lhs_var->data.memory_read_only))) {
+      }
+      else if (lhs_var != NULL && (lhs_var->data.read_only ||
+                                   (lhs_var->data.mode == ir_var_shader_storage &&
+                                    lhs_var->data.memory_read_only)))
+      {
          /* We can have memory_read_only set on both images and buffer variables,
           * but in the former there is a distinction between assignments to
           * the variable itself (read_only) and to the memory they point to
@@ -961,10 +1041,12 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
                           "assignment to read-only variable '%s'",
                           lhs_var->name);
          error_emitted = true;
-      } else if (lhs->type->is_array() &&
-                 !state->check_version(state->allow_glsl_120_subset_in_110 ? 110 : 120,
-                                       300, &lhs_loc,
-                                       "whole array assignment forbidden")) {
+      }
+      else if (lhs->type->is_array() &&
+               !state->check_version(state->allow_glsl_120_subset_in_110 ? 110 : 120,
+                                     300, &lhs_loc,
+                                     "whole array assignment forbidden"))
+      {
          /* From page 32 (page 38 of the PDF) of the GLSL 1.10 spec:
           *
           *    "Other binary or unary expressions, non-dereferenced
@@ -974,15 +1056,18 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
           * The restriction on arrays is lifted in GLSL 1.20 and GLSL ES 3.00.
           */
          error_emitted = true;
-      } else if (!lhs->is_lvalue(state)) {
-         _mesa_glsl_error(& lhs_loc, state, "non-lvalue in assignment");
+      }
+      else if (!lhs->is_lvalue(state))
+      {
+         _mesa_glsl_error(&lhs_loc, state, "non-lvalue in assignment");
          error_emitted = true;
       }
    }
 
    ir_rvalue *new_rhs =
-      validate_assignment(state, lhs_loc, lhs, rhs, is_initializer);
-   if (new_rhs != NULL) {
+       validate_assignment(state, lhs_loc, lhs, rhs, is_initializer);
+   if (new_rhs != NULL)
+   {
       rhs = new_rhs;
 
       /* If the LHS array was not declared with a size, it takes it size from
@@ -990,7 +1075,8 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
        * dereference of a variable.  Any other case would require that the LHS
        * is either not an l-value or not a whole array.
        */
-      if (lhs->type->is_unsized_array()) {
+      if (lhs->type->is_unsized_array())
+      {
          ir_dereference *const d = lhs->as_dereference();
 
          assert(d != NULL);
@@ -999,10 +1085,11 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 
          assert(var != NULL);
 
-         if (var->data.max_array_access >= rhs->type->array_size()) {
+         if (var->data.max_array_access >= rhs->type->array_size())
+         {
             /* FINISHME: This should actually log the location of the RHS. */
-            _mesa_glsl_error(& lhs_loc, state, "array size must be > %u due to "
-                             "previous access",
+            _mesa_glsl_error(&lhs_loc, state, "array size must be > %u due to "
+                                              "previous access",
                              var->data.max_array_access);
          }
 
@@ -1010,12 +1097,15 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
                                                    rhs->type->array_size());
          d->type = var->type;
       }
-      if (lhs->type->is_array()) {
+      if (lhs->type->is_array())
+      {
          mark_whole_array_access(rhs);
          mark_whole_array_access(lhs);
       }
-   } else {
-     error_emitted = true;
+   }
+   else
+   {
+      error_emitted = true;
    }
 
    /* Most callers of do_assignment (assign, add_assign, pre_inc/dec,
@@ -1024,25 +1114,31 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
     *
     * i = j += 1;
     */
-   if (needs_rvalue) {
+   if (needs_rvalue)
+   {
       ir_rvalue *rvalue;
-      if (!error_emitted) {
-         ir_variable *var = new(ctx) ir_variable(rhs->type, "assignment_tmp",
-                                                 ir_var_temporary);
+      if (!error_emitted)
+      {
+         ir_variable *var = new (ctx) ir_variable(rhs->type, "assignment_tmp",
+                                                  ir_var_temporary);
          instructions->push_tail(var);
          instructions->push_tail(assign(var, rhs));
 
          ir_dereference_variable *deref_var =
-            new(ctx) ir_dereference_variable(var);
-         instructions->push_tail(new(ctx) ir_assignment(lhs, deref_var));
-         rvalue = new(ctx) ir_dereference_variable(var);
-      } else {
+             new (ctx) ir_dereference_variable(var);
+         instructions->push_tail(new (ctx) ir_assignment(lhs, deref_var));
+         rvalue = new (ctx) ir_dereference_variable(var);
+      }
+      else
+      {
          rvalue = ir_rvalue::error_value(ctx);
       }
       *out_rvalue = rvalue;
-   } else {
+   }
+   else
+   {
       if (!error_emitted)
-         instructions->push_tail(new(ctx) ir_assignment(lhs, rhs));
+         instructions->push_tail(new (ctx) ir_assignment(lhs, rhs));
       *out_rvalue = NULL;
    }
 
@@ -1055,47 +1151,42 @@ get_lvalue_copy(exec_list *instructions, ir_rvalue *lvalue)
    void *ctx = ralloc_parent(lvalue);
    ir_variable *var;
 
-   var = new(ctx) ir_variable(lvalue->type, "_post_incdec_tmp",
-                              ir_var_temporary);
+   var = new (ctx) ir_variable(lvalue->type, "_post_incdec_tmp",
+                               ir_var_temporary);
    instructions->push_tail(var);
 
-   instructions->push_tail(new(ctx) ir_assignment(new(ctx) ir_dereference_variable(var),
-                                                  lvalue));
+   instructions->push_tail(new (ctx) ir_assignment(new (ctx) ir_dereference_variable(var),
+                                                   lvalue));
 
-   return new(ctx) ir_dereference_variable(var);
+   return new (ctx) ir_dereference_variable(var);
 }
-
 
 ir_rvalue *
 ast_node::hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
 {
-   (void) instructions;
-   (void) state;
+   (void)instructions;
+   (void)state;
 
    return NULL;
 }
 
-bool
-ast_node::has_sequence_subexpression() const
+bool ast_node::has_sequence_subexpression() const
 {
    return false;
 }
 
-void
-ast_node::set_is_lhs(bool /* new_value */)
+void ast_node::set_is_lhs(bool /* new_value */)
 {
 }
 
-void
-ast_function_expression::hir_no_rvalue(exec_list *instructions,
-                                       struct _mesa_glsl_parse_state *state)
+void ast_function_expression::hir_no_rvalue(exec_list *instructions,
+                                            struct _mesa_glsl_parse_state *state)
 {
    (void)hir(instructions, state);
 }
 
-void
-ast_aggregate_initializer::hir_no_rvalue(exec_list *instructions,
-                                         struct _mesa_glsl_parse_state *state)
+void ast_aggregate_initializer::hir_no_rvalue(exec_list *instructions,
+                                              struct _mesa_glsl_parse_state *state)
 {
    (void)hir(instructions, state);
 }
@@ -1111,7 +1202,8 @@ do_comparison(void *mem_ctx, int operation, ir_rvalue *op0, ir_rvalue *op1)
    else
       join_op = ir_binop_logic_or;
 
-   switch (op0->type->base_type) {
+   switch (op0->type->base_type)
+   {
    case GLSL_TYPE_FLOAT:
    case GLSL_TYPE_FLOAT16:
    case GLSL_TYPE_UINT:
@@ -1124,21 +1216,26 @@ do_comparison(void *mem_ctx, int operation, ir_rvalue *op0, ir_rvalue *op1)
    case GLSL_TYPE_INT16:
    case GLSL_TYPE_UINT8:
    case GLSL_TYPE_INT8:
-      return new(mem_ctx) ir_expression(operation, op0, op1);
+      return new (mem_ctx) ir_expression(operation, op0, op1);
 
-   case GLSL_TYPE_ARRAY: {
-      for (unsigned int i = 0; i < op0->type->length; i++) {
+   case GLSL_TYPE_ARRAY:
+   {
+      for (unsigned int i = 0; i < op0->type->length; i++)
+      {
          ir_rvalue *e0, *e1, *result;
 
-         e0 = new(mem_ctx) ir_dereference_array(op0->clone(mem_ctx, NULL),
-                                                new(mem_ctx) ir_constant(i));
-         e1 = new(mem_ctx) ir_dereference_array(op1->clone(mem_ctx, NULL),
-                                                new(mem_ctx) ir_constant(i));
+         e0 = new (mem_ctx) ir_dereference_array(op0->clone(mem_ctx, NULL),
+                                                 new (mem_ctx) ir_constant(i));
+         e1 = new (mem_ctx) ir_dereference_array(op1->clone(mem_ctx, NULL),
+                                                 new (mem_ctx) ir_constant(i));
          result = do_comparison(mem_ctx, operation, e0, e1);
 
-         if (cmp) {
-            cmp = new(mem_ctx) ir_expression(join_op, cmp, result);
-         } else {
+         if (cmp)
+         {
+            cmp = new (mem_ctx) ir_expression(join_op, cmp, result);
+         }
+         else
+         {
             cmp = result;
          }
       }
@@ -1148,20 +1245,25 @@ do_comparison(void *mem_ctx, int operation, ir_rvalue *op0, ir_rvalue *op1)
       break;
    }
 
-   case GLSL_TYPE_STRUCT: {
-      for (unsigned int i = 0; i < op0->type->length; i++) {
+   case GLSL_TYPE_STRUCT:
+   {
+      for (unsigned int i = 0; i < op0->type->length; i++)
+      {
          ir_rvalue *e0, *e1, *result;
          const char *field_name = op0->type->fields.structure[i].name;
 
-         e0 = new(mem_ctx) ir_dereference_record(op0->clone(mem_ctx, NULL),
-                                                 field_name);
-         e1 = new(mem_ctx) ir_dereference_record(op1->clone(mem_ctx, NULL),
-                                                 field_name);
+         e0 = new (mem_ctx) ir_dereference_record(op0->clone(mem_ctx, NULL),
+                                                  field_name);
+         e1 = new (mem_ctx) ir_dereference_record(op1->clone(mem_ctx, NULL),
+                                                  field_name);
          result = do_comparison(mem_ctx, operation, e0, e1);
 
-         if (cmp) {
-            cmp = new(mem_ctx) ir_expression(join_op, cmp, result);
-         } else {
+         if (cmp)
+         {
+            cmp = new (mem_ctx) ir_expression(join_op, cmp, result);
+         }
+         else
+         {
             cmp = result;
          }
       }
@@ -1183,7 +1285,7 @@ do_comparison(void *mem_ctx, int operation, ir_rvalue *op0, ir_rvalue *op1)
    }
 
    if (cmp == NULL)
-      cmp = new(mem_ctx) ir_constant(true);
+      cmp = new (mem_ctx) ir_constant(true);
 
    return cmp;
 }
@@ -1207,7 +1309,8 @@ get_scalar_boolean_operand(exec_list *instructions,
    if (val->type->is_boolean() && val->type->is_scalar())
       return val;
 
-   if (!*error_emitted) {
+   if (!*error_emitted)
+   {
       YYLTYPE loc = expr->get_location();
       _mesa_glsl_error(&loc, state, "%s of `%s' must be scalar boolean",
                        operand_name,
@@ -1215,30 +1318,32 @@ get_scalar_boolean_operand(exec_list *instructions,
       *error_emitted = true;
    }
 
-   return new(ctx) ir_constant(true);
+   return new (ctx) ir_constant(true);
 }
 
 /**
  * If name refers to a builtin array whose maximum allowed size is less than
  * size, report an error and return true.  Otherwise return false.
  */
-void
-check_builtin_array_max_size(const char *name, unsigned size,
-                             YYLTYPE loc, struct _mesa_glsl_parse_state *state)
+void check_builtin_array_max_size(const char *name, unsigned size,
+                                  YYLTYPE loc, struct _mesa_glsl_parse_state *state)
 {
-   if ((strcmp("gl_TexCoord", name) == 0)
-       && (size > state->Const.MaxTextureCoords)) {
+   if ((strcmp("gl_TexCoord", name) == 0) && (size > state->Const.MaxTextureCoords))
+   {
       /* From page 54 (page 60 of the PDF) of the GLSL 1.20 spec:
        *
        *     "The size [of gl_TexCoord] can be at most
        *     gl_MaxTextureCoords."
        */
       _mesa_glsl_error(&loc, state, "`gl_TexCoord' array size cannot "
-                       "be larger than gl_MaxTextureCoords (%u)",
+                                    "be larger than gl_MaxTextureCoords (%u)",
                        state->Const.MaxTextureCoords);
-   } else if (strcmp("gl_ClipDistance", name) == 0) {
+   }
+   else if (strcmp("gl_ClipDistance", name) == 0)
+   {
       state->clip_dist_size = size;
-      if (size + state->cull_dist_size > state->Const.MaxClipPlanes) {
+      if (size + state->cull_dist_size > state->Const.MaxClipPlanes)
+      {
          /* From section 7.1 (Vertex Shader Special Variables) of the
           * GLSL 1.30 spec:
           *
@@ -1249,12 +1354,15 @@ check_builtin_array_max_size(const char *name, unsigned size,
           *   gl_MaxClipDistances."
           */
          _mesa_glsl_error(&loc, state, "`gl_ClipDistance' array size cannot "
-                          "be larger than gl_MaxClipDistances (%u)",
+                                       "be larger than gl_MaxClipDistances (%u)",
                           state->Const.MaxClipPlanes);
       }
-   } else if (strcmp("gl_CullDistance", name) == 0) {
+   }
+   else if (strcmp("gl_CullDistance", name) == 0)
+   {
       state->cull_dist_size = size;
-      if (size + state->clip_dist_size > state->Const.MaxClipPlanes) {
+      if (size + state->clip_dist_size > state->Const.MaxClipPlanes)
+      {
          /* From the ARB_cull_distance spec:
           *
           *   "The gl_CullDistance array is predeclared as unsized and
@@ -1265,7 +1373,7 @@ check_builtin_array_max_size(const char *name, unsigned size,
           *    gl_MaxCullDistances."
           */
          _mesa_glsl_error(&loc, state, "`gl_CullDistance' array size cannot "
-                          "be larger than gl_MaxCullDistances (%u)",
+                                       "be larger than gl_MaxCullDistances (%u)",
                           state->Const.MaxClipPlanes);
       }
    }
@@ -1282,18 +1390,19 @@ check_builtin_array_max_size(const char *name, unsigned size,
 static ir_rvalue *
 constant_one_for_inc_dec(void *ctx, const glsl_type *type)
 {
-   switch (type->base_type) {
+   switch (type->base_type)
+   {
    case GLSL_TYPE_UINT:
-      return new(ctx) ir_constant((unsigned) 1);
+      return new (ctx) ir_constant((unsigned)1);
    case GLSL_TYPE_INT:
-      return new(ctx) ir_constant(1);
+      return new (ctx) ir_constant(1);
    case GLSL_TYPE_UINT64:
-      return new(ctx) ir_constant((uint64_t) 1);
+      return new (ctx) ir_constant((uint64_t)1);
    case GLSL_TYPE_INT64:
-      return new(ctx) ir_constant((int64_t) 1);
+      return new (ctx) ir_constant((int64_t)1);
    default:
    case GLSL_TYPE_FLOAT:
-      return new(ctx) ir_constant(1.0f);
+      return new (ctx) ir_constant(1.0f);
    }
 }
 
@@ -1304,15 +1413,13 @@ ast_expression::hir(exec_list *instructions,
    return do_hir(instructions, state, true);
 }
 
-void
-ast_expression::hir_no_rvalue(exec_list *instructions,
-                              struct _mesa_glsl_parse_state *state)
+void ast_expression::hir_no_rvalue(exec_list *instructions,
+                                   struct _mesa_glsl_parse_state *state)
 {
    do_hir(instructions, state, false);
 }
 
-void
-ast_expression::set_is_lhs(bool new_value)
+void ast_expression::set_is_lhs(bool new_value)
 {
    /* is_lhs is tracked only to print "variable used uninitialized" warnings,
     * if we lack an identifier we can just skip it.
@@ -1336,60 +1443,60 @@ ast_expression::do_hir(exec_list *instructions,
 {
    void *ctx = state;
    static const int operations[AST_NUM_OPERATORS] = {
-      -1,               /* ast_assign doesn't convert to ir_expression. */
-      -1,               /* ast_plus doesn't convert to ir_expression. */
-      ir_unop_neg,
-      ir_binop_add,
-      ir_binop_sub,
-      ir_binop_mul,
-      ir_binop_div,
-      ir_binop_mod,
-      ir_binop_lshift,
-      ir_binop_rshift,
-      ir_binop_less,
-      ir_binop_less,    /* This is correct.  See the ast_greater case below. */
-      ir_binop_gequal,  /* This is correct.  See the ast_lequal case below. */
-      ir_binop_gequal,
-      ir_binop_all_equal,
-      ir_binop_any_nequal,
-      ir_binop_bit_and,
-      ir_binop_bit_xor,
-      ir_binop_bit_or,
-      ir_unop_bit_not,
-      ir_binop_logic_and,
-      ir_binop_logic_xor,
-      ir_binop_logic_or,
-      ir_unop_logic_not,
+       -1, /* ast_assign doesn't convert to ir_expression. */
+       -1, /* ast_plus doesn't convert to ir_expression. */
+       ir_unop_neg,
+       ir_binop_add,
+       ir_binop_sub,
+       ir_binop_mul,
+       ir_binop_div,
+       ir_binop_mod,
+       ir_binop_lshift,
+       ir_binop_rshift,
+       ir_binop_less,
+       ir_binop_less,   /* This is correct.  See the ast_greater case below. */
+       ir_binop_gequal, /* This is correct.  See the ast_lequal case below. */
+       ir_binop_gequal,
+       ir_binop_all_equal,
+       ir_binop_any_nequal,
+       ir_binop_bit_and,
+       ir_binop_bit_xor,
+       ir_binop_bit_or,
+       ir_unop_bit_not,
+       ir_binop_logic_and,
+       ir_binop_logic_xor,
+       ir_binop_logic_or,
+       ir_unop_logic_not,
 
-      /* Note: The following block of expression types actually convert
+       /* Note: The following block of expression types actually convert
        * to multiple IR instructions.
        */
-      ir_binop_mul,     /* ast_mul_assign */
-      ir_binop_div,     /* ast_div_assign */
-      ir_binop_mod,     /* ast_mod_assign */
-      ir_binop_add,     /* ast_add_assign */
-      ir_binop_sub,     /* ast_sub_assign */
-      ir_binop_lshift,  /* ast_ls_assign */
-      ir_binop_rshift,  /* ast_rs_assign */
-      ir_binop_bit_and, /* ast_and_assign */
-      ir_binop_bit_xor, /* ast_xor_assign */
-      ir_binop_bit_or,  /* ast_or_assign */
+       ir_binop_mul,     /* ast_mul_assign */
+       ir_binop_div,     /* ast_div_assign */
+       ir_binop_mod,     /* ast_mod_assign */
+       ir_binop_add,     /* ast_add_assign */
+       ir_binop_sub,     /* ast_sub_assign */
+       ir_binop_lshift,  /* ast_ls_assign */
+       ir_binop_rshift,  /* ast_rs_assign */
+       ir_binop_bit_and, /* ast_and_assign */
+       ir_binop_bit_xor, /* ast_xor_assign */
+       ir_binop_bit_or,  /* ast_or_assign */
 
-      -1,               /* ast_conditional doesn't convert to ir_expression. */
-      ir_binop_add,     /* ast_pre_inc. */
-      ir_binop_sub,     /* ast_pre_dec. */
-      ir_binop_add,     /* ast_post_inc. */
-      ir_binop_sub,     /* ast_post_dec. */
-      -1,               /* ast_field_selection doesn't conv to ir_expression. */
-      -1,               /* ast_array_index doesn't convert to ir_expression. */
-      -1,               /* ast_function_call doesn't conv to ir_expression. */
-      -1,               /* ast_identifier doesn't convert to ir_expression. */
-      -1,               /* ast_int_constant doesn't convert to ir_expression. */
-      -1,               /* ast_uint_constant doesn't conv to ir_expression. */
-      -1,               /* ast_float_constant doesn't conv to ir_expression. */
-      -1,               /* ast_bool_constant doesn't conv to ir_expression. */
-      -1,               /* ast_sequence doesn't convert to ir_expression. */
-      -1,               /* ast_aggregate shouldn't ever even get here. */
+       -1,           /* ast_conditional doesn't convert to ir_expression. */
+       ir_binop_add, /* ast_pre_inc. */
+       ir_binop_sub, /* ast_pre_dec. */
+       ir_binop_add, /* ast_post_inc. */
+       ir_binop_sub, /* ast_post_dec. */
+       -1,           /* ast_field_selection doesn't conv to ir_expression. */
+       -1,           /* ast_array_index doesn't convert to ir_expression. */
+       -1,           /* ast_function_call doesn't conv to ir_expression. */
+       -1,           /* ast_identifier doesn't convert to ir_expression. */
+       -1,           /* ast_int_constant doesn't convert to ir_expression. */
+       -1,           /* ast_uint_constant doesn't conv to ir_expression. */
+       -1,           /* ast_float_constant doesn't conv to ir_expression. */
+       -1,           /* ast_bool_constant doesn't conv to ir_expression. */
+       -1,           /* ast_sequence doesn't convert to ir_expression. */
+       -1,           /* ast_aggregate shouldn't ever even get here. */
    };
    ir_rvalue *result = NULL;
    ir_rvalue *op[3];
@@ -1399,27 +1506,29 @@ ast_expression::do_hir(exec_list *instructions,
 
    loc = this->get_location();
 
-   switch (this->oper) {
+   switch (this->oper)
+   {
    case ast_aggregate:
       unreachable("ast_aggregate: Should never get here.");
 
-   case ast_assign: {
+   case ast_assign:
+   {
       this->subexpressions[0]->set_is_lhs(true);
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
       error_emitted =
-         do_assignment(instructions, state,
-                       this->subexpressions[0]->non_lvalue_description,
-                       op[0], op[1], &result, needs_rvalue, false,
-                       this->subexpressions[0]->get_location());
+          do_assignment(instructions, state,
+                        this->subexpressions[0]->non_lvalue_description,
+                        op[0], op[1], &result, needs_rvalue, false,
+                        this->subexpressions[0]->get_location());
       break;
    }
 
    case ast_plus:
       op[0] = this->subexpressions[0]->hir(instructions, state);
 
-      type = unary_arithmetic_result_type(op[0]->type, state, & loc);
+      type = unary_arithmetic_result_type(op[0]->type, state, &loc);
 
       error_emitted = type->is_error();
 
@@ -1429,12 +1538,12 @@ ast_expression::do_hir(exec_list *instructions,
    case ast_neg:
       op[0] = this->subexpressions[0]->hir(instructions, state);
 
-      type = unary_arithmetic_result_type(op[0]->type, state, & loc);
+      type = unary_arithmetic_result_type(op[0]->type, state, &loc);
 
       error_emitted = type->is_error();
 
-      result = new(ctx) ir_expression(operations[this->oper], type,
-                                      op[0], NULL);
+      result = new (ctx) ir_expression(operations[this->oper], type,
+                                       op[0], NULL);
       break;
 
    case ast_add:
@@ -1446,11 +1555,11 @@ ast_expression::do_hir(exec_list *instructions,
 
       type = arithmetic_result_type(op[0], op[1],
                                     (this->oper == ast_mul),
-                                    state, & loc);
+                                    state, &loc);
       error_emitted = type->is_error();
 
-      result = new(ctx) ir_expression(operations[this->oper], type,
-                                      op[0], op[1]);
+      result = new (ctx) ir_expression(operations[this->oper], type,
+                                       op[0], op[1]);
       break;
 
    case ast_mod:
@@ -1461,25 +1570,26 @@ ast_expression::do_hir(exec_list *instructions,
 
       assert(operations[this->oper] == ir_binop_mod);
 
-      result = new(ctx) ir_expression(operations[this->oper], type,
-                                      op[0], op[1]);
+      result = new (ctx) ir_expression(operations[this->oper], type,
+                                       op[0], op[1]);
       error_emitted = type->is_error();
       break;
 
    case ast_lshift:
    case ast_rshift:
-       if (!state->check_bitwise_operations_allowed(&loc)) {
-          error_emitted = true;
-       }
+      if (!state->check_bitwise_operations_allowed(&loc))
+      {
+         error_emitted = true;
+      }
 
-       op[0] = this->subexpressions[0]->hir(instructions, state);
-       op[1] = this->subexpressions[1]->hir(instructions, state);
-       type = shift_result_type(op[0]->type, op[1]->type, this->oper, state,
-                                &loc);
-       result = new(ctx) ir_expression(operations[this->oper], type,
+      op[0] = this->subexpressions[0]->hir(instructions, state);
+      op[1] = this->subexpressions[1]->hir(instructions, state);
+      type = shift_result_type(op[0]->type, op[1]->type, this->oper, state,
+                               &loc);
+      result = new (ctx) ir_expression(operations[this->oper], type,
                                        op[0], op[1]);
-       error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
-       break;
+      error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
+      break;
 
    case ast_less:
    case ast_greater:
@@ -1488,25 +1598,25 @@ ast_expression::do_hir(exec_list *instructions,
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
-      type = relational_result_type(op[0], op[1], state, & loc);
+      type = relational_result_type(op[0], op[1], state, &loc);
 
       /* The relational operators must either generate an error or result
        * in a scalar boolean.  See page 57 of the GLSL 1.50 spec.
        */
-      assert(type->is_error()
-             || (type->is_boolean() && type->is_scalar()));
+      assert(type->is_error() || (type->is_boolean() && type->is_scalar()));
 
       /* Like NIR, GLSL IR does not have opcodes for > or <=.  Instead, swap
        * the arguments and use < or >=.
        */
-      if (this->oper == ast_greater || this->oper == ast_lequal) {
+      if (this->oper == ast_greater || this->oper == ast_lequal)
+      {
          ir_rvalue *const tmp = op[0];
          op[0] = op[1];
          op[1] = tmp;
       }
 
-      result = new(ctx) ir_expression(operations[this->oper], type,
-                                      op[0], op[1]);
+      result = new (ctx) ir_expression(operations[this->oper], type,
+                                       op[0], op[1]);
       error_emitted = type->is_error();
       break;
 
@@ -1525,35 +1635,47 @@ ast_expression::do_hir(exec_list *instructions,
        *    case this conversion is done."
        */
 
-      if (op[0]->type == glsl_type::void_type || op[1]->type == glsl_type::void_type) {
-         _mesa_glsl_error(& loc, state, "`%s':  wrong operand types: "
-                         "no operation `%1$s' exists that takes a left-hand "
-                         "operand of type 'void' or a right operand of type "
-                         "'void'", (this->oper == ast_equal) ? "==" : "!=");
+      if (op[0]->type == glsl_type::void_type || op[1]->type == glsl_type::void_type)
+      {
+         _mesa_glsl_error(&loc, state, "`%s':  wrong operand types: "
+                                       "no operation `%1$s' exists that takes a left-hand "
+                                       "operand of type 'void' or a right operand of type "
+                                       "'void'",
+                          (this->oper == ast_equal) ? "==" : "!=");
          error_emitted = true;
-      } else if ((!apply_implicit_conversion(op[0]->type, op[1], state)
-           && !apply_implicit_conversion(op[1]->type, op[0], state))
-          || (op[0]->type != op[1]->type)) {
-         _mesa_glsl_error(& loc, state, "operands of `%s' must have the same "
-                          "type", (this->oper == ast_equal) ? "==" : "!=");
+      }
+      else if ((!apply_implicit_conversion(op[0]->type, op[1], state) && !apply_implicit_conversion(op[1]->type, op[0], state)) || (op[0]->type != op[1]->type))
+      {
+         _mesa_glsl_error(&loc, state, "operands of `%s' must have the same "
+                                       "type",
+                          (this->oper == ast_equal) ? "==" : "!=");
          error_emitted = true;
-      } else if ((op[0]->type->is_array() || op[1]->type->is_array()) &&
-                 !state->check_version(120, 300, &loc,
-                                       "array comparisons forbidden")) {
+      }
+      else if ((op[0]->type->is_array() || op[1]->type->is_array()) &&
+               !state->check_version(120, 300, &loc,
+                                     "array comparisons forbidden"))
+      {
          error_emitted = true;
-      } else if ((op[0]->type->contains_subroutine() ||
-                  op[1]->type->contains_subroutine())) {
+      }
+      else if ((op[0]->type->contains_subroutine() ||
+                op[1]->type->contains_subroutine()))
+      {
          _mesa_glsl_error(&loc, state, "subroutine comparisons forbidden");
          error_emitted = true;
-      } else if ((op[0]->type->contains_opaque() ||
-                  op[1]->type->contains_opaque())) {
+      }
+      else if ((op[0]->type->contains_opaque() ||
+                op[1]->type->contains_opaque()))
+      {
          _mesa_glsl_error(&loc, state, "opaque type comparisons forbidden");
          error_emitted = true;
       }
 
-      if (error_emitted) {
-         result = new(ctx) ir_constant(false);
-      } else {
+      if (error_emitted)
+      {
+         result = new (ctx) ir_constant(false);
+      }
+      else
+      {
          result = do_comparison(ctx, operations[this->oper], op[0], op[1]);
          assert(result->type == glsl_type::bool_type);
       }
@@ -1565,91 +1687,101 @@ ast_expression::do_hir(exec_list *instructions,
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
       type = bit_logic_result_type(op[0], op[1], this->oper, state, &loc);
-      result = new(ctx) ir_expression(operations[this->oper], type,
-                                      op[0], op[1]);
+      result = new (ctx) ir_expression(operations[this->oper], type,
+                                       op[0], op[1]);
       error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
       break;
 
    case ast_bit_not:
       op[0] = this->subexpressions[0]->hir(instructions, state);
 
-      if (!state->check_bitwise_operations_allowed(&loc)) {
+      if (!state->check_bitwise_operations_allowed(&loc))
+      {
          error_emitted = true;
       }
 
-      if (!op[0]->type->is_integer_32_64()) {
+      if (!op[0]->type->is_integer_32_64())
+      {
          _mesa_glsl_error(&loc, state, "operand of `~' must be an integer");
          error_emitted = true;
       }
 
       type = error_emitted ? glsl_type::error_type : op[0]->type;
-      result = new(ctx) ir_expression(ir_unop_bit_not, type, op[0], NULL);
+      result = new (ctx) ir_expression(ir_unop_bit_not, type, op[0], NULL);
       break;
 
-   case ast_logic_and: {
+   case ast_logic_and:
+   {
       exec_list rhs_instructions;
       op[0] = get_scalar_boolean_operand(instructions, state, this, 0,
                                          "LHS", &error_emitted);
       op[1] = get_scalar_boolean_operand(&rhs_instructions, state, this, 1,
                                          "RHS", &error_emitted);
 
-      if (rhs_instructions.is_empty()) {
-         result = new(ctx) ir_expression(ir_binop_logic_and, op[0], op[1]);
-      } else {
-         ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
-                                                       "and_tmp",
-                                                       ir_var_temporary);
+      if (rhs_instructions.is_empty())
+      {
+         result = new (ctx) ir_expression(ir_binop_logic_and, op[0], op[1]);
+      }
+      else
+      {
+         ir_variable *const tmp = new (ctx) ir_variable(glsl_type::bool_type,
+                                                        "and_tmp",
+                                                        ir_var_temporary);
          instructions->push_tail(tmp);
 
-         ir_if *const stmt = new(ctx) ir_if(op[0]);
+         ir_if *const stmt = new (ctx) ir_if(op[0]);
          instructions->push_tail(stmt);
 
          stmt->then_instructions.append_list(&rhs_instructions);
-         ir_dereference *const then_deref = new(ctx) ir_dereference_variable(tmp);
+         ir_dereference *const then_deref = new (ctx) ir_dereference_variable(tmp);
          ir_assignment *const then_assign =
-            new(ctx) ir_assignment(then_deref, op[1]);
+             new (ctx) ir_assignment(then_deref, op[1]);
          stmt->then_instructions.push_tail(then_assign);
 
-         ir_dereference *const else_deref = new(ctx) ir_dereference_variable(tmp);
+         ir_dereference *const else_deref = new (ctx) ir_dereference_variable(tmp);
          ir_assignment *const else_assign =
-            new(ctx) ir_assignment(else_deref, new(ctx) ir_constant(false));
+             new (ctx) ir_assignment(else_deref, new (ctx) ir_constant(false));
          stmt->else_instructions.push_tail(else_assign);
 
-         result = new(ctx) ir_dereference_variable(tmp);
+         result = new (ctx) ir_dereference_variable(tmp);
       }
       break;
    }
 
-   case ast_logic_or: {
+   case ast_logic_or:
+   {
       exec_list rhs_instructions;
       op[0] = get_scalar_boolean_operand(instructions, state, this, 0,
                                          "LHS", &error_emitted);
       op[1] = get_scalar_boolean_operand(&rhs_instructions, state, this, 1,
                                          "RHS", &error_emitted);
 
-      if (rhs_instructions.is_empty()) {
-         result = new(ctx) ir_expression(ir_binop_logic_or, op[0], op[1]);
-      } else {
-         ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
-                                                       "or_tmp",
-                                                       ir_var_temporary);
+      if (rhs_instructions.is_empty())
+      {
+         result = new (ctx) ir_expression(ir_binop_logic_or, op[0], op[1]);
+      }
+      else
+      {
+         ir_variable *const tmp = new (ctx) ir_variable(glsl_type::bool_type,
+                                                        "or_tmp",
+                                                        ir_var_temporary);
          instructions->push_tail(tmp);
 
-         ir_if *const stmt = new(ctx) ir_if(op[0]);
+         ir_if *const stmt = new (ctx) ir_if(op[0]);
          instructions->push_tail(stmt);
 
-         ir_dereference *const then_deref = new(ctx) ir_dereference_variable(tmp);
+         ir_dereference *const then_deref = new (ctx) ir_dereference_variable(tmp);
          ir_assignment *const then_assign =
-            new(ctx) ir_assignment(then_deref, new(ctx) ir_constant(true));
+             new (ctx) ir_assignment(then_deref, new (ctx) ir_constant(true));
          stmt->then_instructions.push_tail(then_assign);
 
          stmt->else_instructions.append_list(&rhs_instructions);
-         ir_dereference *const else_deref = new(ctx) ir_dereference_variable(tmp);
+         ir_dereference *const else_deref = new (ctx) ir_dereference_variable(tmp);
          ir_assignment *const else_assign =
-            new(ctx) ir_assignment(else_deref, op[1]);
+             new (ctx) ir_assignment(else_deref, op[1]);
          stmt->else_instructions.push_tail(else_assign);
 
-         result = new(ctx) ir_dereference_variable(tmp);
+         result = new (ctx) ir_dereference_variable(tmp);
       }
       break;
    }
@@ -1666,22 +1798,23 @@ ast_expression::do_hir(exec_list *instructions,
       op[1] = get_scalar_boolean_operand(instructions, state, this, 1, "RHS",
                                          &error_emitted);
 
-      result = new(ctx) ir_expression(operations[this->oper], glsl_type::bool_type,
-                                      op[0], op[1]);
+      result = new (ctx) ir_expression(operations[this->oper], glsl_type::bool_type,
+                                       op[0], op[1]);
       break;
 
    case ast_logic_not:
       op[0] = get_scalar_boolean_operand(instructions, state, this, 0,
                                          "operand", &error_emitted);
 
-      result = new(ctx) ir_expression(operations[this->oper], glsl_type::bool_type,
-                                      op[0], NULL);
+      result = new (ctx) ir_expression(operations[this->oper], glsl_type::bool_type,
+                                       op[0], NULL);
       break;
 
    case ast_mul_assign:
    case ast_div_assign:
    case ast_add_assign:
-   case ast_sub_assign: {
+   case ast_sub_assign:
+   {
       this->subexpressions[0]->set_is_lhs(true);
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
@@ -1690,31 +1823,34 @@ ast_expression::do_hir(exec_list *instructions,
 
       /* Break out if operand types were not parsed successfully. */
       if ((op[0]->type == glsl_type::error_type ||
-           op[1]->type == glsl_type::error_type)) {
+           op[1]->type == glsl_type::error_type))
+      {
          error_emitted = true;
          break;
       }
 
       type = arithmetic_result_type(op[0], op[1],
                                     (this->oper == ast_mul_assign),
-                                    state, & loc);
+                                    state, &loc);
 
-      if (type != orig_type) {
-         _mesa_glsl_error(& loc, state,
+      if (type != orig_type)
+      {
+         _mesa_glsl_error(&loc, state,
                           "could not implicitly convert "
-                          "%s to %s", type->name, orig_type->name);
+                          "%s to %s",
+                          type->name, orig_type->name);
          type = glsl_type::error_type;
       }
 
-      ir_rvalue *temp_rhs = new(ctx) ir_expression(operations[this->oper], type,
-                                                   op[0], op[1]);
+      ir_rvalue *temp_rhs = new (ctx) ir_expression(operations[this->oper], type,
+                                                    op[0], op[1]);
 
       error_emitted =
-         do_assignment(instructions, state,
-                       this->subexpressions[0]->non_lvalue_description,
-                       op[0]->clone(ctx, NULL), temp_rhs,
-                       &result, needs_rvalue, false,
-                       this->subexpressions[0]->get_location());
+          do_assignment(instructions, state,
+                        this->subexpressions[0]->non_lvalue_description,
+                        op[0]->clone(ctx, NULL), temp_rhs,
+                        &result, needs_rvalue, false,
+                        this->subexpressions[0]->get_location());
 
       /* GLSL 1.10 does not allow array assignment.  However, we don't have to
        * explicitly test for this because none of the binary expression
@@ -1724,7 +1860,8 @@ ast_expression::do_hir(exec_list *instructions,
       break;
    }
 
-   case ast_mod_assign: {
+   case ast_mod_assign:
+   {
       this->subexpressions[0]->set_is_lhs(true);
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
@@ -1732,49 +1869,53 @@ ast_expression::do_hir(exec_list *instructions,
       orig_type = op[0]->type;
       type = modulus_result_type(op[0], op[1], state, &loc);
 
-      if (type != orig_type) {
-         _mesa_glsl_error(& loc, state,
+      if (type != orig_type)
+      {
+         _mesa_glsl_error(&loc, state,
                           "could not implicitly convert "
-                          "%s to %s", type->name, orig_type->name);
+                          "%s to %s",
+                          type->name, orig_type->name);
          type = glsl_type::error_type;
       }
 
       assert(operations[this->oper] == ir_binop_mod);
 
       ir_rvalue *temp_rhs;
-      temp_rhs = new(ctx) ir_expression(operations[this->oper], type,
-                                        op[0], op[1]);
+      temp_rhs = new (ctx) ir_expression(operations[this->oper], type,
+                                         op[0], op[1]);
 
       error_emitted =
-         do_assignment(instructions, state,
-                       this->subexpressions[0]->non_lvalue_description,
-                       op[0]->clone(ctx, NULL), temp_rhs,
-                       &result, needs_rvalue, false,
-                       this->subexpressions[0]->get_location());
+          do_assignment(instructions, state,
+                        this->subexpressions[0]->non_lvalue_description,
+                        op[0]->clone(ctx, NULL), temp_rhs,
+                        &result, needs_rvalue, false,
+                        this->subexpressions[0]->get_location());
       break;
    }
 
    case ast_ls_assign:
-   case ast_rs_assign: {
+   case ast_rs_assign:
+   {
       this->subexpressions[0]->set_is_lhs(true);
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
       type = shift_result_type(op[0]->type, op[1]->type, this->oper, state,
                                &loc);
-      ir_rvalue *temp_rhs = new(ctx) ir_expression(operations[this->oper],
-                                                   type, op[0], op[1]);
+      ir_rvalue *temp_rhs = new (ctx) ir_expression(operations[this->oper],
+                                                    type, op[0], op[1]);
       error_emitted =
-         do_assignment(instructions, state,
-                       this->subexpressions[0]->non_lvalue_description,
-                       op[0]->clone(ctx, NULL), temp_rhs,
-                       &result, needs_rvalue, false,
-                       this->subexpressions[0]->get_location());
+          do_assignment(instructions, state,
+                        this->subexpressions[0]->non_lvalue_description,
+                        op[0]->clone(ctx, NULL), temp_rhs,
+                        &result, needs_rvalue, false,
+                        this->subexpressions[0]->get_location());
       break;
    }
 
    case ast_and_assign:
    case ast_xor_assign:
-   case ast_or_assign: {
+   case ast_or_assign:
+   {
       this->subexpressions[0]->set_is_lhs(true);
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
@@ -1782,25 +1923,28 @@ ast_expression::do_hir(exec_list *instructions,
       orig_type = op[0]->type;
       type = bit_logic_result_type(op[0], op[1], this->oper, state, &loc);
 
-      if (type != orig_type) {
-         _mesa_glsl_error(& loc, state,
+      if (type != orig_type)
+      {
+         _mesa_glsl_error(&loc, state,
                           "could not implicitly convert "
-                          "%s to %s", type->name, orig_type->name);
+                          "%s to %s",
+                          type->name, orig_type->name);
          type = glsl_type::error_type;
       }
 
-      ir_rvalue *temp_rhs = new(ctx) ir_expression(operations[this->oper],
-                                                   type, op[0], op[1]);
+      ir_rvalue *temp_rhs = new (ctx) ir_expression(operations[this->oper],
+                                                    type, op[0], op[1]);
       error_emitted =
-         do_assignment(instructions, state,
-                       this->subexpressions[0]->non_lvalue_description,
-                       op[0]->clone(ctx, NULL), temp_rhs,
-                       &result, needs_rvalue, false,
-                       this->subexpressions[0]->get_location());
+          do_assignment(instructions, state,
+                        this->subexpressions[0]->non_lvalue_description,
+                        op[0]->clone(ctx, NULL), temp_rhs,
+                        &result, needs_rvalue, false,
+                        this->subexpressions[0]->get_location());
       break;
    }
 
-   case ast_conditional: {
+   case ast_conditional:
+   {
       /* From page 59 (page 65 of the PDF) of the GLSL 1.50 spec:
        *
        *    "The ternary selection operator (?:). It operates on three
@@ -1830,16 +1974,17 @@ ast_expression::do_hir(exec_list *instructions,
        *     resulting matching type is the type of the entire
        *     expression."
        */
-      if ((!apply_implicit_conversion(op[1]->type, op[2], state)
-          && !apply_implicit_conversion(op[2]->type, op[1], state))
-          || (op[1]->type != op[2]->type)) {
+      if ((!apply_implicit_conversion(op[1]->type, op[2], state) && !apply_implicit_conversion(op[2]->type, op[1], state)) || (op[1]->type != op[2]->type))
+      {
          YYLTYPE loc = this->subexpressions[1]->get_location();
 
-         _mesa_glsl_error(& loc, state, "second and third operands of ?: "
-                          "operator must have matching types");
+         _mesa_glsl_error(&loc, state, "second and third operands of ?: "
+                                       "operator must have matching types");
          error_emitted = true;
          type = glsl_type::error_type;
-      } else {
+      }
+      else
+      {
          type = op[1]->type;
       }
 
@@ -1851,7 +1996,8 @@ ast_expression::do_hir(exec_list *instructions,
       if (type->is_array() &&
           !state->check_version(120, 300, &loc,
                                 "second and third operands of ?: operator "
-                                "cannot be arrays")) {
+                                "cannot be arrays"))
+      {
          error_emitted = true;
       }
 
@@ -1861,95 +2007,105 @@ ast_expression::do_hir(exec_list *instructions,
        *   parentheses, opaque variables are not allowed to be operands in
        *   expressions; such use results in a compile-time error."
        */
-      if (type->contains_opaque()) {
-         if (!(state->has_bindless() && (type->is_image() || type->is_sampler()))) {
+      if (type->contains_opaque())
+      {
+         if (!(state->has_bindless() && (type->is_image() || type->is_sampler())))
+         {
             _mesa_glsl_error(&loc, state, "variables of type %s cannot be "
-                             "operands of the ?: operator", type->name);
+                                          "operands of the ?: operator",
+                             type->name);
             error_emitted = true;
          }
       }
 
       ir_constant *cond_val = op[0]->constant_expression_value(ctx);
 
-      if (then_instructions.is_empty()
-          && else_instructions.is_empty()
-          && cond_val != NULL) {
+      if (then_instructions.is_empty() && else_instructions.is_empty() && cond_val != NULL)
+      {
          result = cond_val->value.b[0] ? op[1] : op[2];
-      } else {
+      }
+      else
+      {
          /* The copy to conditional_tmp reads the whole array. */
-         if (type->is_array()) {
+         if (type->is_array())
+         {
             mark_whole_array_access(op[1]);
             mark_whole_array_access(op[2]);
          }
 
          ir_variable *const tmp =
-            new(ctx) ir_variable(type, "conditional_tmp", ir_var_temporary);
+             new (ctx) ir_variable(type, "conditional_tmp", ir_var_temporary);
          instructions->push_tail(tmp);
 
-         ir_if *const stmt = new(ctx) ir_if(op[0]);
+         ir_if *const stmt = new (ctx) ir_if(op[0]);
          instructions->push_tail(stmt);
 
-         then_instructions.move_nodes_to(& stmt->then_instructions);
+         then_instructions.move_nodes_to(&stmt->then_instructions);
          ir_dereference *const then_deref =
-            new(ctx) ir_dereference_variable(tmp);
+             new (ctx) ir_dereference_variable(tmp);
          ir_assignment *const then_assign =
-            new(ctx) ir_assignment(then_deref, op[1]);
+             new (ctx) ir_assignment(then_deref, op[1]);
          stmt->then_instructions.push_tail(then_assign);
 
-         else_instructions.move_nodes_to(& stmt->else_instructions);
+         else_instructions.move_nodes_to(&stmt->else_instructions);
          ir_dereference *const else_deref =
-            new(ctx) ir_dereference_variable(tmp);
+             new (ctx) ir_dereference_variable(tmp);
          ir_assignment *const else_assign =
-            new(ctx) ir_assignment(else_deref, op[2]);
+             new (ctx) ir_assignment(else_deref, op[2]);
          stmt->else_instructions.push_tail(else_assign);
 
-         result = new(ctx) ir_dereference_variable(tmp);
+         result = new (ctx) ir_dereference_variable(tmp);
       }
       break;
    }
 
    case ast_pre_inc:
-   case ast_pre_dec: {
+   case ast_pre_dec:
+   {
       this->non_lvalue_description = (this->oper == ast_pre_inc)
-         ? "pre-increment operation" : "pre-decrement operation";
+                                         ? "pre-increment operation"
+                                         : "pre-decrement operation";
 
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = constant_one_for_inc_dec(ctx, op[0]->type);
 
-      type = arithmetic_result_type(op[0], op[1], false, state, & loc);
+      type = arithmetic_result_type(op[0], op[1], false, state, &loc);
 
       ir_rvalue *temp_rhs;
-      temp_rhs = new(ctx) ir_expression(operations[this->oper], type,
-                                        op[0], op[1]);
+      temp_rhs = new (ctx) ir_expression(operations[this->oper], type,
+                                         op[0], op[1]);
 
       error_emitted =
-         do_assignment(instructions, state,
-                       this->subexpressions[0]->non_lvalue_description,
-                       op[0]->clone(ctx, NULL), temp_rhs,
-                       &result, needs_rvalue, false,
-                       this->subexpressions[0]->get_location());
+          do_assignment(instructions, state,
+                        this->subexpressions[0]->non_lvalue_description,
+                        op[0]->clone(ctx, NULL), temp_rhs,
+                        &result, needs_rvalue, false,
+                        this->subexpressions[0]->get_location());
       break;
    }
 
    case ast_post_inc:
-   case ast_post_dec: {
+   case ast_post_dec:
+   {
       this->non_lvalue_description = (this->oper == ast_post_inc)
-         ? "post-increment operation" : "post-decrement operation";
+                                         ? "post-increment operation"
+                                         : "post-decrement operation";
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = constant_one_for_inc_dec(ctx, op[0]->type);
 
       error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
 
-      if (error_emitted) {
+      if (error_emitted)
+      {
          result = ir_rvalue::error_value(ctx);
          break;
       }
 
-      type = arithmetic_result_type(op[0], op[1], false, state, & loc);
+      type = arithmetic_result_type(op[0], op[1], false, state, &loc);
 
       ir_rvalue *temp_rhs;
-      temp_rhs = new(ctx) ir_expression(operations[this->oper], type,
-                                        op[0], op[1]);
+      temp_rhs = new (ctx) ir_expression(operations[this->oper], type,
+                                         op[0], op[1]);
 
       /* Get a temporary of a copy of the lvalue before it's modified.
        * This may get thrown away later.
@@ -1958,11 +2114,11 @@ ast_expression::do_hir(exec_list *instructions,
 
       ir_rvalue *junk_rvalue;
       error_emitted =
-         do_assignment(instructions, state,
-                       this->subexpressions[0]->non_lvalue_description,
-                       op[0]->clone(ctx, NULL), temp_rhs,
-                       &junk_rvalue, false, false,
-                       this->subexpressions[0]->get_location());
+          do_assignment(instructions, state,
+                        this->subexpressions[0]->non_lvalue_description,
+                        op[0]->clone(ctx, NULL), temp_rhs,
+                        &junk_rvalue, false, false,
+                        this->subexpressions[0]->get_location());
 
       break;
    }
@@ -1971,7 +2127,8 @@ ast_expression::do_hir(exec_list *instructions,
       result = _mesa_ast_field_selection_to_hir(this, instructions, state);
       break;
 
-   case ast_array_index: {
+   case ast_array_index:
+   {
       YYLTYPE index_loc = subexpressions[1]->get_location();
 
       /* Getting if an array is being used uninitialized is beyond what we get
@@ -2000,15 +2157,17 @@ ast_expression::do_hir(exec_list *instructions,
        */
       unreachable("ast_function_call: handled elsewhere ");
 
-   case ast_identifier: {
+   case ast_identifier:
+   {
       /* ast_identifier can appear several places in a full abstract syntax
        * tree.  This particular use must be at location specified in the grammar
        * as 'variable_identifier'.
        */
       ir_variable *var =
-         state->symbols->get_variable(this->primary_expression.identifier);
+          state->symbols->get_variable(this->primary_expression.identifier);
 
-      if (var == NULL) {
+      if (var == NULL)
+      {
          /* the identifier might be a subroutine name */
          char *sub_name;
          sub_name = ralloc_asprintf(ctx, "%s_%s", _mesa_shader_stage_to_subroutine_prefix(state->stage), this->primary_expression.identifier);
@@ -2016,14 +2175,13 @@ ast_expression::do_hir(exec_list *instructions,
          ralloc_free(sub_name);
       }
 
-      if (var != NULL) {
+      if (var != NULL)
+      {
          var->data.used = true;
-         result = new(ctx) ir_dereference_variable(var);
+         result = new (ctx) ir_dereference_variable(var);
 
-         if ((var->data.mode == ir_var_auto || var->data.mode == ir_var_shader_out)
-             && !this->is_lhs
-             && result->variable_referenced()->data.assigned != true
-             && !is_gl_identifier(var->name)) {
+         if ((var->data.mode == ir_var_auto || var->data.mode == ir_var_shader_out) && !this->is_lhs && result->variable_referenced()->data.assigned != true && !is_gl_identifier(var->name))
+         {
             _mesa_glsl_warning(&loc, state, "`%s' used uninitialized",
                                this->primary_expression.identifier);
          }
@@ -2035,14 +2193,16 @@ ast_expression::do_hir(exec_list *instructions,
           *    hasn't been explicitly redeclared with layout(noncoherent)."
           */
          if (var->data.fb_fetch_output && var->data.memory_coherent &&
-             !state->EXT_shader_framebuffer_fetch_enable) {
+             !state->EXT_shader_framebuffer_fetch_enable)
+         {
             _mesa_glsl_error(&loc, state,
                              "invalid use of framebuffer fetch output not "
                              "qualified with layout(noncoherent)");
          }
-
-      } else {
-         _mesa_glsl_error(& loc, state, "`%s' undeclared",
+      }
+      else
+      {
+         _mesa_glsl_error(&loc, state, "`%s' undeclared",
                           this->primary_expression.identifier);
 
          result = ir_rvalue::error_value(ctx);
@@ -2052,34 +2212,35 @@ ast_expression::do_hir(exec_list *instructions,
    }
 
    case ast_int_constant:
-      result = new(ctx) ir_constant(this->primary_expression.int_constant);
+      result = new (ctx) ir_constant(this->primary_expression.int_constant);
       break;
 
    case ast_uint_constant:
-      result = new(ctx) ir_constant(this->primary_expression.uint_constant);
+      result = new (ctx) ir_constant(this->primary_expression.uint_constant);
       break;
 
    case ast_float_constant:
-      result = new(ctx) ir_constant(this->primary_expression.float_constant);
+      result = new (ctx) ir_constant(this->primary_expression.float_constant);
       break;
 
    case ast_bool_constant:
-      result = new(ctx) ir_constant(bool(this->primary_expression.bool_constant));
+      result = new (ctx) ir_constant(bool(this->primary_expression.bool_constant));
       break;
 
    case ast_double_constant:
-      result = new(ctx) ir_constant(this->primary_expression.double_constant);
+      result = new (ctx) ir_constant(this->primary_expression.double_constant);
       break;
 
    case ast_uint64_constant:
-      result = new(ctx) ir_constant(this->primary_expression.uint64_constant);
+      result = new (ctx) ir_constant(this->primary_expression.uint64_constant);
       break;
 
    case ast_int64_constant:
-      result = new(ctx) ir_constant(this->primary_expression.int64_constant);
+      result = new (ctx) ir_constant(this->primary_expression.int64_constant);
       break;
 
-   case ast_sequence: {
+   case ast_sequence:
+   {
       /* It should not be possible to generate a sequence in the AST without
        * any expressions in it.
        */
@@ -2093,7 +2254,8 @@ ast_expression::do_hir(exec_list *instructions,
       exec_node *previous_tail = NULL;
       YYLTYPE previous_operand_loc = loc;
 
-      foreach_list_typed (ast_node, ast, link, &this->expressions) {
+      foreach_list_typed(ast_node, ast, link, &this->expressions)
+      {
          /* If one of the operands of comma operator does not generate any
           * code, we want to emit a warning.  At each pass through the loop
           * previous_tail will point to the last instruction in the stream
@@ -2110,7 +2272,8 @@ ast_expression::do_hir(exec_list *instructions,
           * effect, but I don't think these cases exist in GLSL.  Either way,
           * it would be a giant hassle to replicate that behavior.
           */
-         if (previous_tail == instructions->get_tail_raw()) {
+         if (previous_tail == instructions->get_tail_raw())
+         {
             _mesa_glsl_warning(&previous_operand_loc, state,
                                "left-hand operand of comma expression has "
                                "no effect");
@@ -2137,15 +2300,15 @@ ast_expression::do_hir(exec_list *instructions,
    assert(error_emitted || (result != NULL || !needs_rvalue));
 
    if (result && result->type->is_error() && !error_emitted)
-      _mesa_glsl_error(& loc, state, "type mismatch");
+      _mesa_glsl_error(&loc, state, "type mismatch");
 
    return result;
 }
 
-bool
-ast_expression::has_sequence_subexpression() const
+bool ast_expression::has_sequence_subexpression() const
 {
-   switch (this->oper) {
+   switch (this->oper)
+   {
    case ast_plus:
    case ast_neg:
    case ast_bit_not:
@@ -2243,7 +2406,6 @@ ast_expression_statement::hir(exec_list *instructions,
    return NULL;
 }
 
-
 ir_rvalue *
 ast_compound_statement::hir(exec_list *instructions,
                             struct _mesa_glsl_parse_state *state)
@@ -2251,8 +2413,8 @@ ast_compound_statement::hir(exec_list *instructions,
    if (new_scope)
       state->symbols->push_scope();
 
-   foreach_list_typed (ast_node, ast, link, &this->statements)
-      ast->hir(instructions, state);
+   foreach_list_typed(ast_node, ast, link, &this->statements)
+       ast->hir(instructions, state);
 
    if (new_scope)
       state->symbols->pop_scope();
@@ -2280,26 +2442,29 @@ process_array_size(exec_node *node,
     * Dimensions other than the outermost dimension can by unsized if they
     * are immediately sized by a constructor or initializer.
     */
-   if (((ast_expression*)array_size)->oper == ast_unsized_array_dim)
+   if (((ast_expression *)array_size)->oper == ast_unsized_array_dim)
       return 0;
 
-   ir_rvalue *const ir = array_size->hir(& dummy_instructions, state);
+   ir_rvalue *const ir = array_size->hir(&dummy_instructions, state);
    YYLTYPE loc = array_size->get_location();
 
-   if (ir == NULL) {
-      _mesa_glsl_error(& loc, state,
+   if (ir == NULL)
+   {
+      _mesa_glsl_error(&loc, state,
                        "array size could not be resolved");
       return 0;
    }
 
-   if (!ir->type->is_integer_32()) {
-      _mesa_glsl_error(& loc, state,
+   if (!ir->type->is_integer_32())
+   {
+      _mesa_glsl_error(&loc, state,
                        "array size must be integer type");
       return 0;
    }
 
-   if (!ir->type->is_scalar()) {
-      _mesa_glsl_error(& loc, state,
+   if (!ir->type->is_scalar())
+   {
+      _mesa_glsl_error(&loc, state,
                        "array size must be scalar type");
       return 0;
    }
@@ -2307,14 +2472,16 @@ process_array_size(exec_node *node,
    ir_constant *const size = ir->constant_expression_value(mem_ctx);
    if (size == NULL ||
        (state->is_version(120, 300) &&
-        array_size->has_sequence_subexpression())) {
-      _mesa_glsl_error(& loc, state, "array size must be a "
-                       "constant valued expression");
+        array_size->has_sequence_subexpression()))
+   {
+      _mesa_glsl_error(&loc, state, "array size must be a "
+                                    "constant valued expression");
       return 0;
    }
 
-   if (size->value.i[0] <= 0) {
-      _mesa_glsl_error(& loc, state, "array size must be > 0");
+   if (size->value.i[0] <= 0)
+   {
+      _mesa_glsl_error(&loc, state, "array size must be > 0");
       return 0;
    }
 
@@ -2338,20 +2505,24 @@ process_array_type(YYLTYPE *loc, const glsl_type *base,
 {
    const glsl_type *array_type = base;
 
-   if (array_specifier != NULL) {
-      if (base->is_array()) {
+   if (array_specifier != NULL)
+   {
+      if (base->is_array())
+      {
 
          /* From page 19 (page 25) of the GLSL 1.20 spec:
           *
           * "Only one-dimensional arrays may be declared."
           */
-         if (!state->check_arrays_of_arrays_allowed(loc)) {
+         if (!state->check_arrays_of_arrays_allowed(loc))
+         {
             return glsl_type::error_type;
          }
       }
 
       for (exec_node *node = array_specifier->array_dimensions.get_tail_raw();
-           !node->is_head_sentinel(); node = node->prev) {
+           !node->is_head_sentinel(); node = node->prev)
+      {
          unsigned array_size = process_array_size(node, state);
          array_type = glsl_type::get_array_instance(array_type, array_size);
       }
@@ -2439,7 +2610,8 @@ ast_type_specifier::glsl_type(const char **name,
 static const char *
 get_type_name_for_precision_qualifier(const glsl_type *type)
 {
-   switch (type->base_type) {
+   switch (type->base_type)
+   {
    case GLSL_TYPE_FLOAT:
       return "float";
    case GLSL_TYPE_UINT:
@@ -2449,71 +2621,74 @@ get_type_name_for_precision_qualifier(const glsl_type *type)
       return "atomic_uint";
    case GLSL_TYPE_IMAGE:
    /* fallthrough */
-   case GLSL_TYPE_SAMPLER: {
+   case GLSL_TYPE_SAMPLER:
+   {
       const unsigned type_idx =
-         type->sampler_array + 2 * type->sampler_shadow;
+          type->sampler_array + 2 * type->sampler_shadow;
       const unsigned offset = type->is_sampler() ? 0 : 4;
       assert(type_idx < 4);
-      switch (type->sampled_type) {
+      switch (type->sampled_type)
+      {
       case GLSL_TYPE_FLOAT:
-         switch (type->sampler_dimensionality) {
-         case GLSL_SAMPLER_DIM_1D: {
+         switch (type->sampler_dimensionality)
+         {
+         case GLSL_SAMPLER_DIM_1D:
+         {
             assert(type->is_sampler());
             static const char *const names[4] = {
-              "sampler1D", "sampler1DArray",
-              "sampler1DShadow", "sampler1DArrayShadow"
-            };
+                "sampler1D", "sampler1DArray",
+                "sampler1DShadow", "sampler1DArrayShadow"};
             return names[type_idx];
          }
-         case GLSL_SAMPLER_DIM_2D: {
+         case GLSL_SAMPLER_DIM_2D:
+         {
             static const char *const names[8] = {
-              "sampler2D", "sampler2DArray",
-              "sampler2DShadow", "sampler2DArrayShadow",
-              "image2D", "image2DArray", NULL, NULL
-            };
+                "sampler2D", "sampler2DArray",
+                "sampler2DShadow", "sampler2DArrayShadow",
+                "image2D", "image2DArray", NULL, NULL};
             return names[offset + type_idx];
          }
-         case GLSL_SAMPLER_DIM_3D: {
+         case GLSL_SAMPLER_DIM_3D:
+         {
             static const char *const names[8] = {
-              "sampler3D", NULL, NULL, NULL,
-              "image3D", NULL, NULL, NULL
-            };
+                "sampler3D", NULL, NULL, NULL,
+                "image3D", NULL, NULL, NULL};
             return names[offset + type_idx];
          }
-         case GLSL_SAMPLER_DIM_CUBE: {
+         case GLSL_SAMPLER_DIM_CUBE:
+         {
             static const char *const names[8] = {
-              "samplerCube", "samplerCubeArray",
-              "samplerCubeShadow", "samplerCubeArrayShadow",
-              "imageCube", NULL, NULL, NULL
-            };
+                "samplerCube", "samplerCubeArray",
+                "samplerCubeShadow", "samplerCubeArrayShadow",
+                "imageCube", NULL, NULL, NULL};
             return names[offset + type_idx];
          }
-         case GLSL_SAMPLER_DIM_MS: {
+         case GLSL_SAMPLER_DIM_MS:
+         {
             assert(type->is_sampler());
             static const char *const names[4] = {
-              "sampler2DMS", "sampler2DMSArray", NULL, NULL
-            };
+                "sampler2DMS", "sampler2DMSArray", NULL, NULL};
             return names[type_idx];
          }
-         case GLSL_SAMPLER_DIM_RECT: {
+         case GLSL_SAMPLER_DIM_RECT:
+         {
             assert(type->is_sampler());
             static const char *const names[4] = {
-              "samplerRect", NULL, "samplerRectShadow", NULL
-            };
+                "samplerRect", NULL, "samplerRectShadow", NULL};
             return names[type_idx];
          }
-         case GLSL_SAMPLER_DIM_BUF: {
+         case GLSL_SAMPLER_DIM_BUF:
+         {
             static const char *const names[8] = {
-              "samplerBuffer", NULL, NULL, NULL,
-              "imageBuffer", NULL, NULL, NULL
-            };
+                "samplerBuffer", NULL, NULL, NULL,
+                "imageBuffer", NULL, NULL, NULL};
             return names[offset + type_idx];
          }
-         case GLSL_SAMPLER_DIM_EXTERNAL: {
+         case GLSL_SAMPLER_DIM_EXTERNAL:
+         {
             assert(type->is_sampler());
             static const char *const names[4] = {
-              "samplerExternalOES", NULL, NULL, NULL
-            };
+                "samplerExternalOES", NULL, NULL, NULL};
             return names[type_idx];
          }
          default:
@@ -2521,54 +2696,55 @@ get_type_name_for_precision_qualifier(const glsl_type *type)
          } /* sampler/image float dimensionality */
          break;
       case GLSL_TYPE_INT:
-         switch (type->sampler_dimensionality) {
-         case GLSL_SAMPLER_DIM_1D: {
+         switch (type->sampler_dimensionality)
+         {
+         case GLSL_SAMPLER_DIM_1D:
+         {
             assert(type->is_sampler());
             static const char *const names[4] = {
-              "isampler1D", "isampler1DArray", NULL, NULL
-            };
+                "isampler1D", "isampler1DArray", NULL, NULL};
             return names[type_idx];
          }
-         case GLSL_SAMPLER_DIM_2D: {
+         case GLSL_SAMPLER_DIM_2D:
+         {
             static const char *const names[8] = {
-              "isampler2D", "isampler2DArray", NULL, NULL,
-              "iimage2D", "iimage2DArray", NULL, NULL
-            };
+                "isampler2D", "isampler2DArray", NULL, NULL,
+                "iimage2D", "iimage2DArray", NULL, NULL};
             return names[offset + type_idx];
          }
-         case GLSL_SAMPLER_DIM_3D: {
+         case GLSL_SAMPLER_DIM_3D:
+         {
             static const char *const names[8] = {
-              "isampler3D", NULL, NULL, NULL,
-              "iimage3D", NULL, NULL, NULL
-            };
+                "isampler3D", NULL, NULL, NULL,
+                "iimage3D", NULL, NULL, NULL};
             return names[offset + type_idx];
          }
-         case GLSL_SAMPLER_DIM_CUBE: {
+         case GLSL_SAMPLER_DIM_CUBE:
+         {
             static const char *const names[8] = {
-              "isamplerCube", "isamplerCubeArray", NULL, NULL,
-              "iimageCube", NULL, NULL, NULL
-            };
+                "isamplerCube", "isamplerCubeArray", NULL, NULL,
+                "iimageCube", NULL, NULL, NULL};
             return names[offset + type_idx];
          }
-         case GLSL_SAMPLER_DIM_MS: {
+         case GLSL_SAMPLER_DIM_MS:
+         {
             assert(type->is_sampler());
             static const char *const names[4] = {
-              "isampler2DMS", "isampler2DMSArray", NULL, NULL
-            };
+                "isampler2DMS", "isampler2DMSArray", NULL, NULL};
             return names[type_idx];
          }
-         case GLSL_SAMPLER_DIM_RECT: {
+         case GLSL_SAMPLER_DIM_RECT:
+         {
             assert(type->is_sampler());
             static const char *const names[4] = {
-              "isamplerRect", NULL, "isamplerRectShadow", NULL
-            };
+                "isamplerRect", NULL, "isamplerRectShadow", NULL};
             return names[type_idx];
          }
-         case GLSL_SAMPLER_DIM_BUF: {
+         case GLSL_SAMPLER_DIM_BUF:
+         {
             static const char *const names[8] = {
-              "isamplerBuffer", NULL, NULL, NULL,
-              "iimageBuffer", NULL, NULL, NULL
-            };
+                "isamplerBuffer", NULL, NULL, NULL,
+                "iimageBuffer", NULL, NULL, NULL};
             return names[offset + type_idx];
          }
          default:
@@ -2576,54 +2752,55 @@ get_type_name_for_precision_qualifier(const glsl_type *type)
          } /* sampler/image int dimensionality */
          break;
       case GLSL_TYPE_UINT:
-         switch (type->sampler_dimensionality) {
-         case GLSL_SAMPLER_DIM_1D: {
+         switch (type->sampler_dimensionality)
+         {
+         case GLSL_SAMPLER_DIM_1D:
+         {
             assert(type->is_sampler());
             static const char *const names[4] = {
-              "usampler1D", "usampler1DArray", NULL, NULL
-            };
+                "usampler1D", "usampler1DArray", NULL, NULL};
             return names[type_idx];
          }
-         case GLSL_SAMPLER_DIM_2D: {
+         case GLSL_SAMPLER_DIM_2D:
+         {
             static const char *const names[8] = {
-              "usampler2D", "usampler2DArray", NULL, NULL,
-              "uimage2D", "uimage2DArray", NULL, NULL
-            };
+                "usampler2D", "usampler2DArray", NULL, NULL,
+                "uimage2D", "uimage2DArray", NULL, NULL};
             return names[offset + type_idx];
          }
-         case GLSL_SAMPLER_DIM_3D: {
+         case GLSL_SAMPLER_DIM_3D:
+         {
             static const char *const names[8] = {
-              "usampler3D", NULL, NULL, NULL,
-              "uimage3D", NULL, NULL, NULL
-            };
+                "usampler3D", NULL, NULL, NULL,
+                "uimage3D", NULL, NULL, NULL};
             return names[offset + type_idx];
          }
-         case GLSL_SAMPLER_DIM_CUBE: {
+         case GLSL_SAMPLER_DIM_CUBE:
+         {
             static const char *const names[8] = {
-              "usamplerCube", "usamplerCubeArray", NULL, NULL,
-              "uimageCube", NULL, NULL, NULL
-            };
+                "usamplerCube", "usamplerCubeArray", NULL, NULL,
+                "uimageCube", NULL, NULL, NULL};
             return names[offset + type_idx];
          }
-         case GLSL_SAMPLER_DIM_MS: {
+         case GLSL_SAMPLER_DIM_MS:
+         {
             assert(type->is_sampler());
             static const char *const names[4] = {
-              "usampler2DMS", "usampler2DMSArray", NULL, NULL
-            };
+                "usampler2DMS", "usampler2DMSArray", NULL, NULL};
             return names[type_idx];
          }
-         case GLSL_SAMPLER_DIM_RECT: {
+         case GLSL_SAMPLER_DIM_RECT:
+         {
             assert(type->is_sampler());
             static const char *const names[4] = {
-              "usamplerRect", NULL, "usamplerRectShadow", NULL
-            };
+                "usamplerRect", NULL, "usamplerRectShadow", NULL};
             return names[type_idx];
          }
-         case GLSL_SAMPLER_DIM_BUF: {
+         case GLSL_SAMPLER_DIM_BUF:
+         {
             static const char *const names[8] = {
-              "usamplerBuffer", NULL, NULL, NULL,
-              "uimageBuffer", NULL, NULL, NULL
-            };
+                "usamplerBuffer", NULL, NULL, NULL,
+                "uimageBuffer", NULL, NULL, NULL};
             return names[offset + type_idx];
          }
          default:
@@ -2655,22 +2832,25 @@ select_gles_precision(unsigned qual_precision,
    assert(state->es_shader);
 
    unsigned precision = GLSL_PRECISION_NONE;
-   if (qual_precision) {
+   if (qual_precision)
+   {
       precision = qual_precision;
-   } else if (precision_qualifier_allowed(type)) {
+   }
+   else if (precision_qualifier_allowed(type))
+   {
       const char *type_name =
-         get_type_name_for_precision_qualifier(type->without_array());
+          get_type_name_for_precision_qualifier(type->without_array());
       assert(type_name != NULL);
 
       precision =
-         state->symbols->get_default_precision_qualifier(type_name);
-      if (precision == ast_precision_none) {
+          state->symbols->get_default_precision_qualifier(type_name);
+      if (precision == ast_precision_none)
+      {
          _mesa_glsl_error(loc, state,
                           "No precision specified in this scope for type `%s'",
                           type->name);
       }
    }
-
 
    /* Section 4.1.7.3 (Atomic Counters) of the GLSL ES 3.10 spec says:
     *
@@ -2678,7 +2858,8 @@ select_gles_precision(unsigned qual_precision,
     *    declare an atomic type with a different precision or to specify the
     *    default precision for an atomic type to be lowp or mediump."
     */
-   if (type->is_atomic_uint() && precision != ast_precision_high) {
+   if (type->is_atomic_uint() && precision != ast_precision_high)
+   {
       _mesa_glsl_error(loc, state,
                        "atomic_uint can only have highp precision qualifier");
    }
@@ -2705,7 +2886,8 @@ ast_fully_specified_type::glsl_type(const char **name,
 static bool
 is_varying_var(ir_variable *var, gl_shader_stage target)
 {
-   switch (target) {
+   switch (target)
+   {
    case MESA_SHADER_VERTEX:
       return var->data.mode == ir_var_shader_out;
    case MESA_SHADER_FRAGMENT:
@@ -2749,7 +2931,8 @@ validate_matrix_layout_for_type(struct _mesa_glsl_parse_state *state,
                                 const glsl_type *type,
                                 ir_variable *var)
 {
-   if (var && !var->is_in_buffer_block()) {
+   if (var && !var->is_in_buffer_block())
+   {
       /* Layout qualifiers may only apply to interface blocks and fields in
        * them.
        */
@@ -2757,7 +2940,9 @@ validate_matrix_layout_for_type(struct _mesa_glsl_parse_state *state,
                        "uniform block layout qualifiers row_major and "
                        "column_major may not be applied to variables "
                        "outside of uniform blocks");
-   } else if (!type->without_array()->is_matrix()) {
+   }
+   else if (!type->without_array()->is_matrix())
+   {
       /* The OpenGL ES 3.0 conformance tests did not originally allow
        * matrix layout qualifiers on non-matrices.  However, the OpenGL
        * 4.4 and OpenGL ES 3.0 (revision TBD) specifications were
@@ -2774,8 +2959,10 @@ validate_matrix_layout_for_type(struct _mesa_glsl_parse_state *state,
 static bool
 validate_xfb_buffer_qualifier(YYLTYPE *loc,
                               struct _mesa_glsl_parse_state *state,
-                              unsigned xfb_buffer) {
-   if (xfb_buffer >= state->Const.MaxTransformFeedbackBuffers) {
+                              unsigned xfb_buffer)
+{
+   if (xfb_buffer >= state->Const.MaxTransformFeedbackBuffers)
+   {
       _mesa_glsl_error(loc, state,
                        "invalid xfb_buffer specified %d is larger than "
                        "MAX_TRANSFORM_FEEDBACK_BUFFERS - 1 (%d).",
@@ -2801,10 +2988,12 @@ static bool
 validate_xfb_offset_qualifier(YYLTYPE *loc,
                               struct _mesa_glsl_parse_state *state,
                               int xfb_offset, const glsl_type *type,
-                              unsigned component_size) {
-  const glsl_type *t_without_array = type->without_array();
+                              unsigned component_size)
+{
+   const glsl_type *t_without_array = type->without_array();
 
-   if (xfb_offset != -1 && type->is_unsized_array()) {
+   if (xfb_offset != -1 && type->is_unsized_array())
+   {
       _mesa_glsl_error(loc, state,
                        "xfb_offset can't be used with unsized arrays.");
       return false;
@@ -2814,7 +3003,8 @@ validate_xfb_offset_qualifier(YYLTYPE *loc,
     * any xfb_offsets on interface members.
     */
    if (t_without_array->is_struct() || t_without_array->is_interface())
-      for (unsigned int i = 0; i < t_without_array->length; i++) {
+      for (unsigned int i = 0; i < t_without_array->length; i++)
+      {
          const glsl_type *member_t = t_without_array->fields.structure[i].type;
 
          /* When the interface block doesn't have an xfb_offset qualifier then
@@ -2828,14 +3018,16 @@ validate_xfb_offset_qualifier(YYLTYPE *loc,
                                        component_size);
       }
 
-  /* Nested structs or interface block without offset may not have had an
+   /* Nested structs or interface block without offset may not have had an
    * offset applied yet so return.
    */
-   if (xfb_offset == -1) {
-     return true;
+   if (xfb_offset == -1)
+   {
+      return true;
    }
 
-   if (xfb_offset % component_size) {
+   if (xfb_offset % component_size)
+   {
       _mesa_glsl_error(loc, state,
                        "invalid qualifier xfb_offset=%d must be a multiple "
                        "of the first component size of the first qualified "
@@ -2852,7 +3044,8 @@ static bool
 validate_stream_qualifier(YYLTYPE *loc, struct _mesa_glsl_parse_state *state,
                           unsigned stream)
 {
-   if (stream >= state->ctx->Const.MaxVertexStreams) {
+   if (stream >= state->ctx->Const.MaxVertexStreams)
+   {
       _mesa_glsl_error(loc, state,
                        "invalid stream specified %d is larger than "
                        "MAX_VERTEX_STREAMS - 1 (%d).",
@@ -2870,7 +3063,8 @@ apply_explicit_binding(struct _mesa_glsl_parse_state *state,
                        const glsl_type *type,
                        const ast_type_qualifier *qual)
 {
-   if (!qual->flags.q.uniform && !qual->flags.q.buffer) {
+   if (!qual->flags.q.uniform && !qual->flags.q.buffer)
+   {
       _mesa_glsl_error(loc, state,
                        "the \"binding\" qualifier only applies to uniforms and "
                        "shader storage buffer objects");
@@ -2879,7 +3073,8 @@ apply_explicit_binding(struct _mesa_glsl_parse_state *state,
 
    unsigned qual_binding;
    if (!process_qualifier_constant(state, loc, "binding", qual->binding,
-                                   &qual_binding)) {
+                                   &qual_binding))
+   {
       return;
    }
 
@@ -2888,7 +3083,8 @@ apply_explicit_binding(struct _mesa_glsl_parse_state *state,
    unsigned max_index = qual_binding + elements - 1;
    const glsl_type *base_type = type->without_array();
 
-   if (base_type->is_interface()) {
+   if (base_type->is_interface())
+   {
       /* UBOs.  From page 60 of the GLSL 4.20 specification:
        * "If the binding point for any uniform block instance is less than zero,
        *  or greater than or equal to the implementation-dependent maximum
@@ -2900,9 +3096,10 @@ apply_explicit_binding(struct _mesa_glsl_parse_state *state,
        * The implementation-dependent maximum is GL_MAX_UNIFORM_BUFFER_BINDINGS.
        */
       if (qual->flags.q.uniform &&
-         max_index >= ctx->Const.MaxUniformBufferBindings) {
+          max_index >= ctx->Const.MaxUniformBufferBindings)
+      {
          _mesa_glsl_error(loc, state, "layout(binding = %u) for %d UBOs exceeds "
-                          "the maximum number of UBO binding points (%d)",
+                                      "the maximum number of UBO binding points (%d)",
                           qual_binding, elements,
                           ctx->Const.MaxUniformBufferBindings);
          return;
@@ -2918,14 +3115,17 @@ apply_explicit_binding(struct _mesa_glsl_parse_state *state,
        *  be within this range."
        */
       if (qual->flags.q.buffer &&
-         max_index >= ctx->Const.MaxShaderStorageBufferBindings) {
+          max_index >= ctx->Const.MaxShaderStorageBufferBindings)
+      {
          _mesa_glsl_error(loc, state, "layout(binding = %u) for %d SSBOs exceeds "
-                          "the maximum number of SSBO binding points (%d)",
+                                      "the maximum number of SSBO binding points (%d)",
                           qual_binding, elements,
                           ctx->Const.MaxShaderStorageBufferBindings);
          return;
       }
-   } else if (base_type->is_sampler()) {
+   }
+   else if (base_type->is_sampler())
+   {
       /* Samplers.  From page 63 of the GLSL 4.20 specification:
        * "If the binding is less than zero, or greater than or equal to the
        *  implementation-dependent maximum supported number of units, a
@@ -2935,35 +3135,46 @@ apply_explicit_binding(struct _mesa_glsl_parse_state *state,
        */
       unsigned limit = ctx->Const.MaxCombinedTextureImageUnits;
 
-      if (max_index >= limit) {
+      if (max_index >= limit)
+      {
          _mesa_glsl_error(loc, state, "layout(binding = %d) for %d samplers "
-                          "exceeds the maximum number of texture image units "
-                          "(%u)", qual_binding, elements, limit);
+                                      "exceeds the maximum number of texture image units "
+                                      "(%u)",
+                          qual_binding, elements, limit);
 
          return;
       }
-   } else if (base_type->contains_atomic()) {
+   }
+   else if (base_type->contains_atomic())
+   {
       assert(ctx->Const.MaxAtomicBufferBindings <= MAX_COMBINED_ATOMIC_BUFFERS);
-      if (qual_binding >= ctx->Const.MaxAtomicBufferBindings) {
+      if (qual_binding >= ctx->Const.MaxAtomicBufferBindings)
+      {
          _mesa_glsl_error(loc, state, "layout(binding = %d) exceeds the "
-                          "maximum number of atomic counter buffer bindings "
-                          "(%u)", qual_binding,
+                                      "maximum number of atomic counter buffer bindings "
+                                      "(%u)",
+                          qual_binding,
                           ctx->Const.MaxAtomicBufferBindings);
 
          return;
       }
-   } else if ((state->is_version(420, 310) ||
-               state->ARB_shading_language_420pack_enable) &&
-              base_type->is_image()) {
+   }
+   else if ((state->is_version(420, 310) ||
+             state->ARB_shading_language_420pack_enable) &&
+            base_type->is_image())
+   {
       assert(ctx->Const.MaxImageUnits <= MAX_IMAGE_UNITS);
-      if (max_index >= ctx->Const.MaxImageUnits) {
+      if (max_index >= ctx->Const.MaxImageUnits)
+      {
          _mesa_glsl_error(loc, state, "Image binding %d exceeds the "
-                          "maximum number of image units (%d)", max_index,
+                                      "maximum number of image units (%d)",
+                          max_index,
                           ctx->Const.MaxImageUnits);
          return;
       }
-
-   } else {
+   }
+   else
+   {
       _mesa_glsl_error(loc, state,
                        "the \"binding\" qualifier only applies to uniform "
                        "blocks, storage blocks, opaque variables, or arrays "
@@ -3018,10 +3229,10 @@ validate_fragment_flat_interpolation_input(struct _mesa_glsl_parse_state *state,
     * reasonable way to interpolate a fragment shader input that contains
     * an integer. See Khronos bug #15671.
     */
-   if ((state->is_version(130, 300) || state->EXT_gpu_shader4_enable)
-       && var_type->contains_integer()) {
+   if ((state->is_version(130, 300) || state->EXT_gpu_shader4_enable) && var_type->contains_integer())
+   {
       _mesa_glsl_error(loc, state, "if a fragment input is (or contains) "
-                       "an integer, then it must be qualified with 'flat'");
+                                   "an integer, then it must be qualified with 'flat'");
    }
 
    /* Double fragment inputs must be qualified with 'flat'.
@@ -3041,10 +3252,10 @@ validate_fragment_flat_interpolation_input(struct _mesa_glsl_parse_state *state,
     *
     * The 'double' type does not exist in GLSL ES so far.
     */
-   if (state->has_double()
-       && var_type->contains_double()) {
+   if (state->has_double() && var_type->contains_double())
+   {
       _mesa_glsl_error(loc, state, "if a fragment input is (or contains) "
-                       "a double, then it must be qualified with 'flat'");
+                                   "a double, then it must be qualified with 'flat'");
    }
 
    /* Bindless sampler/image fragment inputs must be qualified with 'flat'.
@@ -3060,11 +3271,11 @@ validate_fragment_flat_interpolation_input(struct _mesa_glsl_parse_state *state,
     *     point type, or any sampler or image type must be qualified with the
     *     interpolation qualifier "flat"."
     */
-   if (state->has_bindless()
-       && (var_type->contains_sampler() || var_type->contains_image())) {
+   if (state->has_bindless() && (var_type->contains_sampler() || var_type->contains_image()))
+   {
       _mesa_glsl_error(loc, state, "if a fragment input is (or contains) "
-                       "a bindless sampler (or image), then it must be "
-                       "qualified with 'flat'");
+                                   "a bindless sampler (or image), then it must be "
+                                   "qualified with 'flat'");
    }
 }
 
@@ -3099,27 +3310,33 @@ validate_interpolation_qualifier(struct _mesa_glsl_parse_state *state,
     *    not apply to inputs into a vertex shader or outputs from a
     *    fragment shader."
     */
-   if ((state->is_version(130, 300) || state->EXT_gpu_shader4_enable)
-       && interpolation != INTERP_MODE_NONE) {
+   if ((state->is_version(130, 300) || state->EXT_gpu_shader4_enable) && interpolation != INTERP_MODE_NONE)
+   {
       const char *i = interpolation_string(interpolation);
       if (mode != ir_var_shader_in && mode != ir_var_shader_out)
          _mesa_glsl_error(loc, state,
                           "interpolation qualifier `%s' can only be applied to "
-                          "shader inputs or outputs.", i);
+                          "shader inputs or outputs.",
+                          i);
 
-      switch (state->stage) {
+      switch (state->stage)
+      {
       case MESA_SHADER_VERTEX:
-         if (mode == ir_var_shader_in) {
+         if (mode == ir_var_shader_in)
+         {
             _mesa_glsl_error(loc, state,
                              "interpolation qualifier '%s' cannot be applied to "
-                             "vertex shader inputs", i);
+                             "vertex shader inputs",
+                             i);
          }
          break;
       case MESA_SHADER_FRAGMENT:
-         if (mode == ir_var_shader_out) {
+         if (mode == ir_var_shader_out)
+         {
             _mesa_glsl_error(loc, state,
                              "interpolation qualifier '%s' cannot be applied to "
-                             "fragment shader outputs", i);
+                             "fragment shader outputs",
+                             i);
          }
          break;
       default:
@@ -3139,9 +3356,8 @@ validate_interpolation_qualifier(struct _mesa_glsl_parse_state *state,
     *
     * GL_EXT_gpu_shader4 allows this.
     */
-   if (state->is_version(130, 0) && !state->EXT_gpu_shader4_enable
-       && interpolation != INTERP_MODE_NONE
-       && qual->flags.q.varying) {
+   if (state->is_version(130, 0) && !state->EXT_gpu_shader4_enable && interpolation != INTERP_MODE_NONE && qual->flags.q.varying)
+   {
 
       const char *i = interpolation_string(interpolation);
       const char *s;
@@ -3152,7 +3368,8 @@ validate_interpolation_qualifier(struct _mesa_glsl_parse_state *state,
 
       _mesa_glsl_error(loc, state,
                        "qualifier '%s' cannot be applied to the "
-                       "deprecated storage qualifier '%s'", i, s);
+                       "deprecated storage qualifier '%s'",
+                       i, s);
    }
 
    validate_fragment_flat_interpolation_input(state, loc, interpolation,
@@ -3183,7 +3400,6 @@ interpret_interpolation_qualifier(const struct ast_type_qualifier *qual,
    return interpolation;
 }
 
-
 static void
 apply_explicit_location(const struct ast_type_qualifier *qual,
                         ir_variable *var,
@@ -3194,21 +3410,25 @@ apply_explicit_location(const struct ast_type_qualifier *qual,
 
    unsigned qual_location;
    if (!process_qualifier_constant(state, loc, "location", qual->location,
-                                   &qual_location)) {
+                                   &qual_location))
+   {
       return;
    }
 
    /* Checks for GL_ARB_explicit_uniform_location. */
-   if (qual->flags.q.uniform) {
+   if (qual->flags.q.uniform)
+   {
       if (!state->check_explicit_uniform_location_allowed(loc, var))
          return;
 
       const struct gl_context *const ctx = state->ctx;
       unsigned max_loc = qual_location + var->type->uniform_locations() - 1;
 
-      if (max_loc >= ctx->Const.MaxUserAssignableUniformLocations) {
+      if (max_loc >= ctx->Const.MaxUserAssignableUniformLocations)
+      {
          _mesa_glsl_error(loc, state, "location(s) consumed by uniform %s "
-                          ">= MAX_UNIFORM_LOCATIONS (%u)", var->name,
+                                      ">= MAX_UNIFORM_LOCATIONS (%u)",
+                          var->name,
                           ctx->Const.MaxUserAssignableUniformLocations);
          return;
       }
@@ -3231,16 +3451,19 @@ apply_explicit_location(const struct ast_type_qualifier *qual,
     * geometry            sso              sso
     * fragment            sso              explicit_loc
     */
-   switch (state->stage) {
+   switch (state->stage)
+   {
    case MESA_SHADER_VERTEX:
-      if (var->data.mode == ir_var_shader_in) {
+      if (var->data.mode == ir_var_shader_in)
+      {
          if (!state->check_explicit_attrib_location_allowed(loc, var))
             return;
 
          break;
       }
 
-      if (var->data.mode == ir_var_shader_out) {
+      if (var->data.mode == ir_var_shader_out)
+      {
          if (!state->check_separate_shader_objects_allowed(loc, var))
             return;
 
@@ -3253,7 +3476,8 @@ apply_explicit_location(const struct ast_type_qualifier *qual,
    case MESA_SHADER_TESS_CTRL:
    case MESA_SHADER_TESS_EVAL:
    case MESA_SHADER_GEOMETRY:
-      if (var->data.mode == ir_var_shader_in || var->data.mode == ir_var_shader_out) {
+      if (var->data.mode == ir_var_shader_in || var->data.mode == ir_var_shader_out)
+      {
          if (!state->check_separate_shader_objects_allowed(loc, var))
             return;
 
@@ -3264,14 +3488,16 @@ apply_explicit_location(const struct ast_type_qualifier *qual,
       break;
 
    case MESA_SHADER_FRAGMENT:
-      if (var->data.mode == ir_var_shader_in) {
+      if (var->data.mode == ir_var_shader_in)
+      {
          if (!state->check_separate_shader_objects_allowed(loc, var))
             return;
 
          break;
       }
 
-      if (var->data.mode == ir_var_shader_out) {
+      if (var->data.mode == ir_var_shader_out)
+      {
          if (!state->check_explicit_attrib_location_allowed(loc, var))
             return;
 
@@ -3291,19 +3517,23 @@ apply_explicit_location(const struct ast_type_qualifier *qual,
       break;
    };
 
-   if (fail) {
+   if (fail)
+   {
       _mesa_glsl_error(loc, state,
                        "%s cannot be given an explicit location in %s shader",
                        mode_string(var),
-      _mesa_shader_stage_to_string(state->stage));
-   } else {
+                       _mesa_shader_stage_to_string(state->stage));
+   }
+   else
+   {
       var->data.explicit_location = true;
 
-      switch (state->stage) {
+      switch (state->stage)
+      {
       case MESA_SHADER_VERTEX:
          var->data.location = (var->data.mode == ir_var_shader_in)
-            ? (qual_location + VERT_ATTRIB_GENERIC0)
-            : (qual_location + VARYING_SLOT_VAR0);
+                                  ? (qual_location + VERT_ATTRIB_GENERIC0)
+                                  : (qual_location + VARYING_SLOT_VAR0);
          break;
 
       case MESA_SHADER_TESS_CTRL:
@@ -3317,8 +3547,8 @@ apply_explicit_location(const struct ast_type_qualifier *qual,
 
       case MESA_SHADER_FRAGMENT:
          var->data.location = (var->data.mode == ir_var_shader_out)
-            ? (qual_location + FRAG_RESULT_DATA0)
-            : (qual_location + VARYING_SLOT_VAR0);
+                                  ? (qual_location + FRAG_RESULT_DATA0)
+                                  : (qual_location + VARYING_SLOT_VAR0);
          break;
       default:
          assert(!"Unexpected shader type");
@@ -3326,16 +3556,18 @@ apply_explicit_location(const struct ast_type_qualifier *qual,
       }
 
       /* Check if index was set for the uniform instead of the function */
-      if (qual->flags.q.explicit_index && qual->is_subroutine_decl()) {
+      if (qual->flags.q.explicit_index && qual->is_subroutine_decl())
+      {
          _mesa_glsl_error(loc, state, "an index qualifier can only be "
-                          "used with subroutine functions");
+                                      "used with subroutine functions");
          return;
       }
 
       unsigned qual_index;
       if (qual->flags.q.explicit_index &&
           process_qualifier_constant(state, loc, "index", qual->index,
-                                     &qual_index)) {
+                                     &qual_index))
+      {
          /* From the GLSL 4.30 specification, section 4.4.2 (Output
           * Layout Qualifiers):
           *
@@ -3345,10 +3577,13 @@ apply_explicit_location(const struct ast_type_qualifier *qual,
           * Older specifications don't mandate a behavior; we take
           * this as a clarification and always generate the error.
           */
-         if (qual_index > 1) {
+         if (qual_index > 1)
+         {
             _mesa_glsl_error(loc, state,
                              "explicit index may only be 0 or 1");
-         } else {
+         }
+         else
+         {
             var->data.explicit_index = true;
             var->data.index = qual_index;
          }
@@ -3376,26 +3611,31 @@ validate_storage_for_sampler_image_types(ir_variable *var,
     *    "Images may be declared as shader inputs and outputs, as uniform
     *     variables, as temporary variables, and as function parameters."
     */
-   if (state->has_bindless()) {
+   if (state->has_bindless())
+   {
       if (var->data.mode != ir_var_auto &&
           var->data.mode != ir_var_uniform &&
           var->data.mode != ir_var_shader_in &&
           var->data.mode != ir_var_shader_out &&
           var->data.mode != ir_var_function_in &&
           var->data.mode != ir_var_function_out &&
-          var->data.mode != ir_var_function_inout) {
+          var->data.mode != ir_var_function_inout)
+      {
          _mesa_glsl_error(loc, state, "bindless image/sampler variables may "
-                         "only be declared as shader inputs and outputs, as "
-                         "uniform variables, as temporary variables and as "
-                         "function parameters");
+                                      "only be declared as shader inputs and outputs, as "
+                                      "uniform variables, as temporary variables and as "
+                                      "function parameters");
          return false;
       }
-   } else {
+   }
+   else
+   {
       if (var->data.mode != ir_var_uniform &&
-          var->data.mode != ir_var_function_in) {
+          var->data.mode != ir_var_function_in)
+      {
          _mesa_glsl_error(loc, state, "image/sampler variables may only be "
-                          "declared as function parameters or "
-                          "uniform-qualified global variables");
+                                      "declared as function parameters or "
+                                      "uniform-qualified global variables");
          return false;
       }
    }
@@ -3414,15 +3654,17 @@ validate_memory_qualifier_for_type(struct _mesa_glsl_parse_state *state,
     *  variables, buffer variables, and shader storage blocks; it is an error
     *  to use such qualifiers in any other declarations.
     */
-   if (!type->is_image() && !qual->flags.q.buffer) {
+   if (!type->is_image() && !qual->flags.q.buffer)
+   {
       if (qual->flags.q.read_only ||
           qual->flags.q.write_only ||
           qual->flags.q.coherent ||
           qual->flags.q._volatile ||
-          qual->flags.q.restrict_flag) {
+          qual->flags.q.restrict_flag)
+      {
          _mesa_glsl_error(loc, state, "memory qualifiers may only be applied "
-                          "in the declarations of image variables, buffer "
-                          "variables, and shader storage blocks");
+                                      "in the declarations of image variables, buffer "
+                                      "variables, and shader storage blocks");
          return false;
       }
    }
@@ -3440,9 +3682,10 @@ validate_image_format_qualifier_for_type(struct _mesa_glsl_parse_state *state,
     * "Format layout qualifiers can be used on image variable declarations
     *  (those declared with a basic type  having “image ” in its keyword)."
     */
-   if (!type->is_image() && qual->flags.q.explicit_image_format) {
+   if (!type->is_image() && qual->flags.q.explicit_image_format)
+   {
       _mesa_glsl_error(loc, state, "format layout qualifiers may only be "
-                       "applied to images");
+                                   "applied to images");
       return false;
    }
    return true;
@@ -3472,32 +3715,44 @@ apply_image_qualifier_to_variable(const struct ast_type_qualifier *qual,
    var->data.memory_volatile |= qual->flags.q._volatile;
    var->data.memory_restrict |= qual->flags.q.restrict_flag;
 
-   if (qual->flags.q.explicit_image_format) {
-      if (var->data.mode == ir_var_function_in) {
+   if (qual->flags.q.explicit_image_format)
+   {
+      if (var->data.mode == ir_var_function_in)
+      {
          _mesa_glsl_error(loc, state, "format qualifiers cannot be used on "
-                          "image function parameters");
+                                      "image function parameters");
       }
 
-      if (qual->image_base_type != base_type->sampled_type) {
+      if (qual->image_base_type != base_type->sampled_type)
+      {
          _mesa_glsl_error(loc, state, "format qualifier doesn't match the base "
-                          "data type of the image");
+                                      "data type of the image");
       }
 
       var->data.image_format = qual->image_format;
-   } else if (state->has_image_load_formatted()) {
+   }
+   else if (state->has_image_load_formatted())
+   {
       if (var->data.mode == ir_var_uniform &&
-          state->EXT_shader_image_load_formatted_warn) {
+          state->EXT_shader_image_load_formatted_warn)
+      {
          _mesa_glsl_warning(loc, state, "GL_EXT_image_load_formatted used");
       }
-   } else {
-      if (var->data.mode == ir_var_uniform) {
+   }
+   else
+   {
+      if (var->data.mode == ir_var_uniform)
+      {
          if (state->es_shader ||
-             !(state->is_version(420, 310) || state->ARB_shader_image_load_store_enable)) {
+             !(state->is_version(420, 310) || state->ARB_shader_image_load_store_enable))
+         {
             _mesa_glsl_error(loc, state, "all image uniforms must have a "
-                             "format layout qualifier");
-         } else if (!qual->flags.q.write_only) {
+                                         "format layout qualifier");
+         }
+         else if (!qual->flags.q.write_only)
+         {
             _mesa_glsl_error(loc, state, "image uniforms not qualified with "
-                             "`writeonly' must have a format layout qualifier");
+                                         "`writeonly' must have a format layout qualifier");
          }
       }
       var->data.image_format = PIPE_FORMAT_NONE;
@@ -3514,14 +3769,15 @@ apply_image_qualifier_to_variable(const struct ast_type_qualifier *qual,
        var->data.image_format != PIPE_FORMAT_R32_SINT &&
        var->data.image_format != PIPE_FORMAT_R32_UINT &&
        !var->data.memory_read_only &&
-       !var->data.memory_write_only) {
+       !var->data.memory_write_only)
+   {
       _mesa_glsl_error(loc, state, "image variables of format other than r32f, "
-                       "r32i or r32ui must be qualified `readonly' or "
-                       "`writeonly'");
+                                   "r32i or r32ui must be qualified `readonly' or "
+                                   "`writeonly'");
    }
 }
 
-static inline const char*
+static inline const char *
 get_layout_qualifier_string(bool origin_upper_left, bool pixel_center_integer)
 {
    if (origin_upper_left && pixel_center_integer)
@@ -3541,9 +3797,9 @@ is_conflicting_fragcoord_redeclaration(struct _mesa_glsl_parse_state *state,
    /* If gl_FragCoord was previously declared, and the qualifiers were
     * different in any way, return true.
     */
-   if (state->fs_redeclares_gl_fragcoord) {
-      return (state->fs_pixel_center_integer != qual->flags.q.pixel_center_integer
-         || state->fs_origin_upper_left != qual->flags.q.origin_upper_left);
+   if (state->fs_redeclares_gl_fragcoord)
+   {
+      return (state->fs_pixel_center_integer != qual->flags.q.pixel_center_integer || state->fs_origin_upper_left != qual->flags.q.origin_upper_left);
    }
 
    return false;
@@ -3553,7 +3809,8 @@ static inline bool
 is_conflicting_layer_redeclaration(struct _mesa_glsl_parse_state *state,
                                    const struct ast_type_qualifier *qual)
 {
-   if (state->redeclares_gl_layer) {
+   if (state->redeclares_gl_layer)
+   {
       return state->layer_viewport_relative != qual->flags.q.viewport_relative;
    }
    return false;
@@ -3562,11 +3819,15 @@ is_conflicting_layer_redeclaration(struct _mesa_glsl_parse_state *state,
 static inline void
 validate_array_dimensions(const glsl_type *t,
                           struct _mesa_glsl_parse_state *state,
-                          YYLTYPE *loc) {
-   if (t->is_array()) {
+                          YYLTYPE *loc)
+{
+   if (t->is_array())
+   {
       t = t->fields.array;
-      while (t->is_array()) {
-         if (t->is_unsized_array()) {
+      while (t->is_array())
+      {
+         if (t->is_unsized_array())
+         {
             _mesa_glsl_error(loc, state,
                              "only the outermost array dimension can "
                              "be unsized",
@@ -3598,10 +3859,11 @@ apply_bindless_qualifier_to_variable(const struct ast_type_qualifier *qual,
     *  uniforms, or variables with non-uniform storage, a compile-time error
     *  will be generated."
     */
-   if (has_local_qualifiers && !qual->flags.q.uniform) {
+   if (has_local_qualifiers && !qual->flags.q.uniform)
+   {
       _mesa_glsl_error(loc, state, "ARB_bindless_texture layout qualifiers "
-                       "can only be applied to default block uniforms or "
-                       "variables with uniform storage");
+                                   "can only be applied to default block uniforms or "
+                                   "variables with uniform storage");
       return;
    }
 
@@ -3611,16 +3873,18 @@ apply_bindless_qualifier_to_variable(const struct ast_type_qualifier *qual,
     * types.
     */
    if ((qual->flags.q.bindless_sampler || qual->flags.q.bound_sampler) &&
-       !var->type->contains_sampler()) {
+       !var->type->contains_sampler())
+   {
       _mesa_glsl_error(loc, state, "bindless_sampler or bound_sampler can only "
-                       "be applied to sampler types");
+                                   "be applied to sampler types");
       return;
    }
 
    if ((qual->flags.q.bindless_image || qual->flags.q.bound_image) &&
-       !var->type->contains_image()) {
+       !var->type->contains_image())
+   {
       _mesa_glsl_error(loc, state, "bindless_image or bound_image can only be "
-                       "applied to image types");
+                                   "applied to image types");
       return;
    }
 
@@ -3628,7 +3892,8 @@ apply_bindless_qualifier_to_variable(const struct ast_type_qualifier *qual,
     * bound_sampler/bound_image) layout qualifiers can be set at global and at
     * local scope.
     */
-   if (var->type->contains_sampler() || var->type->contains_image()) {
+   if (var->type->contains_sampler() || var->type->contains_image())
+   {
       var->data.bindless = qual->flags.q.bindless_sampler ||
                            qual->flags.q.bindless_image ||
                            state->bindless_sampler_specified ||
@@ -3647,7 +3912,8 @@ apply_layout_qualifier_to_variable(const struct ast_type_qualifier *qual,
                                    struct _mesa_glsl_parse_state *state,
                                    YYLTYPE *loc)
 {
-   if (var->name != NULL && strcmp(var->name, "gl_FragCoord") == 0) {
+   if (var->name != NULL && strcmp(var->name, "gl_FragCoord") == 0)
+   {
 
       /* Section 4.3.8.1, page 39 of GLSL 1.50 spec says:
        *
@@ -3660,7 +3926,8 @@ apply_layout_qualifier_to_variable(const struct ast_type_qualifier *qual,
       ir_variable *earlier = state->symbols->get_variable("gl_FragCoord");
       if (earlier != NULL &&
           earlier->data.used &&
-          !state->fs_redeclares_gl_fragcoord) {
+          !state->fs_redeclares_gl_fragcoord)
+      {
          _mesa_glsl_error(loc, state,
                           "gl_FragCoord used before its first redeclaration "
                           "in fragment shader");
@@ -3669,14 +3936,15 @@ apply_layout_qualifier_to_variable(const struct ast_type_qualifier *qual,
       /* Make sure all gl_FragCoord redeclarations specify the same layout
        * qualifiers.
        */
-      if (is_conflicting_fragcoord_redeclaration(state, qual)) {
+      if (is_conflicting_fragcoord_redeclaration(state, qual))
+      {
          const char *const qual_string =
-            get_layout_qualifier_string(qual->flags.q.origin_upper_left,
-                                        qual->flags.q.pixel_center_integer);
+             get_layout_qualifier_string(qual->flags.q.origin_upper_left,
+                                         qual->flags.q.pixel_center_integer);
 
          const char *const state_string =
-            get_layout_qualifier_string(state->fs_origin_upper_left,
-                                        state->fs_pixel_center_integer);
+             get_layout_qualifier_string(state->fs_origin_upper_left,
+                                         state->fs_pixel_center_integer);
 
          _mesa_glsl_error(loc, state,
                           "gl_FragCoord redeclared with different layout "
@@ -3687,17 +3955,18 @@ apply_layout_qualifier_to_variable(const struct ast_type_qualifier *qual,
       state->fs_origin_upper_left = qual->flags.q.origin_upper_left;
       state->fs_pixel_center_integer = qual->flags.q.pixel_center_integer;
       state->fs_redeclares_gl_fragcoord_with_no_layout_qualifiers =
-         !qual->flags.q.origin_upper_left && !qual->flags.q.pixel_center_integer;
+          !qual->flags.q.origin_upper_left && !qual->flags.q.pixel_center_integer;
       state->fs_redeclares_gl_fragcoord =
-         state->fs_origin_upper_left ||
-         state->fs_pixel_center_integer ||
-         state->fs_redeclares_gl_fragcoord_with_no_layout_qualifiers;
+          state->fs_origin_upper_left ||
+          state->fs_pixel_center_integer ||
+          state->fs_redeclares_gl_fragcoord_with_no_layout_qualifiers;
    }
 
-   if ((qual->flags.q.origin_upper_left || qual->flags.q.pixel_center_integer)
-       && (strcmp(var->name, "gl_FragCoord") != 0)) {
+   if ((qual->flags.q.origin_upper_left || qual->flags.q.pixel_center_integer) && (strcmp(var->name, "gl_FragCoord") != 0))
+   {
       const char *const qual_string = (qual->flags.q.origin_upper_left)
-         ? "origin_upper_left" : "pixel_center_integer";
+                                          ? "origin_upper_left"
+                                          : "pixel_center_integer";
 
       _mesa_glsl_error(loc, state,
                        "layout qualifier `%s' can only be applied to "
@@ -3705,102 +3974,130 @@ apply_layout_qualifier_to_variable(const struct ast_type_qualifier *qual,
                        qual_string);
    }
 
-   if (qual->flags.q.explicit_location) {
+   if (qual->flags.q.explicit_location)
+   {
       apply_explicit_location(qual, var, state, loc);
 
-      if (qual->flags.q.explicit_component) {
+      if (qual->flags.q.explicit_component)
+      {
          unsigned qual_component;
          if (process_qualifier_constant(state, loc, "component",
-                                        qual->component, &qual_component)) {
+                                        qual->component, &qual_component))
+         {
             const glsl_type *type = var->type->without_array();
             unsigned components = type->component_slots();
 
-            if (type->is_matrix() || type->is_struct()) {
+            if (type->is_matrix() || type->is_struct())
+            {
                _mesa_glsl_error(loc, state, "component layout qualifier "
-                                "cannot be applied to a matrix, a structure, "
-                                "a block, or an array containing any of "
-                                "these.");
-            } else if (components > 4 && type->is_64bit()) {
+                                            "cannot be applied to a matrix, a structure, "
+                                            "a block, or an array containing any of "
+                                            "these.");
+            }
+            else if (components > 4 && type->is_64bit())
+            {
                _mesa_glsl_error(loc, state, "component layout qualifier "
-                                "cannot be applied to dvec%u.",
+                                            "cannot be applied to dvec%u.",
                                 components / 2);
-            } else if (qual_component != 0 &&
-                (qual_component + components - 1) > 3) {
+            }
+            else if (qual_component != 0 &&
+                     (qual_component + components - 1) > 3)
+            {
                _mesa_glsl_error(loc, state, "component overflow (%u > 3)",
                                 (qual_component + components - 1));
-            } else if (qual_component == 1 && type->is_64bit()) {
+            }
+            else if (qual_component == 1 && type->is_64bit())
+            {
                /* We don't bother checking for 3 as it should be caught by the
                 * overflow check above.
                 */
                _mesa_glsl_error(loc, state, "doubles cannot begin at "
-                                "component 1 or 3");
-            } else {
+                                            "component 1 or 3");
+            }
+            else
+            {
                var->data.explicit_component = true;
                var->data.location_frac = qual_component;
             }
          }
       }
-   } else if (qual->flags.q.explicit_index) {
+   }
+   else if (qual->flags.q.explicit_index)
+   {
       if (!qual->subroutine_list)
          _mesa_glsl_error(loc, state,
                           "explicit index requires explicit location");
-   } else if (qual->flags.q.explicit_component) {
+   }
+   else if (qual->flags.q.explicit_component)
+   {
       _mesa_glsl_error(loc, state,
                        "explicit component requires explicit location");
    }
 
-   if (qual->flags.q.explicit_binding) {
+   if (qual->flags.q.explicit_binding)
+   {
       apply_explicit_binding(state, loc, var, var->type, qual);
    }
 
    if (state->stage == MESA_SHADER_GEOMETRY &&
-       qual->flags.q.out && qual->flags.q.stream) {
+       qual->flags.q.out && qual->flags.q.stream)
+   {
       unsigned qual_stream;
       if (process_qualifier_constant(state, loc, "stream", qual->stream,
                                      &qual_stream) &&
-          validate_stream_qualifier(loc, state, qual_stream)) {
+          validate_stream_qualifier(loc, state, qual_stream))
+      {
          var->data.stream = qual_stream;
       }
    }
 
-   if (qual->flags.q.out && qual->flags.q.xfb_buffer) {
+   if (qual->flags.q.out && qual->flags.q.xfb_buffer)
+   {
       unsigned qual_xfb_buffer;
       if (process_qualifier_constant(state, loc, "xfb_buffer",
                                      qual->xfb_buffer, &qual_xfb_buffer) &&
-          validate_xfb_buffer_qualifier(loc, state, qual_xfb_buffer)) {
+          validate_xfb_buffer_qualifier(loc, state, qual_xfb_buffer))
+      {
          var->data.xfb_buffer = qual_xfb_buffer;
          if (qual->flags.q.explicit_xfb_buffer)
             var->data.explicit_xfb_buffer = true;
       }
    }
 
-   if (qual->flags.q.explicit_xfb_offset) {
+   if (qual->flags.q.explicit_xfb_offset)
+   {
       unsigned qual_xfb_offset;
       unsigned component_size = var->type->contains_double() ? 8 : 4;
 
       if (process_qualifier_constant(state, loc, "xfb_offset",
                                      qual->offset, &qual_xfb_offset) &&
-          validate_xfb_offset_qualifier(loc, state, (int) qual_xfb_offset,
-                                        var->type, component_size)) {
+          validate_xfb_offset_qualifier(loc, state, (int)qual_xfb_offset,
+                                        var->type, component_size))
+      {
          var->data.offset = qual_xfb_offset;
          var->data.explicit_xfb_offset = true;
       }
    }
 
-   if (qual->flags.q.explicit_xfb_stride) {
+   if (qual->flags.q.explicit_xfb_stride)
+   {
       unsigned qual_xfb_stride;
       if (process_qualifier_constant(state, loc, "xfb_stride",
-                                     qual->xfb_stride, &qual_xfb_stride)) {
+                                     qual->xfb_stride, &qual_xfb_stride))
+      {
          var->data.xfb_stride = qual_xfb_stride;
          var->data.explicit_xfb_stride = true;
       }
    }
 
-   if (var->type->contains_atomic()) {
-      if (var->data.mode == ir_var_uniform) {
-         if (var->data.explicit_binding) {
+   if (var->type->contains_atomic())
+   {
+      if (var->data.mode == ir_var_uniform)
+      {
+         if (var->data.explicit_binding)
+         {
             unsigned *offset =
-               &state->atomic_counter_offsets[var->data.binding];
+                &state->atomic_counter_offsets[var->data.binding];
 
             if (*offset % ATOMIC_COUNTER_SIZE)
                _mesa_glsl_error(loc, state,
@@ -3808,15 +4105,18 @@ apply_layout_qualifier_to_variable(const struct ast_type_qualifier *qual,
 
             var->data.offset = *offset;
             *offset += var->type->atomic_size();
-
-         } else {
+         }
+         else
+         {
             _mesa_glsl_error(loc, state,
                              "atomic counters require explicit binding point");
          }
-      } else if (var->data.mode != ir_var_function_in) {
+      }
+      else if (var->data.mode != ir_var_function_in)
+      {
          _mesa_glsl_error(loc, state, "atomic counters may only be declared as "
-                          "function parameters or uniform-qualified "
-                          "global variables");
+                                      "function parameters or uniform-qualified "
+                                      "global variables");
       }
    }
 
@@ -3845,16 +4145,19 @@ apply_layout_qualifier_to_variable(const struct ast_type_qualifier *qual,
     * allow layout with the deprecated keywords.
     */
    const bool relaxed_layout_qualifier_checking =
-      state->ARB_fragment_coord_conventions_enable;
+       state->ARB_fragment_coord_conventions_enable;
 
-   const bool uses_deprecated_qualifier = qual->flags.q.attribute
-      || qual->flags.q.varying;
-   if (qual->has_layout() && uses_deprecated_qualifier) {
-      if (relaxed_layout_qualifier_checking) {
+   const bool uses_deprecated_qualifier = qual->flags.q.attribute || qual->flags.q.varying;
+   if (qual->has_layout() && uses_deprecated_qualifier)
+   {
+      if (relaxed_layout_qualifier_checking)
+      {
          _mesa_glsl_warning(loc, state,
                             "`layout' qualifier may not be used with "
                             "`attribute' or `varying'");
-      } else {
+      }
+      else
+      {
          _mesa_glsl_error(loc, state,
                           "`layout' qualifier may not be used with "
                           "`attribute' or `varying'");
@@ -3864,22 +4167,22 @@ apply_layout_qualifier_to_variable(const struct ast_type_qualifier *qual,
    /* Layout qualifiers for gl_FragDepth, which are enabled by extension
     * AMD_conservative_depth.
     */
-   if (qual->flags.q.depth_type
-       && !state->is_version(420, 0)
-       && !state->AMD_conservative_depth_enable
-       && !state->ARB_conservative_depth_enable) {
-       _mesa_glsl_error(loc, state,
-                        "extension GL_AMD_conservative_depth or "
-                        "GL_ARB_conservative_depth must be enabled "
-                        "to use depth layout qualifiers");
-   } else if (qual->flags.q.depth_type
-              && strcmp(var->name, "gl_FragDepth") != 0) {
-       _mesa_glsl_error(loc, state,
-                        "depth layout qualifiers can be applied only to "
-                        "gl_FragDepth");
+   if (qual->flags.q.depth_type && !state->is_version(420, 0) && !state->AMD_conservative_depth_enable && !state->ARB_conservative_depth_enable)
+   {
+      _mesa_glsl_error(loc, state,
+                       "extension GL_AMD_conservative_depth or "
+                       "GL_ARB_conservative_depth must be enabled "
+                       "to use depth layout qualifiers");
+   }
+   else if (qual->flags.q.depth_type && strcmp(var->name, "gl_FragDepth") != 0)
+   {
+      _mesa_glsl_error(loc, state,
+                       "depth layout qualifiers can be applied only to "
+                       "gl_FragDepth");
    }
 
-   switch (qual->depth_type) {
+   switch (qual->depth_type)
+   {
    case ast_depth_any:
       var->data.depth_layout = ir_depth_layout_any;
       break;
@@ -3900,7 +4203,8 @@ apply_layout_qualifier_to_variable(const struct ast_type_qualifier *qual,
    if (qual->flags.q.std140 ||
        qual->flags.q.std430 ||
        qual->flags.q.packed ||
-       qual->flags.q.shared) {
+       qual->flags.q.shared)
+   {
       _mesa_glsl_error(loc, state,
                        "uniform and shader storage block layout qualifiers "
                        "std140, std430, packed, and shared can only be "
@@ -3908,7 +4212,8 @@ apply_layout_qualifier_to_variable(const struct ast_type_qualifier *qual,
                        "members");
    }
 
-   if (qual->flags.q.row_major || qual->flags.q.column_major) {
+   if (qual->flags.q.row_major || qual->flags.q.column_major)
+   {
       validate_matrix_layout_for_type(state, loc, var->type, var);
    }
 
@@ -3921,19 +4226,22 @@ apply_layout_qualifier_to_variable(const struct ast_type_qualifier *qual,
     *        early_fragment_tests
     *   [...]"
     */
-   if (qual->flags.q.early_fragment_tests) {
+   if (qual->flags.q.early_fragment_tests)
+   {
       _mesa_glsl_error(loc, state, "early_fragment_tests layout qualifier only "
-                       "valid in fragment shader input layout declaration.");
+                                   "valid in fragment shader input layout declaration.");
    }
 
-   if (qual->flags.q.inner_coverage) {
+   if (qual->flags.q.inner_coverage)
+   {
       _mesa_glsl_error(loc, state, "inner_coverage layout qualifier only "
-                       "valid in fragment shader input layout declaration.");
+                                   "valid in fragment shader input layout declaration.");
    }
 
-   if (qual->flags.q.post_depth_coverage) {
+   if (qual->flags.q.post_depth_coverage)
+   {
       _mesa_glsl_error(loc, state, "post_depth_coverage layout qualifier only "
-                       "valid in fragment shader input layout declaration.");
+                                   "valid in fragment shader input layout declaration.");
    }
 
    if (state->has_bindless())
@@ -3942,23 +4250,29 @@ apply_layout_qualifier_to_variable(const struct ast_type_qualifier *qual,
    if (qual->flags.q.pixel_interlock_ordered ||
        qual->flags.q.pixel_interlock_unordered ||
        qual->flags.q.sample_interlock_ordered ||
-       qual->flags.q.sample_interlock_unordered) {
+       qual->flags.q.sample_interlock_unordered)
+   {
       _mesa_glsl_error(loc, state, "interlock layout qualifiers: "
-                       "pixel_interlock_ordered, pixel_interlock_unordered, "
-                       "sample_interlock_ordered and sample_interlock_unordered, "
-                       "only valid in fragment shader input layout declaration.");
+                                   "pixel_interlock_ordered, pixel_interlock_unordered, "
+                                   "sample_interlock_ordered and sample_interlock_unordered, "
+                                   "only valid in fragment shader input layout declaration.");
    }
 
-   if (var->name != NULL && strcmp(var->name, "gl_Layer") == 0) {
-      if (is_conflicting_layer_redeclaration(state, qual)) {
+   if (var->name != NULL && strcmp(var->name, "gl_Layer") == 0)
+   {
+      if (is_conflicting_layer_redeclaration(state, qual))
+      {
          _mesa_glsl_error(loc, state, "gl_Layer redeclaration with "
-                          "different viewport_relative setting than earlier");
+                                      "different viewport_relative setting than earlier");
       }
       state->redeclares_gl_layer = 1;
-      if (qual->flags.q.viewport_relative) {
+      if (qual->flags.q.viewport_relative)
+      {
          state->layer_viewport_relative = 1;
       }
-   } else if (qual->flags.q.viewport_relative) {
+   }
+   else if (qual->flags.q.viewport_relative)
+   {
       _mesa_glsl_error(loc, state,
                        "viewport_relative qualifier "
                        "can only be applied to gl_Layer.");
@@ -3974,38 +4288,45 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 {
    STATIC_ASSERT(sizeof(qual->flags.q) <= sizeof(qual->flags.i));
 
-   if (qual->flags.q.invariant) {
-      if (var->data.used) {
+   if (qual->flags.q.invariant)
+   {
+      if (var->data.used)
+      {
          _mesa_glsl_error(loc, state,
                           "variable `%s' may not be redeclared "
                           "`invariant' after being used",
                           var->name);
-      } else {
+      }
+      else
+      {
          var->data.explicit_invariant = true;
          var->data.invariant = true;
       }
    }
 
-   if (qual->flags.q.precise) {
-      if (var->data.used) {
+   if (qual->flags.q.precise)
+   {
+      if (var->data.used)
+      {
          _mesa_glsl_error(loc, state,
                           "variable `%s' may not be redeclared "
                           "`precise' after being used",
                           var->name);
-      } else {
+      }
+      else
+      {
          var->data.precise = 1;
       }
    }
 
-   if (qual->is_subroutine_decl() && !qual->flags.q.uniform) {
+   if (qual->is_subroutine_decl() && !qual->flags.q.uniform)
+   {
       _mesa_glsl_error(loc, state,
                        "`subroutine' may only be applied to uniforms, "
                        "subroutine type declarations, or function definitions");
    }
 
-   if (qual->flags.q.constant || qual->flags.q.attribute
-       || qual->flags.q.uniform
-       || (qual->flags.q.varying && (state->stage == MESA_SHADER_FRAGMENT)))
+   if (qual->flags.q.constant || qual->flags.q.attribute || qual->flags.q.uniform || (qual->flags.q.varying && (state->stage == MESA_SHADER_FRAGMENT)))
       var->data.read_only = 1;
 
    if (qual->flags.q.centroid)
@@ -4015,15 +4336,17 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       var->data.sample = 1;
 
    /* Precision qualifiers do not hold any meaning in Desktop GLSL */
-   if (state->es_shader) {
+   if (state->es_shader)
+   {
       var->data.precision =
-         select_gles_precision(qual->precision, var->type, state, loc);
+          select_gles_precision(qual->precision, var->type, state, loc);
    }
 
    if (qual->flags.q.patch)
       var->data.patch = 1;
 
-   if (qual->flags.q.attribute && state->stage != MESA_SHADER_VERTEX) {
+   if (qual->flags.q.attribute && state->stage != MESA_SHADER_VERTEX)
+   {
       var->type = glsl_type::error_type;
       _mesa_glsl_error(loc, state,
                        "`attribute' variables may not be declared in the "
@@ -4032,7 +4355,8 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    }
 
    /* Disallow layout qualifiers which may only appear on layout declarations. */
-   if (qual->flags.q.prim_type) {
+   if (qual->flags.q.prim_type)
+   {
       _mesa_glsl_error(loc, state,
                        "Primitive type may only be specified on GS input or output "
                        "layout declaration, not on variables.");
@@ -4047,7 +4371,8 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
     *     "The const qualifier cannot be used with out or inout, or a
     *     compile-time error results."
     */
-   if (is_parameter && qual->flags.q.constant && qual->flags.q.out) {
+   if (is_parameter && qual->flags.q.constant && qual->flags.q.out)
+   {
       _mesa_glsl_error(loc, state,
                        "`const' may not be applied to `out' or `inout' "
                        "function parameters");
@@ -4061,8 +4386,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       var->data.mode = is_parameter ? ir_var_function_inout : ir_var_shader_out;
    else if (qual->flags.q.in)
       var->data.mode = is_parameter ? ir_var_function_in : ir_var_shader_in;
-   else if (qual->flags.q.attribute
-            || (qual->flags.q.varying && (state->stage == MESA_SHADER_FRAGMENT)))
+   else if (qual->flags.q.attribute || (qual->flags.q.varying && (state->stage == MESA_SHADER_FRAGMENT)))
       var->data.mode = ir_var_shader_in;
    else if (qual->flags.q.out)
       var->data.mode = is_parameter ? ir_var_function_out : ir_var_shader_out;
@@ -4076,14 +4400,16 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       var->data.mode = ir_var_shader_shared;
 
    if (!is_parameter && state->has_framebuffer_fetch() &&
-       state->stage == MESA_SHADER_FRAGMENT) {
+       state->stage == MESA_SHADER_FRAGMENT)
+   {
       if (state->is_version(130, 300))
          var->data.fb_fetch_output = qual->flags.q.in && qual->flags.q.out;
       else
          var->data.fb_fetch_output = (strcmp(var->name, "gl_LastFragData") == 0);
    }
 
-   if (var->data.fb_fetch_output) {
+   if (var->data.fb_fetch_output)
+   {
       var->data.assigned = true;
       var->data.memory_coherent = !qual->flags.q.non_coherent;
 
@@ -4098,8 +4424,9 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
          _mesa_glsl_error(loc, state,
                           "invalid declaration of framebuffer fetch output not "
                           "qualified with layout(noncoherent)");
-
-   } else {
+   }
+   else
+   {
       /* From the EXT_shader_framebuffer_fetch spec:
        *
        *   "Fragment outputs declared inout may specify the following layout
@@ -4111,9 +4438,11 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
                           "framebuffer fetch output declaration");
    }
 
-   if (!is_parameter && is_varying_var(var, state->stage)) {
+   if (!is_parameter && is_varying_var(var, state->stage))
+   {
       /* User-defined ins/outs are not permitted in compute shaders. */
-      if (state->stage == MESA_SHADER_COMPUTE) {
+      if (state->stage == MESA_SHADER_COMPUTE)
+      {
          _mesa_glsl_error(loc, state,
                           "user-defined input and output variables are not "
                           "permitted in compute shaders");
@@ -4157,7 +4486,8 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
        *     integer vectors, sampler or image types, or arrays or structures
        *     of any these."
        */
-      switch (var->type->without_array()->base_type) {
+      switch (var->type->without_array()->base_type)
+      {
       case GLSL_TYPE_FLOAT:
          /* Ok in all GLSL versions */
          break;
@@ -4190,22 +4520,21 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       }
    }
 
-   if (state->all_invariant && var->data.mode == ir_var_shader_out) {
+   if (state->all_invariant && var->data.mode == ir_var_shader_out)
+   {
       var->data.explicit_invariant = true;
       var->data.invariant = true;
    }
 
    var->data.interpolation =
-      interpret_interpolation_qualifier(qual, var->type,
-                                        (ir_variable_mode) var->data.mode,
-                                        state, loc);
+       interpret_interpolation_qualifier(qual, var->type,
+                                         (ir_variable_mode)var->data.mode,
+                                         state, loc);
 
    /* Does the declaration use the deprecated 'attribute' or 'varying'
     * keywords?
     */
-   const bool uses_deprecated_qualifier = qual->flags.q.attribute
-      || qual->flags.q.varying;
-
+   const bool uses_deprecated_qualifier = qual->flags.q.attribute || qual->flags.q.varying;
 
    /* Validate auxiliary storage qualifiers */
 
@@ -4224,18 +4553,21 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
     * "It is an error to use auxiliary storage qualifiers or interpolation
     *  qualifiers on an output in a fragment shader."
     */
-   if (qual->flags.q.sample && (!is_varying_var(var, state->stage) || uses_deprecated_qualifier)) {
+   if (qual->flags.q.sample && (!is_varying_var(var, state->stage) || uses_deprecated_qualifier))
+   {
       _mesa_glsl_error(loc, state,
                        "sample qualifier may only be used on `in` or `out` "
                        "variables between shader stages");
    }
-   if (qual->flags.q.centroid && !is_varying_var(var, state->stage)) {
+   if (qual->flags.q.centroid && !is_varying_var(var, state->stage))
+   {
       _mesa_glsl_error(loc, state,
                        "centroid qualifier may only be used with `in', "
                        "`out' or `varying' variables between shader stages");
    }
 
-   if (qual->flags.q.shared_storage && state->stage != MESA_SHADER_COMPUTE) {
+   if (qual->flags.q.shared_storage && state->stage != MESA_SHADER_COMPUTE)
+   {
       _mesa_glsl_error(loc, state,
                        "the shared storage qualifiers can only be used with "
                        "compute shaders");
@@ -4275,14 +4607,16 @@ get_variable_being_redeclared(ir_variable **var_ptr, YYLTYPE loc,
    ir_variable *earlier = state->symbols->get_variable(var->name);
    if (earlier == NULL ||
        (state->current_function != NULL &&
-       !state->symbols->name_declared_this_scope(var->name))) {
+        !state->symbols->name_declared_this_scope(var->name)))
+   {
       *is_redeclaration = false;
       return var;
    }
 
    *is_redeclaration = true;
 
-   if (earlier->data.how_declared == ir_var_declared_implicitly) {
+   if (earlier->data.how_declared == ir_var_declared_implicitly)
+   {
       /* Verify that the redeclaration of a built-in does not change the
        * storage qualifier.  There are a couple special cases.
        *
@@ -4298,7 +4632,8 @@ get_variable_being_redeclared(ir_variable **var_ptr, YYLTYPE loc,
           !(earlier->data.mode == ir_var_system_value &&
             var->data.mode == ir_var_shader_in) &&
           !(strcmp(var->name, "gl_LastFragData") == 0 &&
-            var->data.mode == ir_var_auto)) {
+            var->data.mode == ir_var_auto))
+      {
          _mesa_glsl_error(&loc, state,
                           "redeclaration cannot change qualification of `%s'",
                           var->name);
@@ -4311,13 +4646,14 @@ get_variable_being_redeclared(ir_variable **var_ptr, YYLTYPE loc,
     *  later re-declare the same name as an array of the same
     *  type and specify a size."
     */
-   if (earlier->type->is_unsized_array() && var->type->is_array()
-       && (var->type->fields.array == earlier->type->fields.array)) {
+   if (earlier->type->is_unsized_array() && var->type->is_array() && (var->type->fields.array == earlier->type->fields.array))
+   {
       const int size = var->type->array_size();
       check_builtin_array_max_size(var->name, size, loc, state);
-      if ((size > 0) && (size <= earlier->data.max_array_access)) {
-         _mesa_glsl_error(& loc, state, "array size must be > %u due to "
-                          "previous access",
+      if ((size > 0) && (size <= earlier->data.max_array_access))
+      {
+         _mesa_glsl_error(&loc, state, "array size must be > %u due to "
+                                       "previous access",
                           earlier->data.max_array_access);
       }
 
@@ -4325,13 +4661,17 @@ get_variable_being_redeclared(ir_variable **var_ptr, YYLTYPE loc,
       delete var;
       var = NULL;
       *var_ptr = NULL;
-   } else if (earlier->type != var->type) {
+   }
+   else if (earlier->type != var->type)
+   {
       _mesa_glsl_error(&loc, state,
                        "redeclaration of `%s' has incorrect type",
                        var->name);
-   } else if ((state->ARB_fragment_coord_conventions_enable ||
-              state->is_version(150, 0))
-              && strcmp(var->name, "gl_FragCoord") == 0) {
+   }
+   else if ((state->ARB_fragment_coord_conventions_enable ||
+             state->is_version(150, 0)) &&
+            strcmp(var->name, "gl_FragCoord") == 0)
+   {
       /* Allow redeclaration of gl_FragCoord for ARB_fcc layout
        * qualifiers.
        *
@@ -4351,47 +4691,47 @@ get_variable_being_redeclared(ir_variable **var_ptr, YYLTYPE loc,
        *    * gl_Color
        *    * gl_SecondaryColor
        */
-   } else if (state->is_version(130, 0)
-              && (strcmp(var->name, "gl_FrontColor") == 0
-                  || strcmp(var->name, "gl_BackColor") == 0
-                  || strcmp(var->name, "gl_FrontSecondaryColor") == 0
-                  || strcmp(var->name, "gl_BackSecondaryColor") == 0
-                  || strcmp(var->name, "gl_Color") == 0
-                  || strcmp(var->name, "gl_SecondaryColor") == 0)) {
+   }
+   else if (state->is_version(130, 0) && (strcmp(var->name, "gl_FrontColor") == 0 || strcmp(var->name, "gl_BackColor") == 0 || strcmp(var->name, "gl_FrontSecondaryColor") == 0 || strcmp(var->name, "gl_BackSecondaryColor") == 0 || strcmp(var->name, "gl_Color") == 0 || strcmp(var->name, "gl_SecondaryColor") == 0))
+   {
       earlier->data.interpolation = var->data.interpolation;
 
       /* Layout qualifiers for gl_FragDepth. */
-   } else if ((state->is_version(420, 0) ||
-               state->AMD_conservative_depth_enable ||
-               state->ARB_conservative_depth_enable)
-              && strcmp(var->name, "gl_FragDepth") == 0) {
+   }
+   else if ((state->is_version(420, 0) ||
+             state->AMD_conservative_depth_enable ||
+             state->ARB_conservative_depth_enable) &&
+            strcmp(var->name, "gl_FragDepth") == 0)
+   {
 
       /** From the AMD_conservative_depth spec:
        *     Within any shader, the first redeclarations of gl_FragDepth
        *     must appear before any use of gl_FragDepth.
        */
-      if (earlier->data.used) {
+      if (earlier->data.used)
+      {
          _mesa_glsl_error(&loc, state,
                           "the first redeclaration of gl_FragDepth "
                           "must appear before any use of gl_FragDepth");
       }
 
       /* Prevent inconsistent redeclaration of depth layout qualifier. */
-      if (earlier->data.depth_layout != ir_depth_layout_none
-          && earlier->data.depth_layout != var->data.depth_layout) {
-            _mesa_glsl_error(&loc, state,
-                             "gl_FragDepth: depth layout is declared here "
-                             "as '%s, but it was previously declared as "
-                             "'%s'",
-                             depth_layout_string(var->data.depth_layout),
-                             depth_layout_string(earlier->data.depth_layout));
+      if (earlier->data.depth_layout != ir_depth_layout_none && earlier->data.depth_layout != var->data.depth_layout)
+      {
+         _mesa_glsl_error(&loc, state,
+                          "gl_FragDepth: depth layout is declared here "
+                          "as '%s, but it was previously declared as "
+                          "'%s'",
+                          depth_layout_string(var->data.depth_layout),
+                          depth_layout_string(earlier->data.depth_layout));
       }
 
       earlier->data.depth_layout = var->data.depth_layout;
-
-   } else if (state->has_framebuffer_fetch() &&
-              strcmp(var->name, "gl_LastFragData") == 0 &&
-              var->data.mode == ir_var_auto) {
+   }
+   else if (state->has_framebuffer_fetch() &&
+            strcmp(var->name, "gl_LastFragData") == 0 &&
+            var->data.mode == ir_var_auto)
+   {
       /* According to the EXT_shader_framebuffer_fetch spec:
        *
        *   "By default, gl_LastFragData is declared with the mediump precision
@@ -4403,19 +4743,23 @@ get_variable_being_redeclared(ir_variable **var_ptr, YYLTYPE loc,
        */
       earlier->data.precision = var->data.precision;
       earlier->data.memory_coherent = var->data.memory_coherent;
-
-   } else if (state->NV_viewport_array2_enable &&
-              strcmp(var->name, "gl_Layer") == 0 &&
-              earlier->data.how_declared == ir_var_declared_implicitly) {
+   }
+   else if (state->NV_viewport_array2_enable &&
+            strcmp(var->name, "gl_Layer") == 0 &&
+            earlier->data.how_declared == ir_var_declared_implicitly)
+   {
       /* No need to do anything, just allow it. Qualifier is stored in state */
-
-   } else if ((earlier->data.how_declared == ir_var_declared_implicitly &&
-               state->allow_builtin_variable_redeclaration) ||
-              allow_all_redeclarations) {
+   }
+   else if ((earlier->data.how_declared == ir_var_declared_implicitly &&
+             state->allow_builtin_variable_redeclaration) ||
+            allow_all_redeclarations)
+   {
       /* Allow verbatim redeclarations of built-in variables. Not explicitly
        * valid, but some applications do it.
        */
-   } else {
+   }
+   else
+   {
       _mesa_glsl_error(&loc, state, "`%s' redeclared", var->name);
    }
 
@@ -4442,7 +4786,8 @@ process_initializer(ir_variable *var, ast_declaration *decl,
     *    directly by an application via API commands, or indirectly by
     *    OpenGL."
     */
-   if (var->data.mode == ir_var_uniform) {
+   if (var->data.mode == ir_var_uniform)
+   {
       state->check_version(120, 0, &initializer_loc,
                            "cannot initialize uniform %s",
                            var->name);
@@ -4452,7 +4797,8 @@ process_initializer(ir_variable *var, ast_declaration *decl,
     *
     *    "Buffer variables cannot have initializers."
     */
-   if (var->data.mode == ir_var_shader_storage) {
+   if (var->data.mode == ir_var_shader_storage)
+   {
       _mesa_glsl_error(&initializer_loc, state,
                        "cannot initialize buffer variable %s",
                        var->name);
@@ -4475,22 +4821,26 @@ process_initializer(ir_variable *var, ast_declaration *decl,
     *     variables, as temporary variables, and as function parameters."
     */
    if (var->type->contains_atomic() ||
-       (!state->has_bindless() && var->type->contains_opaque())) {
+       (!state->has_bindless() && var->type->contains_opaque()))
+   {
       _mesa_glsl_error(&initializer_loc, state,
                        "cannot initialize %s variable %s",
                        var->name, state->has_bindless() ? "atomic" : "opaque");
    }
 
-   if ((var->data.mode == ir_var_shader_in) && (state->current_function == NULL)) {
+   if ((var->data.mode == ir_var_shader_in) && (state->current_function == NULL))
+   {
       _mesa_glsl_error(&initializer_loc, state,
                        "cannot initialize %s shader input / %s %s",
                        _mesa_shader_stage_to_string(state->stage),
                        (state->stage == MESA_SHADER_VERTEX)
-                       ? "attribute" : "varying",
+                           ? "attribute"
+                           : "varying",
                        var->name);
    }
 
-   if (var->data.mode == ir_var_shader_out && state->current_function == NULL) {
+   if (var->data.mode == ir_var_shader_out && state->current_function == NULL)
+   {
       _mesa_glsl_error(&initializer_loc, state,
                        "cannot initialize %s shader output %s",
                        _mesa_shader_stage_to_string(state->stage),
@@ -4504,7 +4854,7 @@ process_initializer(ir_variable *var, ast_declaration *decl,
    if (decl->initializer->oper == ast_aggregate)
       _mesa_ast_set_aggregate_type(var->type, decl->initializer);
 
-   ir_dereference *const lhs = new(state) ir_dereference_variable(var);
+   ir_dereference *const lhs = new (state) ir_dereference_variable(var);
    ir_rvalue *rhs = decl->initializer->hir(initializer_instructions, state);
 
    /* Calculate the constant value if this is a const or uniform
@@ -4519,12 +4869,12 @@ process_initializer(ir_variable *var, ast_declaration *decl,
     *
     * The same section of the GLSL ES 3.00.4 spec has similar language.
     */
-   if (type->qualifier.flags.q.constant
-       || type->qualifier.flags.q.uniform
-       || (state->es_shader && state->current_function == NULL)) {
+   if (type->qualifier.flags.q.constant || type->qualifier.flags.q.uniform || (state->es_shader && state->current_function == NULL))
+   {
       ir_rvalue *new_rhs = validate_assignment(state, initializer_loc,
                                                lhs, rhs, true);
-      if (new_rhs != NULL) {
+      if (new_rhs != NULL)
+      {
          rhs = new_rhs;
 
          /* Section 4.3.3 (Constant Expressions) of the GLSL ES 3.00.4 spec
@@ -4567,49 +4917,60 @@ process_initializer(ir_variable *var, ast_declaration *decl,
           * versions.
           */
          ir_constant *constant_value =
-            rhs->constant_expression_value(mem_ctx);
+             rhs->constant_expression_value(mem_ctx);
 
          if (!constant_value ||
              (state->is_version(430, 300) &&
-              decl->initializer->has_sequence_subexpression())) {
+              decl->initializer->has_sequence_subexpression()))
+         {
             const char *const variable_mode =
-               (type->qualifier.flags.q.constant)
-               ? "const"
-               : ((type->qualifier.flags.q.uniform) ? "uniform" : "global");
+                (type->qualifier.flags.q.constant)
+                    ? "const"
+                    : ((type->qualifier.flags.q.uniform) ? "uniform" : "global");
 
             /* If ARB_shading_language_420pack is enabled, initializers of
              * const-qualified local variables do not have to be constant
              * expressions. Const-qualified global variables must still be
              * initialized with constant expressions.
              */
-            if (!state->has_420pack()
-                || state->current_function == NULL) {
-               _mesa_glsl_error(& initializer_loc, state,
+            if (!state->has_420pack() || state->current_function == NULL)
+            {
+               _mesa_glsl_error(&initializer_loc, state,
                                 "initializer of %s variable `%s' must be a "
                                 "constant expression",
                                 variable_mode,
                                 decl->identifier);
-               if (var->type->is_numeric()) {
+               if (var->type->is_numeric())
+               {
                   /* Reduce cascading errors. */
                   var->constant_value = type->qualifier.flags.q.constant
-                     ? ir_constant::zero(state, var->type) : NULL;
+                                            ? ir_constant::zero(state, var->type)
+                                            : NULL;
                }
             }
-         } else {
+         }
+         else
+         {
             rhs = constant_value;
             var->constant_value = type->qualifier.flags.q.constant
-               ? constant_value : NULL;
+                                      ? constant_value
+                                      : NULL;
          }
-      } else {
-         if (var->type->is_numeric()) {
+      }
+      else
+      {
+         if (var->type->is_numeric())
+         {
             /* Reduce cascading errors. */
             rhs = var->constant_value = type->qualifier.flags.q.constant
-               ? ir_constant::zero(state, var->type) : NULL;
+                                            ? ir_constant::zero(state, var->type)
+                                            : NULL;
          }
       }
    }
 
-   if (rhs && !rhs->type->is_error()) {
+   if (rhs && !rhs->type->is_error())
+   {
       bool temp = var->data.read_only;
       if (type->qualifier.flags.q.constant)
          var->data.read_only = false;
@@ -4618,17 +4979,20 @@ process_initializer(ir_variable *var, ast_declaration *decl,
        */
       const glsl_type *initializer_type;
       bool error_emitted = false;
-      if (!type->qualifier.flags.q.uniform) {
+      if (!type->qualifier.flags.q.uniform)
+      {
          error_emitted =
-            do_assignment(initializer_instructions, state,
-                          NULL, lhs, rhs,
-                          &result, true, true,
-                          type->get_location());
+             do_assignment(initializer_instructions, state,
+                           NULL, lhs, rhs,
+                           &result, true, true,
+                           type->get_location());
          initializer_type = result->type;
-      } else
+      }
+      else
          initializer_type = rhs->type;
 
-      if (!error_emitted) {
+      if (!error_emitted)
+      {
          var->constant_initializer = rhs->constant_expression_value(mem_ctx);
          var->data.has_initializer = true;
          var->data.is_implicit_initializer = false;
@@ -4669,7 +5033,8 @@ validate_layout_qualifier_vertex_count(struct _mesa_glsl_parse_state *state,
                                        unsigned *size,
                                        const char *var_category)
 {
-   if (var->type->is_unsized_array()) {
+   if (var->type->is_unsized_array())
+   {
       /* Section 4.3.8.1 (Input Layout Qualifiers) of the GLSL 1.50 spec says:
        *
        *   All geometry shader input unsized array declarations will be
@@ -4684,7 +5049,9 @@ validate_layout_qualifier_vertex_count(struct _mesa_glsl_parse_state *state,
       if (num_vertices != 0)
          var->type = glsl_type::get_array_instance(var->type->fields.array,
                                                    num_vertices);
-   } else {
+   }
+   else
+   {
       /* Section 4.3.8.1 (Input Layout Qualifiers) of the GLSL 1.50 spec
        * includes the following examples of compile-time errors:
        *
@@ -4704,17 +5071,22 @@ validate_layout_qualifier_vertex_count(struct _mesa_glsl_parse_state *state,
        * verify that the size of an explicitly-sized array is consistent with
        * any previously declared input layout.
        */
-      if (num_vertices != 0 && var->type->length != num_vertices) {
+      if (num_vertices != 0 && var->type->length != num_vertices)
+      {
          _mesa_glsl_error(&loc, state,
                           "%s size contradicts previously declared layout "
                           "(size is %u, but layout requires a size of %u)",
                           var_category, var->type->length, num_vertices);
-      } else if (*size != 0 && var->type->length != *size) {
+      }
+      else if (*size != 0 && var->type->length != *size)
+      {
          _mesa_glsl_error(&loc, state,
                           "%s sizes are inconsistent (size is %u, but a "
                           "previous declaration has size %u)",
                           var_category, var->type->length, *size);
-      } else {
+      }
+      else
+      {
          *size = var->type->length;
       }
    }
@@ -4726,21 +5098,25 @@ handle_tess_ctrl_shader_output_decl(struct _mesa_glsl_parse_state *state,
 {
    unsigned num_vertices = 0;
 
-   if (state->tcs_output_vertices_specified) {
-      if (!state->out_qualifier->vertices->
-             process_qualifier_constant(state, "vertices",
-                                        &num_vertices, false)) {
+   if (state->tcs_output_vertices_specified)
+   {
+      if (!state->out_qualifier->vertices->process_qualifier_constant(state, "vertices",
+                                                                      &num_vertices, false))
+      {
          return;
       }
 
-      if (num_vertices > state->Const.MaxPatchVertices) {
+      if (num_vertices > state->Const.MaxPatchVertices)
+      {
          _mesa_glsl_error(&loc, state, "vertices (%d) exceeds "
-                          "GL_MAX_PATCH_VERTICES", num_vertices);
+                                       "GL_MAX_PATCH_VERTICES",
+                          num_vertices);
          return;
       }
    }
 
-   if (!var->type->is_array() && !var->data.patch) {
+   if (!var->type->is_array() && !var->data.patch)
+   {
       _mesa_glsl_error(&loc, state,
                        "tessellation control shader outputs must be arrays");
 
@@ -4765,7 +5141,8 @@ static void
 handle_tess_shader_input_decl(struct _mesa_glsl_parse_state *state,
                               YYLTYPE loc, ir_variable *var)
 {
-   if (!var->type->is_array() && !var->data.patch) {
+   if (!var->type->is_array() && !var->data.patch)
+   {
       _mesa_glsl_error(&loc, state,
                        "per-vertex tessellation shader inputs must be arrays");
       /* Avoid cascading failures. */
@@ -4784,17 +5161,19 @@ handle_tess_shader_input_decl(struct _mesa_glsl_parse_state *state,
     *
     * This text appears twice, once for TCS inputs, and again for TES inputs.
     */
-   if (var->type->is_unsized_array()) {
+   if (var->type->is_unsized_array())
+   {
       var->type = glsl_type::get_array_instance(var->type->fields.array,
-            state->Const.MaxPatchVertices);
-   } else if (var->type->length != state->Const.MaxPatchVertices) {
+                                                state->Const.MaxPatchVertices);
+   }
+   else if (var->type->length != state->Const.MaxPatchVertices)
+   {
       _mesa_glsl_error(&loc, state,
                        "per-vertex tessellation shader input arrays must be "
                        "sized to gl_MaxPatchVertices (%d).",
                        state->Const.MaxPatchVertices);
    }
 }
-
 
 /**
  * Do additional processing necessary for geometry shader input declarations
@@ -4806,14 +5185,16 @@ handle_geometry_shader_input_decl(struct _mesa_glsl_parse_state *state,
 {
    unsigned num_vertices = 0;
 
-   if (state->gs_input_prim_type_specified) {
+   if (state->gs_input_prim_type_specified)
+   {
       num_vertices = vertices_per_prim(state->in_qualifier->prim_type);
    }
 
    /* Geometry shader input variables must be arrays.  Caller should have
     * reported an error for this.
     */
-   if (!var->type->is_array()) {
+   if (!var->type->is_array())
+   {
       assert(state->error);
 
       /* To avoid cascading failures, short circuit the checks below. */
@@ -4835,11 +5216,14 @@ validate_identifier(const char *identifier, YYLTYPE loc,
     *   OpenGL, and may not be declared in a shader as either a
     *   variable or a function."
     */
-   if (is_gl_identifier(identifier)) {
+   if (is_gl_identifier(identifier))
+   {
       _mesa_glsl_error(&loc, state,
                        "identifier `%s' uses reserved `gl_' prefix",
                        identifier);
-   } else if (strstr(identifier, "__")) {
+   }
+   else if (strstr(identifier, "__"))
+   {
       /* From page 14 (page 20 of the PDF) of the GLSL 1.10
        * spec:
        *
@@ -4881,35 +5265,47 @@ ast_declarator_list::hir(exec_list *instructions,
     * In these cases the parser will set the 'invariant' flag in the declarator
     * list, and the type will be NULL.
     */
-   if (this->invariant) {
+   if (this->invariant)
+   {
       assert(this->type == NULL);
 
-      if (state->current_function != NULL) {
-         _mesa_glsl_error(& loc, state,
+      if (state->current_function != NULL)
+      {
+         _mesa_glsl_error(&loc, state,
                           "all uses of `invariant' keyword must be at global "
                           "scope");
       }
 
-      foreach_list_typed (ast_declaration, decl, link, &this->declarations) {
+      foreach_list_typed(ast_declaration, decl, link, &this->declarations)
+      {
          assert(decl->array_specifier == NULL);
          assert(decl->initializer == NULL);
 
          ir_variable *const earlier =
-            state->symbols->get_variable(decl->identifier);
-         if (earlier == NULL) {
-            _mesa_glsl_error(& loc, state,
+             state->symbols->get_variable(decl->identifier);
+         if (earlier == NULL)
+         {
+            _mesa_glsl_error(&loc, state,
                              "undeclared variable `%s' cannot be marked "
-                             "invariant", decl->identifier);
-         } else if (!is_allowed_invariant(earlier, state)) {
+                             "invariant",
+                             decl->identifier);
+         }
+         else if (!is_allowed_invariant(earlier, state))
+         {
             _mesa_glsl_error(&loc, state,
                              "`%s' cannot be marked invariant; interfaces between "
-                             "shader stages only.", decl->identifier);
-         } else if (earlier->data.used) {
-            _mesa_glsl_error(& loc, state,
-                            "variable `%s' may not be redeclared "
-                            "`invariant' after being used",
-                            earlier->name);
-         } else {
+                             "shader stages only.",
+                             decl->identifier);
+         }
+         else if (earlier->data.used)
+         {
+            _mesa_glsl_error(&loc, state,
+                             "variable `%s' may not be redeclared "
+                             "`invariant' after being used",
+                             earlier->name);
+         }
+         else
+         {
             earlier->data.explicit_invariant = true;
             earlier->data.invariant = true;
          }
@@ -4920,34 +5316,44 @@ ast_declarator_list::hir(exec_list *instructions,
       return NULL;
    }
 
-   if (this->precise) {
+   if (this->precise)
+   {
       assert(this->type == NULL);
 
-      foreach_list_typed (ast_declaration, decl, link, &this->declarations) {
+      foreach_list_typed(ast_declaration, decl, link, &this->declarations)
+      {
          assert(decl->array_specifier == NULL);
          assert(decl->initializer == NULL);
 
          ir_variable *const earlier =
-            state->symbols->get_variable(decl->identifier);
-         if (earlier == NULL) {
-            _mesa_glsl_error(& loc, state,
+             state->symbols->get_variable(decl->identifier);
+         if (earlier == NULL)
+         {
+            _mesa_glsl_error(&loc, state,
                              "undeclared variable `%s' cannot be marked "
-                             "precise", decl->identifier);
-         } else if (state->current_function != NULL &&
-                    !state->symbols->name_declared_this_scope(decl->identifier)) {
+                             "precise",
+                             decl->identifier);
+         }
+         else if (state->current_function != NULL &&
+                  !state->symbols->name_declared_this_scope(decl->identifier))
+         {
             /* Note: we have to check if we're in a function, since
              * builtins are treated as having come from another scope.
              */
-            _mesa_glsl_error(& loc, state,
+            _mesa_glsl_error(&loc, state,
                              "variable `%s' from an outer scope may not be "
                              "redeclared `precise' in this scope",
                              earlier->name);
-         } else if (earlier->data.used) {
-            _mesa_glsl_error(& loc, state,
+         }
+         else if (earlier->data.used)
+         {
+            _mesa_glsl_error(&loc, state,
                              "variable `%s' may not be redeclared "
                              "`precise' after being used",
                              earlier->name);
-         } else {
+         }
+         else
+         {
             earlier->data.precise = true;
          }
       }
@@ -4965,8 +5371,9 @@ ast_declarator_list::hir(exec_list *instructions,
     * This is done here, based on the layout qualifier and the type of the image var
     */
    if (this->type->qualifier.flags.q.explicit_image_format &&
-         this->type->specifier->type->is_image() &&
-         this->type->qualifier.image_base_type == GLSL_TYPE_VOID) {
+       this->type->specifier->type->is_image() &&
+       this->type->qualifier.image_base_type == GLSL_TYPE_VOID)
+   {
       /*     "The ARB_shader_image_load_store says:
        *     If both extensions are enabled in the shading language, the "size*" layout
        *     qualifiers are treated as format qualifiers, and are mapped to equivalent
@@ -4980,14 +5387,16 @@ ast_declarator_list::hir(exec_list *instructions,
        *       size2x32      rg32f     rg32i     rg32ui
        *       size4x32      rgba32f   rgba32i   rgba32ui"
        */
-      if (strncmp(this->type->specifier->type_name, "image", strlen("image")) == 0) {
-         switch (this->type->qualifier.image_format) {
+      if (strncmp(this->type->specifier->type_name, "image", strlen("image")) == 0)
+      {
+         switch (this->type->qualifier.image_format)
+         {
          case PIPE_FORMAT_R8_SINT:
             /* The GL_EXT_shader_image_load_store spec says:
              *    A layout of "size1x8" is illegal for image variables associated
              *    with floating-point data types.
              */
-            _mesa_glsl_error(& loc, state,
+            _mesa_glsl_error(&loc, state,
                              "size1x8 is illegal for image variables "
                              "with floating-point data types.");
             return NULL;
@@ -5007,8 +5416,11 @@ ast_declarator_list::hir(exec_list *instructions,
             unreachable("Unknown image format");
          }
          this->type->qualifier.image_base_type = GLSL_TYPE_FLOAT;
-      } else if (strncmp(this->type->specifier->type_name, "uimage", strlen("uimage")) == 0) {
-         switch (this->type->qualifier.image_format) {
+      }
+      else if (strncmp(this->type->specifier->type_name, "uimage", strlen("uimage")) == 0)
+      {
+         switch (this->type->qualifier.image_format)
+         {
          case PIPE_FORMAT_R8_SINT:
             this->type->qualifier.image_format = PIPE_FORMAT_R8_UINT;
             break;
@@ -5028,9 +5440,13 @@ ast_declarator_list::hir(exec_list *instructions,
             unreachable("Unknown image format");
          }
          this->type->qualifier.image_base_type = GLSL_TYPE_UINT;
-      } else if (strncmp(this->type->specifier->type_name, "iimage", strlen("iimage")) == 0) {
+      }
+      else if (strncmp(this->type->specifier->type_name, "iimage", strlen("iimage")) == 0)
+      {
          this->type->qualifier.image_base_type = GLSL_TYPE_INT;
-      } else {
+      }
+      else
+      {
          assert(false);
       }
    }
@@ -5038,9 +5454,9 @@ ast_declarator_list::hir(exec_list *instructions,
    /* The type specifier may contain a structure definition.  Process that
     * before any of the variable declarations.
     */
-   (void) this->type->specifier->hir(instructions, state);
+   (void)this->type->specifier->hir(instructions, state);
 
-   decl_type = this->type->glsl_type(& type_name, state);
+   decl_type = this->type->glsl_type(&type_name, state);
 
    /* Section 4.3.7 "Buffer Variables" of the GLSL 4.30 spec:
     *    "Buffer variables may only be declared inside interface blocks
@@ -5048,7 +5464,8 @@ ast_declarator_list::hir(exec_list *instructions,
     *    shader storage blocks. It is a compile-time error to declare buffer
     *    variables at global scope (outside a block)."
     */
-   if (type->qualifier.flags.q.buffer && !decl_type->is_interface()) {
+   if (type->qualifier.flags.q.buffer && !decl_type->is_interface())
+   {
       _mesa_glsl_error(&loc, state,
                        "buffer variables cannot be declared outside "
                        "interface blocks");
@@ -5058,17 +5475,20 @@ ast_declarator_list::hir(exec_list *instructions,
     * offset for the next declaration within the same atomic counter
     * buffer.
     */
-   if (decl_type && decl_type->contains_atomic()) {
+   if (decl_type && decl_type->contains_atomic())
+   {
       if (type->qualifier.flags.q.explicit_binding &&
-          type->qualifier.flags.q.explicit_offset) {
+          type->qualifier.flags.q.explicit_offset)
+      {
          unsigned qual_binding;
          unsigned qual_offset;
          if (process_qualifier_constant(state, &loc, "binding",
                                         type->qualifier.binding,
-                                        &qual_binding)
-             && process_qualifier_constant(state, &loc, "offset",
+                                        &qual_binding) &&
+             process_qualifier_constant(state, &loc, "offset",
                                         type->qualifier.offset,
-                                        &qual_offset)) {
+                                        &qual_offset))
+         {
             if (qual_binding < ARRAY_SIZE(state->atomic_counter_offsets))
                state->atomic_counter_offsets[qual_binding] = qual_offset;
          }
@@ -5085,7 +5505,8 @@ ast_declarator_list::hir(exec_list *instructions,
                                      "atomic_uint");
    }
 
-   if (this->declarations.is_empty()) {
+   if (this->declarations.is_empty())
+   {
       /* If there is no structure involved in the program text, there are two
        * possible scenarios:
        *
@@ -5107,15 +5528,18 @@ ast_declarator_list::hir(exec_list *instructions,
        * code for the structure.  There is no need to generate an additional,
        * confusing error.
        */
-      assert(this->type->specifier->structure == NULL || decl_type != NULL
-             || state->error);
+      assert(this->type->specifier->structure == NULL || decl_type != NULL || state->error);
 
-      if (decl_type == NULL) {
+      if (decl_type == NULL)
+      {
          _mesa_glsl_error(&loc, state,
                           "invalid type `%s' in empty declaration",
                           type_name);
-      } else {
-         if (decl_type->is_array()) {
+      }
+      else
+      {
+         if (decl_type->is_array())
+         {
             /* From Section 13.22 (Array Declarations) of the GLSL ES 3.2
              * spec:
              *
@@ -5123,9 +5547,10 @@ ast_declarator_list::hir(exec_list *instructions,
              *    disallowed as this would add complexity and there are no
              *    use-cases."
              */
-            if (state->es_shader && decl_type->is_unsized_array()) {
+            if (state->es_shader && decl_type->is_unsized_array())
+            {
                _mesa_glsl_error(&loc, state, "array size must be explicitly "
-                                "or implicitly defined");
+                                             "or implicitly defined");
             }
 
             /* From Section 4.12 (Empty Declarations) of the GLSL 4.5 spec:
@@ -5137,39 +5562,46 @@ ast_declarator_list::hir(exec_list *instructions,
             validate_array_dimensions(decl_type, state, &loc);
          }
 
-         if (decl_type->is_atomic_uint()) {
+         if (decl_type->is_atomic_uint())
+         {
             /* Empty atomic counter declarations are allowed and useful
              * to set the default offset qualifier.
              */
             return NULL;
-         } else if (this->type->qualifier.precision != ast_precision_none) {
-            if (this->type->specifier->structure != NULL) {
+         }
+         else if (this->type->qualifier.precision != ast_precision_none)
+         {
+            if (this->type->specifier->structure != NULL)
+            {
                _mesa_glsl_error(&loc, state,
                                 "precision qualifiers can't be applied "
                                 "to structures");
-            } else {
+            }
+            else
+            {
                static const char *const precision_names[] = {
-                  "highp",
-                  "highp",
-                  "mediump",
-                  "lowp"
-               };
+                   "highp",
+                   "highp",
+                   "mediump",
+                   "lowp"};
 
                _mesa_glsl_warning(&loc, state,
                                   "empty declaration with precision "
                                   "qualifier, to set the default precision, "
                                   "use `precision %s %s;'",
-                                  precision_names[this->type->
-                                     qualifier.precision],
+                                  precision_names[this->type->qualifier.precision],
                                   type_name);
             }
-         } else if (this->type->specifier->structure == NULL) {
+         }
+         else if (this->type->specifier->structure == NULL)
+         {
             _mesa_glsl_warning(&loc, state, "empty declaration");
          }
       }
    }
 
-   foreach_list_typed (ast_declaration, decl, link, &this->declarations) {
+   foreach_list_typed(ast_declaration, decl, link, &this->declarations)
+   {
       const struct glsl_type *var_type;
       ir_variable *var;
       const char *identifier = decl->identifier;
@@ -5177,51 +5609,59 @@ ast_declarator_list::hir(exec_list *instructions,
        * FINISHME: declaration at a higher scope.
        */
 
-      if ((decl_type == NULL) || decl_type->is_void()) {
-         if (type_name != NULL) {
-            _mesa_glsl_error(& loc, state,
+      if ((decl_type == NULL) || decl_type->is_void())
+      {
+         if (type_name != NULL)
+         {
+            _mesa_glsl_error(&loc, state,
                              "invalid type `%s' in declaration of `%s'",
                              type_name, decl->identifier);
-         } else {
-            _mesa_glsl_error(& loc, state,
+         }
+         else
+         {
+            _mesa_glsl_error(&loc, state,
                              "invalid type in declaration of `%s'",
                              decl->identifier);
          }
          continue;
       }
 
-      if (this->type->qualifier.is_subroutine_decl()) {
+      if (this->type->qualifier.is_subroutine_decl())
+      {
          const glsl_type *t;
          const char *name;
 
          t = state->symbols->get_type(this->type->specifier->type_name);
          if (!t)
-            _mesa_glsl_error(& loc, state,
+            _mesa_glsl_error(&loc, state,
                              "invalid type in declaration of `%s'",
                              decl->identifier);
          name = ralloc_asprintf(ctx, "%s_%s", _mesa_shader_stage_to_subroutine_prefix(state->stage), decl->identifier);
 
          identifier = name;
-
       }
       var_type = process_array_type(&loc, decl_type, decl->array_specifier,
                                     state);
 
-      var = new(ctx) ir_variable(var_type, identifier, ir_var_auto);
+      var = new (ctx) ir_variable(var_type, identifier, ir_var_auto);
 
       /* The 'varying in' and 'varying out' qualifiers can only be used with
        * ARB_geometry_shader4 and EXT_geometry_shader4, which we don't support
        * yet.
        */
-      if (this->type->qualifier.flags.q.varying) {
-         if (this->type->qualifier.flags.q.in) {
-            _mesa_glsl_error(& loc, state,
+      if (this->type->qualifier.flags.q.varying)
+      {
+         if (this->type->qualifier.flags.q.in)
+         {
+            _mesa_glsl_error(&loc, state,
                              "`varying in' qualifier in declaration of "
                              "`%s' only valid for geometry shaders using "
                              "ARB_geometry_shader4 or EXT_geometry_shader4",
                              decl->identifier);
-         } else if (this->type->qualifier.flags.q.out) {
-            _mesa_glsl_error(& loc, state,
+         }
+         else if (this->type->qualifier.flags.q.out)
+         {
+            _mesa_glsl_error(&loc, state,
                              "`varying out' qualifier in declaration of "
                              "`%s' only valid for geometry shaders using "
                              "ARB_geometry_shader4 or EXT_geometry_shader4",
@@ -5240,23 +5680,23 @@ ast_declarator_list::hir(exec_list *instructions,
        * This is relaxed in GLSL 1.30 and GLSL ES 3.00.  It is also relaxed by
        * any extension that adds the 'layout' keyword.
        */
-      if (!state->is_version(130, 300)
-          && !state->has_explicit_attrib_location()
-          && !state->has_separate_shader_objects()
-          && !state->ARB_fragment_coord_conventions_enable) {
+      if (!state->is_version(130, 300) && !state->has_explicit_attrib_location() && !state->has_separate_shader_objects() && !state->ARB_fragment_coord_conventions_enable)
+      {
          /* GL_EXT_gpu_shader4 only allows "varying out" on fragment shader
           * outputs. (the varying flag is not set by the parser)
           */
          if (this->type->qualifier.flags.q.out &&
              (!state->EXT_gpu_shader4_enable ||
-              state->stage != MESA_SHADER_FRAGMENT)) {
-            _mesa_glsl_error(& loc, state,
+              state->stage != MESA_SHADER_FRAGMENT))
+         {
+            _mesa_glsl_error(&loc, state,
                              "`out' qualifier in declaration of `%s' "
                              "only valid for function parameters in %s",
                              decl->identifier, state->get_version_string());
          }
-         if (this->type->qualifier.flags.q.in) {
-            _mesa_glsl_error(& loc, state,
+         if (this->type->qualifier.flags.q.in)
+         {
+            _mesa_glsl_error(&loc, state,
                              "`in' qualifier in declaration of `%s' "
                              "only valid for function parameters in %s",
                              decl->identifier, state->get_version_string());
@@ -5264,60 +5704,80 @@ ast_declarator_list::hir(exec_list *instructions,
          /* FINISHME: Test for other invalid qualifiers. */
       }
 
-      apply_type_qualifier_to_variable(& this->type->qualifier, var, state,
-                                       & loc, false);
+      apply_type_qualifier_to_variable(&this->type->qualifier, var, state,
+                                       &loc, false);
       apply_layout_qualifier_to_variable(&this->type->qualifier, var, state,
                                          &loc);
 
       if ((state->zero_init & (1u << var->data.mode)) &&
-          (var->type->is_numeric() || var->type->is_boolean())) {
-         const ir_constant_data data = { { 0 } };
+          (var->type->is_numeric() || var->type->is_boolean()))
+      {
+         const ir_constant_data data = {{0}};
          var->data.has_initializer = true;
          var->data.is_implicit_initializer = true;
-         var->constant_initializer = new(var) ir_constant(var->type, &data);
+         var->constant_initializer = new (var) ir_constant(var->type, &data);
       }
 
-      if (this->type->qualifier.flags.q.invariant) {
-         if (!is_allowed_invariant(var, state)) {
+      if (this->type->qualifier.flags.q.invariant)
+      {
+         if (!is_allowed_invariant(var, state))
+         {
             _mesa_glsl_error(&loc, state,
                              "`%s' cannot be marked invariant; interfaces between "
-                             "shader stages only", var->name);
+                             "shader stages only",
+                             var->name);
          }
       }
 
-      if (state->current_function != NULL) {
+      if (state->current_function != NULL)
+      {
          const char *mode = NULL;
          const char *extra = "";
 
          /* There is no need to check for 'inout' here because the parser will
           * only allow that in function parameter lists.
           */
-         if (this->type->qualifier.flags.q.attribute) {
+         if (this->type->qualifier.flags.q.attribute)
+         {
             mode = "attribute";
-         } else if (this->type->qualifier.is_subroutine_decl()) {
+         }
+         else if (this->type->qualifier.is_subroutine_decl())
+         {
             mode = "subroutine uniform";
-         } else if (this->type->qualifier.flags.q.uniform) {
+         }
+         else if (this->type->qualifier.flags.q.uniform)
+         {
             mode = "uniform";
-         } else if (this->type->qualifier.flags.q.varying) {
+         }
+         else if (this->type->qualifier.flags.q.varying)
+         {
             mode = "varying";
-         } else if (this->type->qualifier.flags.q.in) {
+         }
+         else if (this->type->qualifier.flags.q.in)
+         {
             mode = "in";
             extra = " or in function parameter list";
-         } else if (this->type->qualifier.flags.q.out) {
+         }
+         else if (this->type->qualifier.flags.q.out)
+         {
             mode = "out";
             extra = " or in function parameter list";
          }
 
-         if (mode) {
-            _mesa_glsl_error(& loc, state,
+         if (mode)
+         {
+            _mesa_glsl_error(&loc, state,
                              "%s variable `%s' must be declared at "
                              "global scope%s",
                              mode, var->name, extra);
          }
-      } else if (var->data.mode == ir_var_shader_in) {
+      }
+      else if (var->data.mode == ir_var_shader_in)
+      {
          var->data.read_only = true;
 
-         if (state->stage == MESA_SHADER_VERTEX) {
+         if (state->stage == MESA_SHADER_VERTEX)
+         {
             /* From page 31 (page 37 of the PDF) of the GLSL 1.50 spec:
              *
              *    "Vertex shader inputs can only be float, floating-point
@@ -5355,7 +5815,8 @@ ast_declarator_list::hir(exec_list *instructions,
             const glsl_type *check_type = var->type->without_array();
 
             bool error = false;
-            switch (check_type->base_type) {
+            switch (check_type->base_type)
+            {
             case GLSL_TYPE_FLOAT:
                break;
             case GLSL_TYPE_UINT64:
@@ -5376,18 +5837,23 @@ ast_declarator_list::hir(exec_list *instructions,
                error = true;
             }
 
-            if (error) {
-               _mesa_glsl_error(& loc, state,
+            if (error)
+            {
+               _mesa_glsl_error(&loc, state,
                                 "vertex shader input / attribute cannot have "
                                 "type %s`%s'",
                                 var->type->is_array() ? "array of " : "",
                                 check_type->name);
-            } else if (var->type->is_array() &&
-                !state->check_version(150, 0, &loc,
-                                      "vertex shader input / attribute "
-                                      "cannot have array type")) {
             }
-         } else if (state->stage == MESA_SHADER_GEOMETRY) {
+            else if (var->type->is_array() &&
+                     !state->check_version(150, 0, &loc,
+                                           "vertex shader input / attribute "
+                                           "cannot have array type"))
+            {
+            }
+         }
+         else if (state->stage == MESA_SHADER_GEOMETRY)
+         {
             /* From section 4.3.4 (Inputs) of the GLSL 1.50 spec:
              *
              *     Geometry shader input variables get the per-vertex values
@@ -5396,13 +5862,16 @@ ast_declarator_list::hir(exec_list *instructions,
              *     vertices, each input varying variable (or input block, see
              *     interface blocks below) needs to be declared as an array.
              */
-            if (!var->type->is_array()) {
+            if (!var->type->is_array())
+            {
                _mesa_glsl_error(&loc, state,
                                 "geometry shader inputs must be arrays");
             }
 
             handle_geometry_shader_input_decl(state, loc, var);
-         } else if (state->stage == MESA_SHADER_FRAGMENT) {
+         }
+         else if (state->stage == MESA_SHADER_FRAGMENT)
+         {
             /* From section 4.3.4 (Input Variables) of the GLSL ES 3.10 spec:
              *
              *     It is a compile-time error to declare a fragment shader
@@ -5415,29 +5884,35 @@ ast_declarator_list::hir(exec_list *instructions,
              *     * A structure containing an array
              *     * A structure containing a structure
              */
-            if (state->es_shader) {
+            if (state->es_shader)
+            {
                const glsl_type *check_type = var->type->without_array();
                if (check_type->is_boolean() ||
-                   check_type->contains_opaque()) {
+                   check_type->contains_opaque())
+               {
                   _mesa_glsl_error(&loc, state,
                                    "fragment shader input cannot have type %s",
                                    check_type->name);
                }
                if (var->type->is_array() &&
-                   var->type->fields.array->is_array()) {
+                   var->type->fields.array->is_array())
+               {
                   _mesa_glsl_error(&loc, state,
                                    "%s shader output "
                                    "cannot have an array of arrays",
                                    _mesa_shader_stage_to_string(state->stage));
                }
                if (var->type->is_array() &&
-                   var->type->fields.array->is_struct()) {
+                   var->type->fields.array->is_struct())
+               {
                   _mesa_glsl_error(&loc, state,
                                    "fragment shader input "
                                    "cannot have an array of structs");
                }
-               if (var->type->is_struct()) {
-                  for (unsigned i = 0; i < var->type->length; i++) {
+               if (var->type->is_struct())
+               {
+                  for (unsigned i = 0; i < var->type->length; i++)
+                  {
                      if (var->type->fields.structure[i].type->is_array() ||
                          var->type->fields.structure[i].type->is_struct())
                         _mesa_glsl_error(&loc, state,
@@ -5447,11 +5922,15 @@ ast_declarator_list::hir(exec_list *instructions,
                   }
                }
             }
-         } else if (state->stage == MESA_SHADER_TESS_CTRL ||
-                    state->stage == MESA_SHADER_TESS_EVAL) {
+         }
+         else if (state->stage == MESA_SHADER_TESS_CTRL ||
+                  state->stage == MESA_SHADER_TESS_EVAL)
+         {
             handle_tess_shader_input_decl(state, loc, var);
          }
-      } else if (var->data.mode == ir_var_shader_out) {
+      }
+      else if (var->data.mode == ir_var_shader_out)
+      {
          const glsl_type *check_type = var->type->without_array();
 
          /* From section 4.3.6 (Output variables) of the GLSL 4.40 spec:
@@ -5465,12 +5944,14 @@ ast_declarator_list::hir(exec_list *instructions,
           *     * Any matrix type
           *     * A structure
           */
-         if (state->stage == MESA_SHADER_FRAGMENT) {
+         if (state->stage == MESA_SHADER_FRAGMENT)
+         {
             if (check_type->is_struct() || check_type->is_matrix())
                _mesa_glsl_error(&loc, state,
                                 "fragment shader output "
                                 "cannot have struct or matrix type");
-            switch (check_type->base_type) {
+            switch (check_type->base_type)
+            {
             case GLSL_TYPE_UINT:
             case GLSL_TYPE_INT:
             case GLSL_TYPE_FLOAT:
@@ -5478,7 +5959,8 @@ ast_declarator_list::hir(exec_list *instructions,
             default:
                _mesa_glsl_error(&loc, state,
                                 "fragment shader output cannot have "
-                                "type %s", check_type->name);
+                                "type %s",
+                                check_type->name);
             }
          }
 
@@ -5521,30 +6003,37 @@ ast_declarator_list::hir(exec_list *instructions,
           * which basically says to unwrap the per-vertex aspect and apply
           * the old rules.
           */
-         if (state->es_shader) {
+         if (state->es_shader)
+         {
             if (var->type->is_array() &&
-                var->type->fields.array->is_array()) {
+                var->type->fields.array->is_array())
+            {
                _mesa_glsl_error(&loc, state,
                                 "%s shader output "
                                 "cannot have an array of arrays",
                                 _mesa_shader_stage_to_string(state->stage));
             }
-            if (state->stage <= MESA_SHADER_GEOMETRY) {
+            if (state->stage <= MESA_SHADER_GEOMETRY)
+            {
                const glsl_type *type = var->type;
 
                if (state->stage == MESA_SHADER_TESS_CTRL &&
-                   !var->data.patch && var->type->is_array()) {
+                   !var->data.patch && var->type->is_array())
+               {
                   type = var->type->fields.array;
                }
 
-               if (type->is_array() && type->fields.array->is_struct()) {
+               if (type->is_array() && type->fields.array->is_struct())
+               {
                   _mesa_glsl_error(&loc, state,
                                    "%s shader output cannot have "
                                    "an array of structs",
                                    _mesa_shader_stage_to_string(state->stage));
                }
-               if (type->is_struct()) {
-                  for (unsigned i = 0; i < type->length; i++) {
+               if (type->is_struct())
+               {
+                  for (unsigned i = 0; i < type->length; i++)
+                  {
                      if (type->fields.structure[i].type->is_array() ||
                          type->fields.structure[i].type->is_struct())
                         _mesa_glsl_error(&loc, state,
@@ -5557,10 +6046,13 @@ ast_declarator_list::hir(exec_list *instructions,
             }
          }
 
-         if (state->stage == MESA_SHADER_TESS_CTRL) {
+         if (state->stage == MESA_SHADER_TESS_CTRL)
+         {
             handle_tess_ctrl_shader_output_decl(state, loc, var);
          }
-      } else if (var->type->contains_subroutine()) {
+      }
+      else if (var->type->contains_subroutine())
+      {
          /* declare subroutine uniforms as hidden */
          var->data.how_declared = ir_var_hidden;
       }
@@ -5576,30 +6068,30 @@ ast_declarator_list::hir(exec_list *instructions,
        * This doesn't explicitly forbid using them in a fragment shader, but
        * that's probably just an oversight.
        */
-      if (state->stage != MESA_SHADER_TESS_EVAL
-          && this->type->qualifier.flags.q.patch
-          && this->type->qualifier.flags.q.in) {
+      if (state->stage != MESA_SHADER_TESS_EVAL && this->type->qualifier.flags.q.patch && this->type->qualifier.flags.q.in)
+      {
 
          _mesa_glsl_error(&loc, state, "'patch in' can only be used in a "
-                          "tessellation evaluation shader");
+                                       "tessellation evaluation shader");
       }
 
-      if (state->stage != MESA_SHADER_TESS_CTRL
-          && this->type->qualifier.flags.q.patch
-          && this->type->qualifier.flags.q.out) {
+      if (state->stage != MESA_SHADER_TESS_CTRL && this->type->qualifier.flags.q.patch && this->type->qualifier.flags.q.out)
+      {
 
          _mesa_glsl_error(&loc, state, "'patch out' can only be used in a "
-                          "tessellation control shader");
+                                       "tessellation control shader");
       }
 
       /* Precision qualifiers exists only in GLSL versions 1.00 and >= 1.30.
        */
-      if (this->type->qualifier.precision != ast_precision_none) {
+      if (this->type->qualifier.precision != ast_precision_none)
+      {
          state->check_precision_qualifiers_allowed(&loc);
       }
 
       if (this->type->qualifier.precision != ast_precision_none &&
-          !precision_qualifier_allowed(var->type)) {
+          !precision_qualifier_allowed(var->type))
+      {
          _mesa_glsl_error(&loc, state,
                           "precision qualifiers apply only to floating point"
                           ", integer and opaque types");
@@ -5622,7 +6114,8 @@ ast_declarator_list::hir(exec_list *instructions,
        */
       if (!this->type->qualifier.flags.q.uniform &&
           (var_type->contains_atomic() ||
-           (!state->has_bindless() && var_type->contains_opaque()))) {
+           (!state->has_bindless() && var_type->contains_opaque())))
+      {
          _mesa_glsl_error(&loc, state,
                           "%s variables must be declared uniform",
                           state->has_bindless() ? "atomic" : "opaque");
@@ -5643,21 +6136,27 @@ ast_declarator_list::hir(exec_list *instructions,
       var = get_variable_being_redeclared(&var, decl->get_location(), state,
                                           false /* allow_all_redeclarations */,
                                           &is_redeclaration);
-      if (is_redeclaration) {
+      if (is_redeclaration)
+      {
          if (var_is_gl_id &&
-             var->data.how_declared == ir_var_declared_in_block) {
+             var->data.how_declared == ir_var_declared_in_block)
+         {
             _mesa_glsl_error(&loc, state,
                              "`%s' has already been redeclared using "
-                             "gl_PerVertex", var->name);
+                             "gl_PerVertex",
+                             var->name);
          }
          var->data.how_declared = ir_var_declared_normally;
       }
 
-      if (decl->initializer != NULL) {
+      if (decl->initializer != NULL)
+      {
          result = process_initializer(var,
                                       decl, this->type,
                                       &initializer_instructions, state);
-      } else {
+      }
+      else
+      {
          validate_array_dimensions(var_type, state, &loc);
       }
 
@@ -5667,13 +6166,15 @@ ast_declarator_list::hir(exec_list *instructions,
        *      its declaration, so they must be initialized when
        *      declared."
        */
-      if (this->type->qualifier.flags.q.constant && decl->initializer == NULL) {
-         _mesa_glsl_error(& loc, state,
+      if (this->type->qualifier.flags.q.constant && decl->initializer == NULL)
+      {
+         _mesa_glsl_error(&loc, state,
                           "const declaration of `%s' must be initialized",
                           decl->identifier);
       }
 
-      if (state->es_shader) {
+      if (state->es_shader)
+      {
          const glsl_type *const t = var->type;
 
          /* Skip the unsized array check for TCS/TES/GS inputs & TCS outputs.
@@ -5696,11 +6197,11 @@ ast_declarator_list::hir(exec_list *instructions,
           *     present, as per the following table."
           */
          const bool implicitly_sized =
-            (var->data.mode == ir_var_shader_in &&
-             state->stage >= MESA_SHADER_TESS_CTRL &&
-             state->stage <= MESA_SHADER_GEOMETRY) ||
-            (var->data.mode == ir_var_shader_out &&
-             state->stage == MESA_SHADER_TESS_CTRL);
+             (var->data.mode == ir_var_shader_in &&
+              state->stage >= MESA_SHADER_TESS_CTRL &&
+              state->stage <= MESA_SHADER_GEOMETRY) ||
+             (var->data.mode == ir_var_shader_out &&
+              state->stage == MESA_SHADER_TESS_CTRL);
 
          if (t->is_unsized_array() && !implicitly_sized)
             /* Section 10.17 of the GLSL ES 1.00 specification states that
@@ -5720,7 +6221,7 @@ ast_declarator_list::hir(exec_list *instructions,
              *         float a[5];
              *         float b[] = a;"
              */
-            _mesa_glsl_error(& loc, state,
+            _mesa_glsl_error(&loc, state,
                              "unsized array declarations are not allowed in "
                              "GLSL ES");
       }
@@ -5731,8 +6232,9 @@ ast_declarator_list::hir(exec_list *instructions,
        *     atomic_uint"
        */
       if (var->type->is_unsized_array() &&
-          var->type->without_array()->base_type == GLSL_TYPE_ATOMIC_UINT) {
-         _mesa_glsl_error(& loc, state,
+          var->type->without_array()->base_type == GLSL_TYPE_ATOMIC_UINT)
+      {
+         _mesa_glsl_error(&loc, state,
                           "Unsized array of atomic_uint is not allowed");
       }
 
@@ -5740,7 +6242,8 @@ ast_declarator_list::hir(exec_list *instructions,
        * semantic checks that must be applied.  In addition, variable that was
        * created for the declaration should be added to the IR stream.
        */
-      if (!is_redeclaration) {
+      if (!is_redeclaration)
+      {
          validate_identifier(decl->identifier, loc, state);
 
          /* Add the variable to the symbol table.  Note that the initializer's
@@ -5755,10 +6258,12 @@ ast_declarator_list::hir(exec_list *instructions,
           *     after the initializer if present or immediately after the name
           *     being declared if not."
           */
-         if (!state->symbols->add_variable(var)) {
+         if (!state->symbols->add_variable(var))
+         {
             YYLTYPE loc = this->get_location();
             _mesa_glsl_error(&loc, state, "name `%s' already taken in the "
-                             "current scope", decl->identifier);
+                                          "current scope",
+                             decl->identifier);
             continue;
          }
 
@@ -5774,7 +6279,6 @@ ast_declarator_list::hir(exec_list *instructions,
       instructions->append_list(&initializer_instructions);
    }
 
-
    /* Generally, variable declarations do not have r-values.  However,
     * one is used for the declaration in
     *
@@ -5787,7 +6291,6 @@ ast_declarator_list::hir(exec_list *instructions,
    return result;
 }
 
-
 ir_rvalue *
 ast_parameter_declarator::hir(exec_list *instructions,
                               struct _mesa_glsl_parse_state *state)
@@ -5797,15 +6300,19 @@ ast_parameter_declarator::hir(exec_list *instructions,
    const char *name = NULL;
    YYLTYPE loc = this->get_location();
 
-   type = this->type->glsl_type(& name, state);
+   type = this->type->glsl_type(&name, state);
 
-   if (type == NULL) {
-      if (name != NULL) {
-         _mesa_glsl_error(& loc, state,
+   if (type == NULL)
+   {
+      if (name != NULL)
+      {
+         _mesa_glsl_error(&loc, state,
                           "invalid type `%s' in declaration of `%s'",
                           name, this->identifier);
-      } else {
-         _mesa_glsl_error(& loc, state,
+      }
+      else
+      {
+         _mesa_glsl_error(&loc, state,
                           "invalid type in declaration of `%s'",
                           this->identifier);
       }
@@ -5825,17 +6332,19 @@ ast_parameter_declarator::hir(exec_list *instructions,
     * for a function, which avoids tripping up checks for main taking
     * parameters and lookups of an unnamed symbol.
     */
-   if (type->is_void()) {
+   if (type->is_void())
+   {
       if (this->identifier != NULL)
-         _mesa_glsl_error(& loc, state,
+         _mesa_glsl_error(&loc, state,
                           "named parameter cannot have type `void'");
 
       is_void = true;
       return NULL;
    }
 
-   if (formal_parameter && (this->identifier == NULL)) {
-      _mesa_glsl_error(& loc, state, "formal parameter lacks a name");
+   if (formal_parameter && (this->identifier == NULL))
+   {
+      _mesa_glsl_error(&loc, state, "formal parameter lacks a name");
       return NULL;
    }
 
@@ -5844,28 +6353,30 @@ ast_parameter_declarator::hir(exec_list *instructions,
     */
    type = process_array_type(&loc, type, this->array_specifier, state);
 
-   if (!type->is_error() && type->is_unsized_array()) {
+   if (!type->is_error() && type->is_unsized_array())
+   {
       _mesa_glsl_error(&loc, state, "arrays passed as parameters must have "
-                       "a declared size");
+                                    "a declared size");
       type = glsl_type::error_type;
    }
 
    is_void = false;
-   ir_variable *var = new(ctx)
-      ir_variable(type, this->identifier, ir_var_function_in);
+   ir_variable *var = new (ctx)
+       ir_variable(type, this->identifier, ir_var_function_in);
 
    /* Apply any specified qualifiers to the parameter declaration.  Note that
     * for function parameters the default mode is 'in'.
     */
-   apply_type_qualifier_to_variable(& this->type->qualifier, var, state, & loc,
+   apply_type_qualifier_to_variable(&this->type->qualifier, var, state, &loc,
                                     true);
 
    if (((1u << var->data.mode) & state->zero_init) &&
-       (var->type->is_numeric() || var->type->is_boolean())) {
-         const ir_constant_data data = { { 0 } };
-         var->data.has_initializer = true;
-         var->data.is_implicit_initializer = true;
-         var->constant_initializer = new(var) ir_constant(var->type, &data);
+       (var->type->is_numeric() || var->type->is_boolean()))
+   {
+      const ir_constant_data data = {{0}};
+      var->data.has_initializer = true;
+      var->data.is_implicit_initializer = true;
+      var->constant_initializer = new (var) ir_constant(var->type, &data);
    }
 
    /* From section 4.1.7 of the GLSL 4.40 spec:
@@ -5884,11 +6395,11 @@ ast_parameter_declarator::hir(exec_list *instructions,
     *   "Images can be used as l-values, so can be assigned into and used as
     *    "out" and "inout" function parameters."
     */
-   if ((var->data.mode == ir_var_function_inout || var->data.mode == ir_var_function_out)
-       && (type->contains_atomic() ||
-           (!state->has_bindless() && type->contains_opaque()))) {
+   if ((var->data.mode == ir_var_function_inout || var->data.mode == ir_var_function_out) && (type->contains_atomic() ||
+                                                                                              (!state->has_bindless() && type->contains_opaque())))
+   {
       _mesa_glsl_error(&loc, state, "out and inout parameters cannot "
-                       "contain %s variables",
+                                    "contain %s variables",
                        state->has_bindless() ? "atomic" : "opaque");
       type = glsl_type::error_type;
    }
@@ -5907,10 +6418,8 @@ ast_parameter_declarator::hir(exec_list *instructions,
     * So for GLSL 1.10, passing an array as an out or inout parameter is not
     * allowed.  This restriction is removed in GLSL 1.20, and in GLSL ES.
     */
-   if ((var->data.mode == ir_var_function_inout || var->data.mode == ir_var_function_out)
-       && type->is_array()
-       && !state->check_version(120, 100, &loc,
-                                "arrays cannot be out or inout parameters")) {
+   if ((var->data.mode == ir_var_function_inout || var->data.mode == ir_var_function_out) && type->is_array() && !state->check_version(120, 100, &loc, "arrays cannot be out or inout parameters"))
+   {
       type = glsl_type::error_type;
    }
 
@@ -5921,17 +6430,16 @@ ast_parameter_declarator::hir(exec_list *instructions,
    return NULL;
 }
 
-
-void
-ast_parameter_declarator::parameters_to_hir(exec_list *ast_parameters,
-                                            bool formal,
-                                            exec_list *ir_parameters,
-                                            _mesa_glsl_parse_state *state)
+void ast_parameter_declarator::parameters_to_hir(exec_list *ast_parameters,
+                                                 bool formal,
+                                                 exec_list *ir_parameters,
+                                                 _mesa_glsl_parse_state *state)
 {
    ast_parameter_declarator *void_param = NULL;
    unsigned count = 0;
 
-   foreach_list_typed (ast_parameter_declarator, param, link, ast_parameters) {
+   foreach_list_typed(ast_parameter_declarator, param, link, ast_parameters)
+   {
       param->formal_parameter = formal;
       param->hir(ir_parameters, state);
 
@@ -5941,17 +6449,16 @@ ast_parameter_declarator::parameters_to_hir(exec_list *ast_parameters,
       count++;
    }
 
-   if ((void_param != NULL) && (count > 1)) {
+   if ((void_param != NULL) && (count > 1))
+   {
       YYLTYPE loc = void_param->get_location();
 
-      _mesa_glsl_error(& loc, state,
+      _mesa_glsl_error(&loc, state,
                        "`void' parameter must be only parameter");
    }
 }
 
-
-void
-emit_function(_mesa_glsl_parse_state *state, ir_function *f)
+void emit_function(_mesa_glsl_parse_state *state, ir_function *f)
 {
    /* IR invariants disallow function declarations or definitions
     * nested within other function definitions.  But there is no
@@ -5962,7 +6469,6 @@ emit_function(_mesa_glsl_parse_state *state, ir_function *f)
     */
    state->toplevel_ir->push_tail(f);
 }
-
 
 ir_rvalue *
 ast_function::hir(exec_list *instructions,
@@ -5980,7 +6486,7 @@ ast_function::hir(exec_list *instructions,
     * so this instruction list pointer is ignored.  See also emit_function
     * (called below).
     */
-   (void) instructions;
+   (void)instructions;
 
    /* From page 21 (page 27 of the PDF) of the GLSL 1.20 spec,
     *
@@ -5995,11 +6501,13 @@ ast_function::hir(exec_list *instructions,
     * Note that this language does not appear in GLSL 1.10.
     */
    if ((state->current_function != NULL) &&
-       state->is_version(120, 100)) {
+       state->is_version(120, 100))
+   {
       YYLTYPE loc = this->get_location();
       _mesa_glsl_error(&loc, state,
                        "declaration of function `%s' not allowed within "
-                       "function body", name);
+                       "function body",
+                       name);
    }
 
    validate_identifier(name, this->get_location(), state);
@@ -6008,15 +6516,16 @@ ast_function::hir(exec_list *instructions,
     * used below to compare this function's signature with previously seen
     * signatures for functions with the same name.
     */
-   ast_parameter_declarator::parameters_to_hir(& this->parameters,
+   ast_parameter_declarator::parameters_to_hir(&this->parameters,
                                                is_definition,
-                                               & hir_parameters, state);
+                                               &hir_parameters, state);
 
    const char *return_type_name;
    const glsl_type *return_type =
-      this->return_type->glsl_type(& return_type_name, state);
+       this->return_type->glsl_type(&return_type_name, state);
 
-   if (!return_type) {
+   if (!return_type)
+   {
       YYLTYPE loc = this->get_location();
       _mesa_glsl_error(&loc, state,
                        "function `%s' has undeclared return type `%s'",
@@ -6028,7 +6537,8 @@ ast_function::hir(exec_list *instructions,
     *  "Subroutine declarations cannot be prototyped. It is an error to prepend
     *   subroutine(...) to a function declaration."
     */
-   if (this->return_type->qualifier.subroutine_list && !is_definition) {
+   if (this->return_type->qualifier.subroutine_list && !is_definition)
+   {
       YYLTYPE loc = this->get_location();
       _mesa_glsl_error(&loc, state,
                        "function declaration `%s' cannot have subroutine prepended",
@@ -6038,9 +6548,10 @@ ast_function::hir(exec_list *instructions,
    /* From page 56 (page 62 of the PDF) of the GLSL 1.30 spec:
     * "No qualifier is allowed on the return type of a function."
     */
-   if (this->return_type->has_qualifiers(state)) {
+   if (this->return_type->has_qualifiers(state))
+   {
       YYLTYPE loc = this->get_location();
-      _mesa_glsl_error(& loc, state,
+      _mesa_glsl_error(&loc, state,
                        "function `%s' return type has qualifiers", name);
    }
 
@@ -6049,11 +6560,13 @@ ast_function::hir(exec_list *instructions,
     *     "Arrays are allowed as arguments and as the return type. In both
     *     cases, the array must be explicitly sized."
     */
-   if (return_type->is_unsized_array()) {
+   if (return_type->is_unsized_array())
+   {
       YYLTYPE loc = this->get_location();
-      _mesa_glsl_error(& loc, state,
+      _mesa_glsl_error(&loc, state,
                        "function `%s' return type array must be explicitly "
-                       "sized", name);
+                       "sized",
+                       name);
    }
 
    /* From Section 6.1 (Function Definitions) of the GLSL 1.00 spec:
@@ -6062,9 +6575,10 @@ ast_function::hir(exec_list *instructions,
     *      The return type can also be a structure if the structure does not
     *      contain an array."
     */
-   if (state->language_version == 100 && return_type->contains_array()) {
+   if (state->language_version == 100 && return_type->contains_array())
+   {
       YYLTYPE loc = this->get_location();
-      _mesa_glsl_error(& loc, state,
+      _mesa_glsl_error(&loc, state,
                        "function `%s' return type contains an array", name);
    }
 
@@ -6078,7 +6592,8 @@ ast_function::hir(exec_list *instructions,
     * (Images)", this should be allowed.
     */
    if (return_type->contains_atomic() ||
-       (!state->has_bindless() && return_type->contains_opaque())) {
+       (!state->has_bindless() && return_type->contains_opaque()))
+   {
       YYLTYPE loc = this->get_location();
       _mesa_glsl_error(&loc, state,
                        "function `%s' return type can't contain an %s type",
@@ -6086,7 +6601,8 @@ ast_function::hir(exec_list *instructions,
    }
 
    /**/
-   if (return_type->is_subroutine()) {
+   if (return_type->is_subroutine())
+   {
       YYLTYPE loc = this->get_location();
       _mesa_glsl_error(&loc, state,
                        "function `%s' return type can't be a subroutine type",
@@ -6096,27 +6612,34 @@ ast_function::hir(exec_list *instructions,
    /* Get the precision for the return type */
    unsigned return_precision;
 
-   if (state->es_shader) {
+   if (state->es_shader)
+   {
       YYLTYPE loc = this->get_location();
       return_precision =
-         select_gles_precision(this->return_type->qualifier.precision,
-                               return_type,
-                               state,
-                               &loc);
-   } else {
+          select_gles_precision(this->return_type->qualifier.precision,
+                                return_type,
+                                state,
+                                &loc);
+   }
+   else
+   {
       return_precision = GLSL_PRECISION_NONE;
    }
 
    /* Create an ir_function if one doesn't already exist. */
    f = state->symbols->get_function(name);
-   if (f == NULL) {
-      f = new(ctx) ir_function(name);
-      if (!this->return_type->qualifier.is_subroutine_decl()) {
-         if (!state->symbols->add_function(f)) {
+   if (f == NULL)
+   {
+      f = new (ctx) ir_function(name);
+      if (!this->return_type->qualifier.is_subroutine_decl())
+      {
+         if (!state->symbols->add_function(f))
+         {
             /* This function name shadows a non-function use of the same name. */
             YYLTYPE loc = this->get_location();
             _mesa_glsl_error(&loc, state, "function name `%s' conflicts with "
-                             "non-function", name);
+                                          "non-function",
+                             name);
             return NULL;
          }
       }
@@ -6132,24 +6655,30 @@ ast_function::hir(exec_list *instructions,
     * "User code can overload the built-in functions but cannot redefine
     * them."
     */
-   if (state->es_shader) {
+   if (state->es_shader)
+   {
       /* Local shader has no exact candidates; check the built-ins. */
       if (state->language_version >= 300 &&
-          _mesa_glsl_has_builtin_function(state, name)) {
+          _mesa_glsl_has_builtin_function(state, name))
+      {
          YYLTYPE loc = this->get_location();
-         _mesa_glsl_error(& loc, state,
+         _mesa_glsl_error(&loc, state,
                           "A shader cannot redefine or overload built-in "
-                          "function `%s' in GLSL ES 3.00", name);
+                          "function `%s' in GLSL ES 3.00",
+                          name);
          return NULL;
       }
 
-      if (state->language_version == 100) {
+      if (state->language_version == 100)
+      {
          ir_function_signature *sig =
-            _mesa_glsl_find_builtin_function(state, name, &hir_parameters);
-         if (sig && sig->is_builtin()) {
-            _mesa_glsl_error(& loc, state,
+             _mesa_glsl_find_builtin_function(state, name, &hir_parameters);
+         if (sig && sig->is_builtin())
+         {
+            _mesa_glsl_error(&loc, state,
                              "A shader cannot redefine built-in "
-                             "function `%s' in GLSL ES 1.00", name);
+                             "function `%s' in GLSL ES 1.00",
+                             name);
          }
       }
    }
@@ -6158,43 +6687,57 @@ ast_function::hir(exec_list *instructions,
     * seen signature for a function with the same name, or, if a match is found,
     * that the previously seen signature does not have an associated definition.
     */
-   if (state->es_shader || f->has_user_signature()) {
+   if (state->es_shader || f->has_user_signature())
+   {
       sig = f->exact_matching_signature(state, &hir_parameters);
-      if (sig != NULL) {
+      if (sig != NULL)
+      {
          const char *badvar = sig->qualifiers_match(&hir_parameters);
-         if (badvar != NULL) {
+         if (badvar != NULL)
+         {
             YYLTYPE loc = this->get_location();
 
             _mesa_glsl_error(&loc, state, "function `%s' parameter `%s' "
-                             "qualifiers don't match prototype", name, badvar);
+                                          "qualifiers don't match prototype",
+                             name, badvar);
          }
 
-         if (sig->return_type != return_type) {
+         if (sig->return_type != return_type)
+         {
             YYLTYPE loc = this->get_location();
 
             _mesa_glsl_error(&loc, state, "function `%s' return type doesn't "
-                             "match prototype", name);
+                                          "match prototype",
+                             name);
          }
 
-         if (sig->return_precision != return_precision) {
+         if (sig->return_precision != return_precision)
+         {
             YYLTYPE loc = this->get_location();
 
             _mesa_glsl_error(&loc, state, "function `%s' return type precision "
-                             "doesn't match prototype", name);
+                                          "doesn't match prototype",
+                             name);
          }
 
-         if (sig->is_defined) {
-            if (is_definition) {
+         if (sig->is_defined)
+         {
+            if (is_definition)
+            {
                YYLTYPE loc = this->get_location();
-               _mesa_glsl_error(& loc, state, "function `%s' redefined", name);
-            } else {
+               _mesa_glsl_error(&loc, state, "function `%s' redefined", name);
+            }
+            else
+            {
                /* We just encountered a prototype that exactly matches a
                 * function that's already been defined.  This is redundant,
                 * and we should ignore it.
                 */
                return NULL;
             }
-         } else if (state->language_version == 100 && !is_definition) {
+         }
+         else if (state->language_version == 100 && !is_definition)
+         {
             /* From the GLSL 1.00 spec, section 4.2.7:
              *
              *     "A particular variable, structure or function declaration
@@ -6209,24 +6752,28 @@ ast_function::hir(exec_list *instructions,
    }
 
    /* Verify the return type of main() */
-   if (strcmp(name, "main") == 0) {
-      if (! return_type->is_void()) {
+   if (strcmp(name, "main") == 0)
+   {
+      if (!return_type->is_void())
+      {
          YYLTYPE loc = this->get_location();
 
-         _mesa_glsl_error(& loc, state, "main() must return void");
+         _mesa_glsl_error(&loc, state, "main() must return void");
       }
 
-      if (!hir_parameters.is_empty()) {
+      if (!hir_parameters.is_empty())
+      {
          YYLTYPE loc = this->get_location();
 
-         _mesa_glsl_error(& loc, state, "main() must not take any parameters");
+         _mesa_glsl_error(&loc, state, "main() must not take any parameters");
       }
    }
 
    /* Finish storing the information about this new function in its signature.
     */
-   if (sig == NULL) {
-      sig = new(ctx) ir_function_signature(return_type);
+   if (sig == NULL)
+   {
+      sig = new (ctx) ir_function_signature(return_type);
       sig->return_precision = return_precision;
       f->add_signature(sig);
    }
@@ -6234,25 +6781,34 @@ ast_function::hir(exec_list *instructions,
    sig->replace_parameters(&hir_parameters);
    signature = sig;
 
-   if (this->return_type->qualifier.subroutine_list) {
+   if (this->return_type->qualifier.subroutine_list)
+   {
       int idx;
 
-      if (this->return_type->qualifier.flags.q.explicit_index) {
+      if (this->return_type->qualifier.flags.q.explicit_index)
+      {
          unsigned qual_index;
          if (process_qualifier_constant(state, &loc, "index",
                                         this->return_type->qualifier.index,
-                                        &qual_index)) {
-            if (!state->has_explicit_uniform_location()) {
+                                        &qual_index))
+         {
+            if (!state->has_explicit_uniform_location())
+            {
                _mesa_glsl_error(&loc, state, "subroutine index requires "
-                                "GL_ARB_explicit_uniform_location or "
-                                "GLSL 4.30");
-            } else if (qual_index >= MAX_SUBROUTINES) {
+                                             "GL_ARB_explicit_uniform_location or "
+                                             "GLSL 4.30");
+            }
+            else if (qual_index >= MAX_SUBROUTINES)
+            {
                _mesa_glsl_error(&loc, state,
                                 "invalid subroutine index (%d) index must "
                                 "be a number between 0 and "
-                                "GL_MAX_SUBROUTINES - 1 (%d)", qual_index,
+                                "GL_MAX_SUBROUTINES - 1 (%d)",
+                                qual_index,
                                 MAX_SUBROUTINES - 1);
-            } else {
+            }
+            else
+            {
                f->subroutine_index = qual_index;
             }
          }
@@ -6262,15 +6818,18 @@ ast_function::hir(exec_list *instructions,
       f->subroutine_types = ralloc_array(state, const struct glsl_type *,
                                          f->num_subroutine_types);
       idx = 0;
-      foreach_list_typed(ast_declaration, decl, link, &this->return_type->qualifier.subroutine_list->declarations) {
+      foreach_list_typed(ast_declaration, decl, link, &this->return_type->qualifier.subroutine_list->declarations)
+      {
          const struct glsl_type *type;
          /* the subroutine type must be already declared */
          type = state->symbols->get_type(decl->identifier);
-         if (!type) {
-            _mesa_glsl_error(& loc, state, "unknown type '%s' in subroutine function definition", decl->identifier);
+         if (!type)
+         {
+            _mesa_glsl_error(&loc, state, "unknown type '%s' in subroutine function definition", decl->identifier);
          }
 
-         for (int i = 0; i < state->num_subroutine_types; i++) {
+         for (int i = 0; i < state->num_subroutine_types; i++)
+         {
             ir_function *fn = state->subroutine_types[i];
             ir_function_signature *tsig = NULL;
 
@@ -6279,11 +6838,15 @@ ast_function::hir(exec_list *instructions,
 
             tsig = fn->matching_signature(state, &sig->parameters,
                                           false);
-            if (!tsig) {
-               _mesa_glsl_error(& loc, state, "subroutine type mismatch '%s' - signatures do not match\n", decl->identifier);
-            } else {
-               if (tsig->return_type != sig->return_type) {
-                  _mesa_glsl_error(& loc, state, "subroutine type mismatch '%s' - return types do not match\n", decl->identifier);
+            if (!tsig)
+            {
+               _mesa_glsl_error(&loc, state, "subroutine type mismatch '%s' - signatures do not match\n", decl->identifier);
+            }
+            else
+            {
+               if (tsig->return_type != sig->return_type)
+               {
+                  _mesa_glsl_error(&loc, state, "subroutine type mismatch '%s' - return types do not match\n", decl->identifier);
                }
             }
          }
@@ -6294,12 +6857,13 @@ ast_function::hir(exec_list *instructions,
                                                     state->num_subroutines + 1);
       state->subroutines[state->num_subroutines] = f;
       state->num_subroutines++;
-
    }
 
-   if (this->return_type->qualifier.is_subroutine_decl()) {
-      if (!state->symbols->add_type(this->identifier, glsl_type::get_subroutine_instance(this->identifier))) {
-         _mesa_glsl_error(& loc, state, "type '%s' previously defined", this->identifier);
+   if (this->return_type->qualifier.is_subroutine_decl())
+   {
+      if (!state->symbols->add_type(this->identifier, glsl_type::get_subroutine_instance(this->identifier)))
+      {
+         _mesa_glsl_error(&loc, state, "type '%s' previously defined", this->identifier);
          return NULL;
       }
       state->subroutine_types = (ir_function **)reralloc(state, state->subroutine_types,
@@ -6315,7 +6879,6 @@ ast_function::hir(exec_list *instructions,
     */
    return NULL;
 }
-
 
 ir_rvalue *
 ast_function_definition::hir(exec_list *instructions,
@@ -6338,17 +6901,21 @@ ast_function_definition::hir(exec_list *instructions,
     * Add these to the symbol table.
     */
    state->symbols->push_scope();
-   foreach_in_list(ir_variable, var, &signature->parameters) {
+   foreach_in_list(ir_variable, var, &signature->parameters)
+   {
       assert(var->as_variable() != NULL);
 
       /* The only way a parameter would "exist" is if two parameters have
        * the same name.
        */
-      if (state->symbols->name_declared_this_scope(var->name)) {
+      if (state->symbols->name_declared_this_scope(var->name))
+      {
          YYLTYPE loc = this->get_location();
 
-         _mesa_glsl_error(& loc, state, "parameter `%s' redeclared", var->name);
-      } else {
+         _mesa_glsl_error(&loc, state, "parameter `%s' redeclared", var->name);
+      }
+      else
+      {
          state->symbols->add_variable(var);
       }
    }
@@ -6362,10 +6929,11 @@ ast_function_definition::hir(exec_list *instructions,
    assert(state->current_function == signature);
    state->current_function = NULL;
 
-   if (!signature->return_type->is_void() && !state->found_return) {
+   if (!signature->return_type->is_void() && !state->found_return)
+   {
       YYLTYPE loc = this->get_location();
-      _mesa_glsl_error(& loc, state, "function `%s' has non-void return type "
-                       "%s, but no return statement",
+      _mesa_glsl_error(&loc, state, "function `%s' has non-void return type "
+                                    "%s, but no return statement",
                        signature->function_name(),
                        signature->return_type->name);
    }
@@ -6375,19 +6943,21 @@ ast_function_definition::hir(exec_list *instructions,
    return NULL;
 }
 
-
 ir_rvalue *
 ast_jump_statement::hir(exec_list *instructions,
                         struct _mesa_glsl_parse_state *state)
 {
    void *ctx = state;
 
-   switch (mode) {
-   case ast_return: {
+   switch (mode)
+   {
+   case ast_return:
+   {
       ir_return *inst;
       assert(state->current_function);
 
-      if (opt_return_value) {
+      if (opt_return_value)
+      {
          ir_rvalue *ret = opt_return_value->hir(instructions, state);
 
          /* The value of the return type can be NULL if the shader says
@@ -6398,34 +6968,41 @@ ast_jump_statement::hir(exec_list *instructions,
           * also void, then this should compile without error.  Seriously.
           */
          const glsl_type *const ret_type =
-            (ret == NULL) ? glsl_type::void_type : ret->type;
+             (ret == NULL) ? glsl_type::void_type : ret->type;
 
          /* Implicit conversions are not allowed for return values prior to
           * ARB_shading_language_420pack.
           */
-         if (state->current_function->return_type != ret_type) {
+         if (state->current_function->return_type != ret_type)
+         {
             YYLTYPE loc = this->get_location();
 
-            if (state->has_420pack()) {
+            if (state->has_420pack())
+            {
                if (!apply_implicit_conversion(state->current_function->return_type,
-                                              ret, state)
-                   || (ret->type != state->current_function->return_type)) {
-                  _mesa_glsl_error(& loc, state,
+                                              ret, state) ||
+                   (ret->type != state->current_function->return_type))
+               {
+                  _mesa_glsl_error(&loc, state,
                                    "could not implicitly convert return value "
                                    "to %s, in function `%s'",
                                    state->current_function->return_type->name,
                                    state->current_function->function_name());
                }
-            } else {
-               _mesa_glsl_error(& loc, state,
+            }
+            else
+            {
+               _mesa_glsl_error(&loc, state,
                                 "`return' with wrong type %s, in function `%s' "
                                 "returning %s",
                                 ret_type->name,
                                 state->current_function->function_name(),
                                 state->current_function->return_type->name);
             }
-         } else if (state->current_function->return_type->base_type ==
-                    GLSL_TYPE_VOID) {
+         }
+         else if (state->current_function->return_type->base_type ==
+                  GLSL_TYPE_VOID)
+         {
             YYLTYPE loc = this->get_location();
 
             /* The ARB_shading_language_420pack, GLSL ES 3.0, and GLSL 4.20
@@ -6437,23 +7014,26 @@ ast_jump_statement::hir(exec_list *instructions,
              *         void func1() { }
              *         void func2() { return func1(); } // illegal return statement"
              */
-            _mesa_glsl_error(& loc, state,
+            _mesa_glsl_error(&loc, state,
                              "void functions can only use `return' without a "
                              "return argument");
          }
 
-         inst = new(ctx) ir_return(ret);
-      } else {
+         inst = new (ctx) ir_return(ret);
+      }
+      else
+      {
          if (state->current_function->return_type->base_type !=
-             GLSL_TYPE_VOID) {
+             GLSL_TYPE_VOID)
+         {
             YYLTYPE loc = this->get_location();
 
-            _mesa_glsl_error(& loc, state,
+            _mesa_glsl_error(&loc, state,
                              "`return' with no value, in function %s returning "
                              "non-void",
-            state->current_function->function_name());
+                             state->current_function->function_name());
          }
-         inst = new(ctx) ir_return;
+         inst = new (ctx) ir_return;
       }
 
       state->found_return = true;
@@ -6462,73 +7042,86 @@ ast_jump_statement::hir(exec_list *instructions,
    }
 
    case ast_discard:
-      if (state->stage != MESA_SHADER_FRAGMENT) {
+      if (state->stage != MESA_SHADER_FRAGMENT)
+      {
          YYLTYPE loc = this->get_location();
 
-         _mesa_glsl_error(& loc, state,
+         _mesa_glsl_error(&loc, state,
                           "`discard' may only appear in a fragment shader");
       }
-      instructions->push_tail(new(ctx) ir_discard);
+      instructions->push_tail(new (ctx) ir_discard);
       break;
 
    case ast_break:
    case ast_continue:
       if (mode == ast_continue &&
-          state->loop_nesting_ast == NULL) {
+          state->loop_nesting_ast == NULL)
+      {
          YYLTYPE loc = this->get_location();
 
-         _mesa_glsl_error(& loc, state, "continue may only appear in a loop");
-      } else if (mode == ast_break &&
-         state->loop_nesting_ast == NULL &&
-         state->switch_state.switch_nesting_ast == NULL) {
+         _mesa_glsl_error(&loc, state, "continue may only appear in a loop");
+      }
+      else if (mode == ast_break &&
+               state->loop_nesting_ast == NULL &&
+               state->switch_state.switch_nesting_ast == NULL)
+      {
          YYLTYPE loc = this->get_location();
 
-         _mesa_glsl_error(& loc, state,
+         _mesa_glsl_error(&loc, state,
                           "break may only appear in a loop or a switch");
-      } else {
+      }
+      else
+      {
          /* For a loop, inline the for loop expression again, since we don't
           * know where near the end of the loop body the normal copy of it is
           * going to be placed.  Same goes for the condition for a do-while
           * loop.
           */
          if (state->loop_nesting_ast != NULL &&
-             mode == ast_continue && !state->switch_state.is_switch_innermost) {
-            if (state->loop_nesting_ast->rest_expression) {
+             mode == ast_continue && !state->switch_state.is_switch_innermost)
+         {
+            if (state->loop_nesting_ast->rest_expression)
+            {
                state->loop_nesting_ast->rest_expression->hir(instructions,
                                                              state);
             }
             if (state->loop_nesting_ast->mode ==
-                ast_iteration_statement::ast_do_while) {
+                ast_iteration_statement::ast_do_while)
+            {
                state->loop_nesting_ast->condition_to_hir(instructions, state);
             }
          }
 
          if (state->switch_state.is_switch_innermost &&
-             mode == ast_continue) {
+             mode == ast_continue)
+         {
             /* Set 'continue_inside' to true. */
             ir_rvalue *const true_val = new (ctx) ir_constant(true);
             ir_dereference_variable *deref_continue_inside_var =
-               new(ctx) ir_dereference_variable(state->switch_state.continue_inside);
-            instructions->push_tail(new(ctx) ir_assignment(deref_continue_inside_var,
-                                                           true_val));
+                new (ctx) ir_dereference_variable(state->switch_state.continue_inside);
+            instructions->push_tail(new (ctx) ir_assignment(deref_continue_inside_var,
+                                                            true_val));
 
             /* Break out from the switch, continue for the loop will
              * be called right after switch. */
             ir_loop_jump *const jump =
-               new(ctx) ir_loop_jump(ir_loop_jump::jump_break);
+                new (ctx) ir_loop_jump(ir_loop_jump::jump_break);
             instructions->push_tail(jump);
-
-         } else if (state->switch_state.is_switch_innermost &&
-             mode == ast_break) {
+         }
+         else if (state->switch_state.is_switch_innermost &&
+                  mode == ast_break)
+         {
             /* Force break out of switch by inserting a break. */
             ir_loop_jump *const jump =
-               new(ctx) ir_loop_jump(ir_loop_jump::jump_break);
+                new (ctx) ir_loop_jump(ir_loop_jump::jump_break);
             instructions->push_tail(jump);
-         } else {
+         }
+         else
+         {
             ir_loop_jump *const jump =
-               new(ctx) ir_loop_jump((mode == ast_break)
-                  ? ir_loop_jump::jump_break
-                  : ir_loop_jump::jump_continue);
+                new (ctx) ir_loop_jump((mode == ast_break)
+                                           ? ir_loop_jump::jump_break
+                                           : ir_loop_jump::jump_continue);
             instructions->push_tail(jump);
          }
       }
@@ -6541,25 +7134,24 @@ ast_jump_statement::hir(exec_list *instructions,
    return NULL;
 }
 
-
 ir_rvalue *
 ast_demote_statement::hir(exec_list *instructions,
                           struct _mesa_glsl_parse_state *state)
 {
    void *ctx = state;
 
-   if (state->stage != MESA_SHADER_FRAGMENT) {
+   if (state->stage != MESA_SHADER_FRAGMENT)
+   {
       YYLTYPE loc = this->get_location();
 
-      _mesa_glsl_error(& loc, state,
+      _mesa_glsl_error(&loc, state,
                        "`demote' may only appear in a fragment shader");
    }
 
-   instructions->push_tail(new(ctx) ir_demote);
+   instructions->push_tail(new (ctx) ir_demote);
 
    return NULL;
 }
-
 
 ir_rvalue *
 ast_selection_statement::hir(exec_list *instructions,
@@ -6578,24 +7170,27 @@ ast_selection_statement::hir(exec_list *instructions,
     * The checks are separated so that higher quality diagnostics can be
     * generated for cases where both rules are violated.
     */
-   if (!condition->type->is_boolean() || !condition->type->is_scalar()) {
+   if (!condition->type->is_boolean() || !condition->type->is_scalar())
+   {
       YYLTYPE loc = this->condition->get_location();
 
-      _mesa_glsl_error(& loc, state, "if-statement condition must be scalar "
-                       "boolean");
+      _mesa_glsl_error(&loc, state, "if-statement condition must be scalar "
+                                    "boolean");
    }
 
-   ir_if *const stmt = new(ctx) ir_if(condition);
+   ir_if *const stmt = new (ctx) ir_if(condition);
 
-   if (then_statement != NULL) {
+   if (then_statement != NULL)
+   {
       state->symbols->push_scope();
-      then_statement->hir(& stmt->then_instructions, state);
+      then_statement->hir(&stmt->then_instructions, state);
       state->symbols->pop_scope();
    }
 
-   if (else_statement != NULL) {
+   if (else_statement != NULL)
+   {
       state->symbols->push_scope();
-      else_statement->hir(& stmt->else_instructions, state);
+      else_statement->hir(&stmt->else_instructions, state);
       state->symbols->pop_scope();
    }
 
@@ -6606,8 +7201,8 @@ ast_selection_statement::hir(exec_list *instructions,
    return NULL;
 }
 
-
-struct case_label {
+struct case_label
+{
    /** Value of the case label. */
    unsigned value;
 
@@ -6628,9 +7223,8 @@ struct case_label {
 static bool
 compare_case_value(const void *a, const void *b)
 {
-   return ((struct case_label *) a)->value == ((struct case_label *) b)->value;
+   return ((struct case_label *)a)->value == ((struct case_label *)b)->value;
 }
-
 
 /* Used for detection of duplicate case values, just
  * returns key contents as is.
@@ -6638,9 +7232,8 @@ compare_case_value(const void *a, const void *b)
 static unsigned
 key_contents(const void *key)
 {
-   return ((struct case_label *) key)->value;
+   return ((struct case_label *)key)->value;
 }
-
 
 ir_rvalue *
 ast_switch_statement::hir(exec_list *instructions,
@@ -6649,7 +7242,7 @@ ast_switch_statement::hir(exec_list *instructions,
    void *ctx = state;
 
    ir_rvalue *const test_expression =
-      this->test_expression->hir(instructions, state);
+       this->test_expression->hir(instructions, state);
 
    /* From page 66 (page 55 of the PDF) of the GLSL 1.50 spec:
     *
@@ -6657,10 +7250,11 @@ ast_switch_statement::hir(exec_list *instructions,
     *     scalar integer."
     */
    if (!test_expression->type->is_scalar() ||
-       !test_expression->type->is_integer_32()) {
+       !test_expression->type->is_integer_32())
+   {
       YYLTYPE loc = this->test_expression->get_location();
 
-      _mesa_glsl_error(& loc,
+      _mesa_glsl_error(&loc,
                        state,
                        "switch-statement expression must be scalar "
                        "integer");
@@ -6674,46 +7268,46 @@ ast_switch_statement::hir(exec_list *instructions,
    state->switch_state.is_switch_innermost = true;
    state->switch_state.switch_nesting_ast = this;
    state->switch_state.labels_ht =
-         _mesa_hash_table_create(NULL, key_contents,
-                                 compare_case_value);
+       _mesa_hash_table_create(NULL, key_contents,
+                               compare_case_value);
    state->switch_state.previous_default = NULL;
 
    /* Initalize is_fallthru state to false.
     */
    ir_rvalue *const is_fallthru_val = new (ctx) ir_constant(false);
    state->switch_state.is_fallthru_var =
-      new(ctx) ir_variable(glsl_type::bool_type,
-                           "switch_is_fallthru_tmp",
-                           ir_var_temporary);
+       new (ctx) ir_variable(glsl_type::bool_type,
+                             "switch_is_fallthru_tmp",
+                             ir_var_temporary);
    instructions->push_tail(state->switch_state.is_fallthru_var);
 
    ir_dereference_variable *deref_is_fallthru_var =
-      new(ctx) ir_dereference_variable(state->switch_state.is_fallthru_var);
-   instructions->push_tail(new(ctx) ir_assignment(deref_is_fallthru_var,
-                                                  is_fallthru_val));
+       new (ctx) ir_dereference_variable(state->switch_state.is_fallthru_var);
+   instructions->push_tail(new (ctx) ir_assignment(deref_is_fallthru_var,
+                                                   is_fallthru_val));
 
    /* Initialize continue_inside state to false.
     */
    state->switch_state.continue_inside =
-      new(ctx) ir_variable(glsl_type::bool_type,
-                           "continue_inside_tmp",
-                           ir_var_temporary);
+       new (ctx) ir_variable(glsl_type::bool_type,
+                             "continue_inside_tmp",
+                             ir_var_temporary);
    instructions->push_tail(state->switch_state.continue_inside);
 
    ir_rvalue *const false_val = new (ctx) ir_constant(false);
    ir_dereference_variable *deref_continue_inside_var =
-      new(ctx) ir_dereference_variable(state->switch_state.continue_inside);
-   instructions->push_tail(new(ctx) ir_assignment(deref_continue_inside_var,
-                                                  false_val));
+       new (ctx) ir_dereference_variable(state->switch_state.continue_inside);
+   instructions->push_tail(new (ctx) ir_assignment(deref_continue_inside_var,
+                                                   false_val));
 
    state->switch_state.run_default =
-      new(ctx) ir_variable(glsl_type::bool_type,
+       new (ctx) ir_variable(glsl_type::bool_type,
                              "run_default_tmp",
                              ir_var_temporary);
    instructions->push_tail(state->switch_state.run_default);
 
    /* Loop around the switch is used for flow control. */
-   ir_loop * loop = new(ctx) ir_loop();
+   ir_loop *loop = new (ctx) ir_loop();
    instructions->push_tail(loop);
 
    /* Cache test expression.
@@ -6725,23 +7319,27 @@ ast_switch_statement::hir(exec_list *instructions,
    body->hir(&loop->body_instructions, state);
 
    /* Insert a break at the end to exit loop. */
-   ir_loop_jump *jump = new(ctx) ir_loop_jump(ir_loop_jump::jump_break);
+   ir_loop_jump *jump = new (ctx) ir_loop_jump(ir_loop_jump::jump_break);
    loop->body_instructions.push_tail(jump);
 
    /* If we are inside loop, check if continue got called inside switch. */
-   if (state->loop_nesting_ast != NULL) {
+   if (state->loop_nesting_ast != NULL)
+   {
       ir_dereference_variable *deref_continue_inside =
-         new(ctx) ir_dereference_variable(state->switch_state.continue_inside);
-      ir_if *irif = new(ctx) ir_if(deref_continue_inside);
-      ir_loop_jump *jump = new(ctx) ir_loop_jump(ir_loop_jump::jump_continue);
+          new (ctx) ir_dereference_variable(state->switch_state.continue_inside);
+      ir_if *irif = new (ctx) ir_if(deref_continue_inside);
+      ir_loop_jump *jump = new (ctx) ir_loop_jump(ir_loop_jump::jump_continue);
 
-      if (state->loop_nesting_ast != NULL) {
-         if (state->loop_nesting_ast->rest_expression) {
+      if (state->loop_nesting_ast != NULL)
+      {
+         if (state->loop_nesting_ast->rest_expression)
+         {
             state->loop_nesting_ast->rest_expression->hir(&irif->then_instructions,
                                                           state);
          }
          if (state->loop_nesting_ast->mode ==
-             ast_iteration_statement::ast_do_while) {
+             ast_iteration_statement::ast_do_while)
+         {
             state->loop_nesting_ast->condition_to_hir(&irif->then_instructions, state);
          }
       }
@@ -6757,10 +7355,8 @@ ast_switch_statement::hir(exec_list *instructions,
    return NULL;
 }
 
-
-void
-ast_switch_statement::test_to_hir(exec_list *instructions,
-                                  struct _mesa_glsl_parse_state *state)
+void ast_switch_statement::test_to_hir(exec_list *instructions,
+                                       struct _mesa_glsl_parse_state *state)
 {
    void *ctx = state;
 
@@ -6772,16 +7368,15 @@ ast_switch_statement::test_to_hir(exec_list *instructions,
    /* Cache value of test expression. */
    ir_rvalue *const test_val = test_expression->hir(instructions, state);
 
-   state->switch_state.test_var = new(ctx) ir_variable(test_val->type,
-                                                       "switch_test_tmp",
-                                                       ir_var_temporary);
+   state->switch_state.test_var = new (ctx) ir_variable(test_val->type,
+                                                        "switch_test_tmp",
+                                                        ir_var_temporary);
    ir_dereference_variable *deref_test_var =
-      new(ctx) ir_dereference_variable(state->switch_state.test_var);
+       new (ctx) ir_dereference_variable(state->switch_state.test_var);
 
    instructions->push_tail(state->switch_state.test_var);
-   instructions->push_tail(new(ctx) ir_assignment(deref_test_var, test_val));
+   instructions->push_tail(new (ctx) ir_assignment(deref_test_var, test_val));
 }
-
 
 ir_rvalue *
 ast_switch_body::hir(exec_list *instructions,
@@ -6800,11 +7395,13 @@ ast_case_statement_list::hir(exec_list *instructions,
 {
    exec_list default_case, after_default, tmp;
 
-   foreach_list_typed (ast_case_statement, case_stmt, link, & this->cases) {
+   foreach_list_typed(ast_case_statement, case_stmt, link, &this->cases)
+   {
       case_stmt->hir(&tmp, state);
 
       /* Default case. */
-      if (state->switch_state.previous_default && default_case.is_empty()) {
+      if (state->switch_state.previous_default && default_case.is_empty())
+      {
          default_case.append_list(&tmp);
          continue;
       }
@@ -6820,27 +7417,30 @@ ast_case_statement_list::hir(exec_list *instructions,
     * the last case. We need to add checks against following cases first to see
     * if default should be chosen or not.
     */
-   if (!default_case.is_empty()) {
+   if (!default_case.is_empty())
+   {
       ir_factory body(instructions, state);
 
       ir_expression *cmp = NULL;
 
-      hash_table_foreach(state->switch_state.labels_ht, entry) {
-         const struct case_label *const l = (struct case_label *) entry->data;
+      hash_table_foreach(state->switch_state.labels_ht, entry)
+      {
+         const struct case_label *const l = (struct case_label *)entry->data;
 
          /* If the switch init-value is the value of one of the labels that
           * occurs after the default case, disable execution of the default
           * case.
           */
-         if (l->after_default) {
+         if (l->after_default)
+         {
             ir_constant *const cnst =
-               state->switch_state.test_var->type->base_type == GLSL_TYPE_UINT
-               ? body.constant(unsigned(l->value))
-               : body.constant(int(l->value));
+                state->switch_state.test_var->type->base_type == GLSL_TYPE_UINT
+                    ? body.constant(unsigned(l->value))
+                    : body.constant(int(l->value));
 
             cmp = cmp == NULL
-               ? equal(cnst, state->switch_state.test_var)
-               : logic_or(cmp, equal(cnst, state->switch_state.test_var));
+                      ? equal(cnst, state->switch_state.test_var)
+                      : logic_or(cmp, equal(cnst, state->switch_state.test_var));
          }
       }
 
@@ -6866,11 +7466,11 @@ ast_case_statement::hir(exec_list *instructions,
 
    /* Guard case statements depending on fallthru state. */
    ir_dereference_variable *const deref_fallthru_guard =
-      new(state) ir_dereference_variable(state->switch_state.is_fallthru_var);
-   ir_if *const test_fallthru = new(state) ir_if(deref_fallthru_guard);
+       new (state) ir_dereference_variable(state->switch_state.is_fallthru_var);
+   ir_if *const test_fallthru = new (state) ir_if(deref_fallthru_guard);
 
-   foreach_list_typed (ast_node, stmt, link, & this->stmts)
-      stmt->hir(& test_fallthru->then_instructions, state);
+   foreach_list_typed(ast_node, stmt, link, &this->stmts)
+       stmt->hir(&test_fallthru->then_instructions, state);
 
    instructions->push_tail(test_fallthru);
 
@@ -6878,13 +7478,12 @@ ast_case_statement::hir(exec_list *instructions,
    return NULL;
 }
 
-
 ir_rvalue *
 ast_case_label_list::hir(exec_list *instructions,
                          struct _mesa_glsl_parse_state *state)
 {
-   foreach_list_typed (ast_case_label, label, link, & this->labels)
-      label->hir(instructions, state);
+   foreach_list_typed(ast_case_label, label, link, &this->labels)
+       label->hir(instructions, state);
 
    /* Case labels do not have r-values. */
    return NULL;
@@ -6899,39 +7498,46 @@ ast_case_label::hir(exec_list *instructions,
    ir_variable *const fallthru_var = state->switch_state.is_fallthru_var;
 
    /* If not default case, ... */
-   if (this->test_value != NULL) {
+   if (this->test_value != NULL)
+   {
       /* Conditionally set fallthru state based on
        * comparison of cached test expression value to case label.
        */
       ir_rvalue *const label_rval = this->test_value->hir(instructions, state);
       ir_constant *label_const =
-         label_rval->constant_expression_value(body.mem_ctx);
+          label_rval->constant_expression_value(body.mem_ctx);
 
-      if (!label_const) {
+      if (!label_const)
+      {
          YYLTYPE loc = this->test_value->get_location();
 
-         _mesa_glsl_error(& loc, state,
+         _mesa_glsl_error(&loc, state,
                           "switch statement case label must be a "
                           "constant expression");
 
          /* Stuff a dummy value in to allow processing to continue. */
          label_const = body.constant(0);
-      } else {
+      }
+      else
+      {
          hash_entry *entry =
-               _mesa_hash_table_search(state->switch_state.labels_ht,
-                                       &label_const->value.u[0]);
+             _mesa_hash_table_search(state->switch_state.labels_ht,
+                                     &label_const->value.u[0]);
 
-         if (entry) {
+         if (entry)
+         {
             const struct case_label *const l =
-               (struct case_label *) entry->data;
+                (struct case_label *)entry->data;
             const ast_expression *const previous_label = l->ast;
             YYLTYPE loc = this->test_value->get_location();
 
-            _mesa_glsl_error(& loc, state, "duplicate case value");
+            _mesa_glsl_error(&loc, state, "duplicate case value");
 
             loc = previous_label->get_location();
-            _mesa_glsl_error(& loc, state, "this is the previous case label");
-         } else {
+            _mesa_glsl_error(&loc, state, "this is the previous case label");
+         }
+         else
+         {
             struct case_label *l = ralloc(state->switch_state.labels_ht,
                                           struct case_label);
 
@@ -6952,7 +7558,7 @@ ast_case_label::hir(exec_list *instructions,
       ir_rvalue *label = label_const;
 
       ir_rvalue *deref_test_var =
-         new(body.mem_ctx) ir_dereference_variable(state->switch_state.test_var);
+          new (body.mem_ctx) ir_dereference_variable(state->switch_state.test_var);
 
       /*
        * From GLSL 4.40 specification section 6.2 ("Selection"):
@@ -6965,7 +7571,8 @@ ast_case_label::hir(exec_list *instructions,
        *     uint (see section 4.1.10 “Implicit Conversions”) before the compare
        *     is done."
        */
-      if (label->type != state->switch_state.test_var->type) {
+      if (label->type != state->switch_state.test_var->type)
+      {
          YYLTYPE loc = this->test_value->get_location();
 
          const glsl_type *type_a = label->type;
@@ -6973,21 +7580,27 @@ ast_case_label::hir(exec_list *instructions,
 
          /* Check if int->uint implicit conversion is supported. */
          bool integer_conversion_supported =
-            glsl_type::int_type->can_implicitly_convert_to(glsl_type::uint_type,
-                                                           state);
+             glsl_type::int_type->can_implicitly_convert_to(glsl_type::uint_type,
+                                                            state);
 
          if ((!type_a->is_integer_32() || !type_b->is_integer_32()) ||
-              !integer_conversion_supported) {
+             !integer_conversion_supported)
+         {
             _mesa_glsl_error(&loc, state, "type mismatch with switch "
-                             "init-expression and case label (%s != %s)",
+                                          "init-expression and case label (%s != %s)",
                              type_a->name, type_b->name);
-         } else {
+         }
+         else
+         {
             /* Conversion of the case label. */
-            if (type_a->base_type == GLSL_TYPE_INT) {
+            if (type_a->base_type == GLSL_TYPE_INT)
+            {
                if (!apply_implicit_conversion(glsl_type::uint_type,
                                               label, state))
                   _mesa_glsl_error(&loc, state, "implicit type conversion error");
-            } else {
+            }
+            else
+            {
                /* Conversion of the init-expression value. */
                if (!apply_implicit_conversion(glsl_type::uint_type,
                                               deref_test_var, state))
@@ -7005,14 +7618,17 @@ ast_case_label::hir(exec_list *instructions,
 
       body.emit(assign(fallthru_var,
                        logic_or(fallthru_var, equal(label, deref_test_var))));
-   } else { /* default case */
-      if (state->switch_state.previous_default) {
+   }
+   else
+   { /* default case */
+      if (state->switch_state.previous_default)
+      {
          YYLTYPE loc = this->get_location();
-         _mesa_glsl_error(& loc, state,
+         _mesa_glsl_error(&loc, state,
                           "multiple default labels in one switch");
 
          loc = state->switch_state.previous_default->get_location();
-         _mesa_glsl_error(& loc, state, "this is the first default label");
+         _mesa_glsl_error(&loc, state, "this is the first default label");
       }
       state->switch_state.previous_default = this;
 
@@ -7026,40 +7642,41 @@ ast_case_label::hir(exec_list *instructions,
    return NULL;
 }
 
-void
-ast_iteration_statement::condition_to_hir(exec_list *instructions,
-                                          struct _mesa_glsl_parse_state *state)
+void ast_iteration_statement::condition_to_hir(exec_list *instructions,
+                                               struct _mesa_glsl_parse_state *state)
 {
    void *ctx = state;
 
-   if (condition != NULL) {
+   if (condition != NULL)
+   {
       ir_rvalue *const cond =
-         condition->hir(instructions, state);
+          condition->hir(instructions, state);
 
-      if ((cond == NULL)
-          || !cond->type->is_boolean() || !cond->type->is_scalar()) {
+      if ((cond == NULL) || !cond->type->is_boolean() || !cond->type->is_scalar())
+      {
          YYLTYPE loc = condition->get_location();
 
-         _mesa_glsl_error(& loc, state,
+         _mesa_glsl_error(&loc, state,
                           "loop condition must be scalar boolean");
-      } else {
+      }
+      else
+      {
          /* As the first code in the loop body, generate a block that looks
           * like 'if (!condition) break;' as the loop termination condition.
           */
          ir_rvalue *const not_cond =
-            new(ctx) ir_expression(ir_unop_logic_not, cond);
+             new (ctx) ir_expression(ir_unop_logic_not, cond);
 
-         ir_if *const if_stmt = new(ctx) ir_if(not_cond);
+         ir_if *const if_stmt = new (ctx) ir_if(not_cond);
 
          ir_jump *const break_stmt =
-            new(ctx) ir_loop_jump(ir_loop_jump::jump_break);
+             new (ctx) ir_loop_jump(ir_loop_jump::jump_break);
 
          if_stmt->then_instructions.push_tail(break_stmt);
          instructions->push_tail(if_stmt);
       }
    }
 }
-
 
 ir_rvalue *
 ast_iteration_statement::hir(exec_list *instructions,
@@ -7075,7 +7692,7 @@ ast_iteration_statement::hir(exec_list *instructions,
    if (init_statement != NULL)
       init_statement->hir(instructions, state);
 
-   ir_loop *const stmt = new(ctx) ir_loop();
+   ir_loop *const stmt = new (ctx) ir_loop();
    instructions->push_tail(stmt);
 
    /* Track the current loop nesting. */
@@ -7093,10 +7710,10 @@ ast_iteration_statement::hir(exec_list *instructions,
       condition_to_hir(&stmt->body_instructions, state);
 
    if (body != NULL)
-      body->hir(& stmt->body_instructions, state);
+      body->hir(&stmt->body_instructions, state);
 
    if (rest_expression != NULL)
-      rest_expression->hir(& stmt->body_instructions, state);
+      rest_expression->hir(&stmt->body_instructions, state);
 
    if (mode == ast_do_while)
       condition_to_hir(&stmt->body_instructions, state);
@@ -7112,7 +7729,6 @@ ast_iteration_statement::hir(exec_list *instructions,
     */
    return NULL;
 }
-
 
 /**
  * Determine if the given type is valid for establishing a default precision
@@ -7140,7 +7756,8 @@ is_valid_default_precision_type(const struct glsl_type *const type)
    if (type == NULL)
       return false;
 
-   switch (type->base_type) {
+   switch (type->base_type)
+   {
    case GLSL_TYPE_INT:
    case GLSL_TYPE_FLOAT:
       /* "int" and "float" are valid, but vectors and matrices are not. */
@@ -7153,7 +7770,6 @@ is_valid_default_precision_type(const struct glsl_type *const type)
       return false;
    }
 }
-
 
 ir_rvalue *
 ast_type_specifier::hir(exec_list *instructions,
@@ -7174,17 +7790,20 @@ ast_type_specifier::hir(exec_list *instructions,
     *    field can be either int or float [...].  Any other types or
     *    qualifiers will result in an error.
     */
-   if (this->default_precision != ast_precision_none) {
+   if (this->default_precision != ast_precision_none)
+   {
       if (!state->check_precision_qualifiers_allowed(&loc))
          return NULL;
 
-      if (this->structure != NULL) {
+      if (this->structure != NULL)
+      {
          _mesa_glsl_error(&loc, state,
                           "precision qualifiers do not apply to structures");
          return NULL;
       }
 
-      if (this->array_specifier != NULL) {
+      if (this->array_specifier != NULL)
+      {
          _mesa_glsl_error(&loc, state,
                           "default precision statements do not apply to "
                           "arrays");
@@ -7192,15 +7811,17 @@ ast_type_specifier::hir(exec_list *instructions,
       }
 
       const struct glsl_type *const type =
-         state->symbols->get_type(this->type_name);
-      if (!is_valid_default_precision_type(type)) {
+          state->symbols->get_type(this->type_name);
+      if (!is_valid_default_precision_type(type))
+      {
          _mesa_glsl_error(&loc, state,
                           "default precision statements apply only to "
                           "float, int, and opaque types");
          return NULL;
       }
 
-      if (state->es_shader) {
+      if (state->es_shader)
+      {
          /* Section 4.5.3 (Default Precision Qualifiers) of the GLSL ES 1.00
           * spec says:
           *
@@ -7247,7 +7868,6 @@ ast_type_specifier::hir(exec_list *instructions,
    return NULL;
 }
 
-
 /**
  * Process a structure or interface block tree into an array of structure fields
  *
@@ -7289,7 +7909,8 @@ ast_process_struct_or_iface_block_members(exec_list *instructions,
     * This means that we actually need to count the number of elements in the
     * 'declarations' list in each of the elements.
     */
-   foreach_list_typed (ast_declarator_list, decl_list, link, declarations) {
+   foreach_list_typed(ast_declarator_list, decl_list, link, declarations)
+   {
       decl_count += decl_list->declarations.length();
    }
 
@@ -7305,7 +7926,8 @@ ast_process_struct_or_iface_block_members(exec_list *instructions,
    bool first_member_has_explicit_location = false;
 
    unsigned i = 0;
-   foreach_list_typed (ast_declarator_list, decl_list, link, declarations) {
+   foreach_list_typed(ast_declarator_list, decl_list, link, declarations)
+   {
       const char *type_name;
       YYLTYPE loc = decl_list->get_location();
 
@@ -7331,10 +7953,10 @@ ast_process_struct_or_iface_block_members(exec_list *instructions,
                           "embedded structure declarations are not allowed");
 
       const glsl_type *decl_type =
-         decl_list->type->glsl_type(& type_name, state);
+          decl_list->type->glsl_type(&type_name, state);
 
       const struct ast_type_qualifier *const qual =
-         &decl_list->type->qualifier;
+          &decl_list->type->qualifier;
 
       /* From section 4.3.9 of the GLSL 4.40 spec:
        *
@@ -7347,7 +7969,8 @@ ast_process_struct_or_iface_block_members(exec_list *instructions,
        */
       assert(decl_type);
 
-      if (is_interface) {
+      if (is_interface)
+      {
          /* From section 4.3.7 of the ARB_bindless_texture spec:
           *
           *    "(remove the following bullet from the last list on p. 39,
@@ -7357,13 +7980,17 @@ ast_process_struct_or_iface_block_members(exec_list *instructions,
           *     * sampler types are not allowed
           */
          if (decl_type->contains_atomic() ||
-             (!state->has_bindless() && decl_type->contains_opaque())) {
+             (!state->has_bindless() && decl_type->contains_opaque()))
+         {
             _mesa_glsl_error(&loc, state, "uniform/buffer in non-default "
-                             "interface block contains %s variable",
+                                          "interface block contains %s variable",
                              state->has_bindless() ? "atomic" : "opaque");
          }
-      } else {
-         if (decl_type->contains_atomic()) {
+      }
+      else
+      {
+         if (decl_type->contains_atomic())
+         {
             /* From section 4.1.7.3 of the GLSL 4.40 spec:
              *
              *    "Members of structures cannot be declared as atomic counter
@@ -7372,7 +7999,8 @@ ast_process_struct_or_iface_block_members(exec_list *instructions,
             _mesa_glsl_error(&loc, state, "atomic counter in structure");
          }
 
-         if (!state->has_bindless() && decl_type->contains_image()) {
+         if (!state->has_bindless() && decl_type->contains_image())
+         {
             /* FINISHME: Same problem as with atomic counters.
              * FINISHME: Request clarification from Khronos and add
              * FINISHME: spec quotation here.
@@ -7381,19 +8009,23 @@ ast_process_struct_or_iface_block_members(exec_list *instructions,
          }
       }
 
-      if (qual->flags.q.explicit_binding) {
+      if (qual->flags.q.explicit_binding)
+      {
          _mesa_glsl_error(&loc, state,
                           "binding layout qualifier cannot be applied "
                           "to struct or interface block members");
       }
 
-      if (is_interface) {
-         if (!first_member) {
+      if (is_interface)
+      {
+         if (!first_member)
+         {
             if (!layout->flags.q.explicit_location &&
                 ((first_member_has_explicit_location &&
                   !qual->flags.q.explicit_location) ||
                  (!first_member_has_explicit_location &&
-                  qual->flags.q.explicit_location))) {
+                  qual->flags.q.explicit_location)))
+            {
                _mesa_glsl_error(&loc, state,
                                 "when block-level location layout qualifier "
                                 "is not supplied either all members must "
@@ -7401,17 +8033,20 @@ ast_process_struct_or_iface_block_members(exec_list *instructions,
                                 "members must not have a location layout "
                                 "qualifier");
             }
-         } else {
+         }
+         else
+         {
             first_member = false;
             first_member_has_explicit_location =
-               qual->flags.q.explicit_location;
+                qual->flags.q.explicit_location;
          }
       }
 
       if (qual->flags.q.std140 ||
           qual->flags.q.std430 ||
           qual->flags.q.packed ||
-          qual->flags.q.shared) {
+          qual->flags.q.shared)
+      {
          _mesa_glsl_error(&loc, state,
                           "uniform/shader storage block layout qualifiers "
                           "std140, std430, packed, and shared can only be "
@@ -7419,7 +8054,8 @@ ast_process_struct_or_iface_block_members(exec_list *instructions,
                           "members");
       }
 
-      if (qual->flags.q.constant) {
+      if (qual->flags.q.constant)
+      {
          _mesa_glsl_error(&loc, state,
                           "const storage qualifier cannot be applied "
                           "to struct or interface block members");
@@ -7434,84 +8070,99 @@ ast_process_struct_or_iface_block_members(exec_list *instructions,
        *   the specified stream must match the stream associated with the
        *   containing block."
        */
-      if (qual->flags.q.explicit_stream) {
+      if (qual->flags.q.explicit_stream)
+      {
          unsigned qual_stream;
          if (process_qualifier_constant(state, &loc, "stream",
                                         qual->stream, &qual_stream) &&
-             qual_stream != block_stream) {
+             qual_stream != block_stream)
+         {
             _mesa_glsl_error(&loc, state, "stream layout qualifier on "
-                             "interface block member does not match "
-                             "the interface block (%u vs %u)", qual_stream,
+                                          "interface block member does not match "
+                                          "the interface block (%u vs %u)",
+                             qual_stream,
                              block_stream);
          }
       }
 
       int xfb_buffer;
       unsigned explicit_xfb_buffer = 0;
-      if (qual->flags.q.explicit_xfb_buffer) {
+      if (qual->flags.q.explicit_xfb_buffer)
+      {
          unsigned qual_xfb_buffer;
          if (process_qualifier_constant(state, &loc, "xfb_buffer",
-                                        qual->xfb_buffer, &qual_xfb_buffer)) {
+                                        qual->xfb_buffer, &qual_xfb_buffer))
+         {
             explicit_xfb_buffer = 1;
             if (qual_xfb_buffer != block_xfb_buffer)
                _mesa_glsl_error(&loc, state, "xfb_buffer layout qualifier on "
-                                "interface block member does not match "
-                                "the interface block (%u vs %u)",
+                                             "interface block member does not match "
+                                             "the interface block (%u vs %u)",
                                 qual_xfb_buffer, block_xfb_buffer);
          }
-         xfb_buffer = (int) qual_xfb_buffer;
-      } else {
+         xfb_buffer = (int)qual_xfb_buffer;
+      }
+      else
+      {
          if (layout)
             explicit_xfb_buffer = layout->flags.q.explicit_xfb_buffer;
-         xfb_buffer = (int) block_xfb_buffer;
+         xfb_buffer = (int)block_xfb_buffer;
       }
 
       int xfb_stride = -1;
-      if (qual->flags.q.explicit_xfb_stride) {
+      if (qual->flags.q.explicit_xfb_stride)
+      {
          unsigned qual_xfb_stride;
          if (process_qualifier_constant(state, &loc, "xfb_stride",
-                                        qual->xfb_stride, &qual_xfb_stride)) {
-            xfb_stride = (int) qual_xfb_stride;
+                                        qual->xfb_stride, &qual_xfb_stride))
+         {
+            xfb_stride = (int)qual_xfb_stride;
          }
       }
 
-      if (qual->flags.q.uniform && qual->has_interpolation()) {
+      if (qual->flags.q.uniform && qual->has_interpolation())
+      {
          _mesa_glsl_error(&loc, state,
                           "interpolation qualifiers cannot be used "
                           "with uniform interface blocks");
       }
 
       if ((qual->flags.q.uniform || !is_interface) &&
-          qual->has_auxiliary_storage()) {
+          qual->has_auxiliary_storage())
+      {
          _mesa_glsl_error(&loc, state,
                           "auxiliary storage qualifiers cannot be used "
                           "in uniform blocks or structures.");
       }
 
-      if (qual->flags.q.row_major || qual->flags.q.column_major) {
-         if (!qual->flags.q.uniform && !qual->flags.q.buffer) {
+      if (qual->flags.q.row_major || qual->flags.q.column_major)
+      {
+         if (!qual->flags.q.uniform && !qual->flags.q.buffer)
+         {
             _mesa_glsl_error(&loc, state,
                              "row_major and column_major can only be "
                              "applied to interface blocks");
-         } else
+         }
+         else
             validate_matrix_layout_for_type(state, &loc, decl_type, NULL);
       }
 
-      foreach_list_typed (ast_declaration, decl, link,
-                          &decl_list->declarations) {
+      foreach_list_typed(ast_declaration, decl, link,
+                         &decl_list->declarations)
+      {
          YYLTYPE loc = decl->get_location();
 
          if (!allow_reserved_names)
             validate_identifier(decl->identifier, loc, state);
 
          const struct glsl_type *field_type =
-            process_array_type(&loc, decl_type, decl->array_specifier, state);
+             process_array_type(&loc, decl_type, decl->array_specifier, state);
          validate_array_dimensions(field_type, state, &loc);
          fields[i].type = field_type;
          fields[i].name = decl->identifier;
          fields[i].interpolation =
-            interpret_interpolation_qualifier(qual, field_type,
-                                              var_mode, state, &loc);
+             interpret_interpolation_qualifier(qual, field_type,
+                                               var_mode, state, &loc);
          fields[i].centroid = qual->flags.q.centroid ? 1 : 0;
          fields[i].sample = qual->flags.q.sample ? 1 : 0;
          fields[i].patch = qual->flags.q.patch ? 1 : 0;
@@ -7520,20 +8171,27 @@ ast_process_struct_or_iface_block_members(exec_list *instructions,
          fields[i].xfb_buffer = xfb_buffer;
          fields[i].xfb_stride = xfb_stride;
 
-         if (qual->flags.q.explicit_location) {
+         if (qual->flags.q.explicit_location)
+         {
             unsigned qual_location;
             if (process_qualifier_constant(state, &loc, "location",
-                                           qual->location, &qual_location)) {
+                                           qual->location, &qual_location))
+            {
                fields[i].location = qual_location +
-                  (fields[i].patch ? VARYING_SLOT_PATCH0 : VARYING_SLOT_VAR0);
+                                    (fields[i].patch ? VARYING_SLOT_PATCH0 : VARYING_SLOT_VAR0);
                expl_location = fields[i].location +
-                  fields[i].type->count_attribute_slots(false);
+                               fields[i].type->count_attribute_slots(false);
             }
-         } else {
-            if (layout && layout->flags.q.explicit_location) {
+         }
+         else
+         {
+            if (layout && layout->flags.q.explicit_location)
+            {
                fields[i].location = expl_location;
                expl_location += fields[i].type->count_attribute_slots(false);
-            } else {
+            }
+            else
+            {
                fields[i].location = -1;
             }
          }
@@ -7543,71 +8201,96 @@ ast_process_struct_or_iface_block_members(exec_list *instructions,
           */
          unsigned align = 0;
          unsigned size = 0;
-         if (layout) {
+         if (layout)
+         {
             bool row_major;
             if (qual->flags.q.row_major ||
-                matrix_layout == GLSL_MATRIX_LAYOUT_ROW_MAJOR) {
+                matrix_layout == GLSL_MATRIX_LAYOUT_ROW_MAJOR)
+            {
                row_major = true;
-            } else {
+            }
+            else
+            {
                row_major = false;
             }
 
-            if(layout->flags.q.std140) {
+            if (layout->flags.q.std140)
+            {
                align = field_type->std140_base_alignment(row_major);
                size = field_type->std140_size(row_major);
-            } else if (layout->flags.q.std430) {
+            }
+            else if (layout->flags.q.std430)
+            {
                align = field_type->std430_base_alignment(row_major);
                size = field_type->std430_size(row_major);
             }
          }
 
-         if (qual->flags.q.explicit_offset) {
+         if (qual->flags.q.explicit_offset)
+         {
             unsigned qual_offset;
             if (process_qualifier_constant(state, &loc, "offset",
-                                           qual->offset, &qual_offset)) {
-               if (align != 0 && size != 0) {
-                   if (next_offset > qual_offset)
-                      _mesa_glsl_error(&loc, state, "layout qualifier "
-                                       "offset overlaps previous member");
+                                           qual->offset, &qual_offset))
+            {
+               if (align != 0 && size != 0)
+               {
+                  if (next_offset > qual_offset)
+                     _mesa_glsl_error(&loc, state, "layout qualifier "
+                                                   "offset overlaps previous member");
 
-                  if (qual_offset % align) {
+                  if (qual_offset % align)
+                  {
                      _mesa_glsl_error(&loc, state, "layout qualifier offset "
-                                      "must be a multiple of the base "
-                                      "alignment of %s", field_type->name);
+                                                   "must be a multiple of the base "
+                                                   "alignment of %s",
+                                      field_type->name);
                   }
                   fields[i].offset = qual_offset;
                   next_offset = qual_offset + size;
-               } else {
+               }
+               else
+               {
                   _mesa_glsl_error(&loc, state, "offset can only be used "
-                                   "with std430 and std140 layouts");
+                                                "with std430 and std140 layouts");
                }
             }
          }
 
-         if (qual->flags.q.explicit_align || expl_align != 0) {
-            unsigned offset = fields[i].offset != -1 ? fields[i].offset :
-               next_offset;
-            if (align == 0 || size == 0) {
+         if (qual->flags.q.explicit_align || expl_align != 0)
+         {
+            unsigned offset = fields[i].offset != -1 ? fields[i].offset : next_offset;
+            if (align == 0 || size == 0)
+            {
                _mesa_glsl_error(&loc, state, "align can only be used with "
-                                "std430 and std140 layouts");
-            } else if (qual->flags.q.explicit_align) {
+                                             "std430 and std140 layouts");
+            }
+            else if (qual->flags.q.explicit_align)
+            {
                unsigned member_align;
                if (process_qualifier_constant(state, &loc, "align",
-                                              qual->align, &member_align)) {
+                                              qual->align, &member_align))
+               {
                   if (member_align == 0 ||
-                      member_align & (member_align - 1)) {
+                      member_align & (member_align - 1))
+                  {
                      _mesa_glsl_error(&loc, state, "align layout qualifier "
-                                      "is not a power of 2");
-                  } else {
+                                                   "is not a power of 2");
+                  }
+                  else
+                  {
                      fields[i].offset = glsl_align(offset, member_align);
                      next_offset = fields[i].offset + size;
                   }
                }
-            } else {
+            }
+            else
+            {
                fields[i].offset = glsl_align(offset, expl_align);
                next_offset = fields[i].offset + size;
             }
-         } else if (!qual->flags.q.explicit_offset) {
+         }
+         else if (!qual->flags.q.explicit_offset)
+         {
             if (align != 0 && size != 0)
                next_offset = glsl_align(next_offset, align) + size;
          }
@@ -7621,16 +8304,21 @@ ast_process_struct_or_iface_block_members(exec_list *instructions,
           *    component's size.  Aggregate types are flattened down to the
           *    component level to get this sequence of components."
           */
-         if (qual->flags.q.explicit_xfb_offset) {
+         if (qual->flags.q.explicit_xfb_offset)
+         {
             unsigned xfb_offset;
             if (process_qualifier_constant(state, &loc, "xfb_offset",
-                                           qual->offset, &xfb_offset)) {
+                                           qual->offset, &xfb_offset))
+            {
                fields[i].offset = xfb_offset;
                block_xfb_offset = fields[i].offset +
-                  4 * field_type->component_slots();
+                                  4 * field_type->component_slots();
             }
-         } else {
-            if (layout && layout->flags.q.explicit_xfb_offset) {
+         }
+         else
+         {
+            if (layout && layout->flags.q.explicit_xfb_offset)
+            {
                unsigned align = field_type->is_64bit() ? 8 : 4;
                fields[i].offset = glsl_align(block_xfb_offset, align);
                block_xfb_offset += 4 * field_type->component_slots();
@@ -7644,8 +8332,8 @@ ast_process_struct_or_iface_block_members(exec_list *instructions,
           */
          if (is_interface && layout &&
              (layout->flags.q.uniform || layout->flags.q.buffer) &&
-             (field_type->without_array()->is_matrix()
-              || field_type->without_array()->is_struct())) {
+             (field_type->without_array()->is_matrix() || field_type->without_array()->is_struct()))
+         {
             /* If no layout is specified for the field, inherit the layout
              * from the block.
              */
@@ -7659,26 +8347,29 @@ ast_process_struct_or_iface_block_members(exec_list *instructions,
             /* If we're processing an uniform or buffer block, the matrix
              * layout must be decided by this point.
              */
-            assert(fields[i].matrix_layout == GLSL_MATRIX_LAYOUT_ROW_MAJOR
-                   || fields[i].matrix_layout == GLSL_MATRIX_LAYOUT_COLUMN_MAJOR);
+            assert(fields[i].matrix_layout == GLSL_MATRIX_LAYOUT_ROW_MAJOR || fields[i].matrix_layout == GLSL_MATRIX_LAYOUT_COLUMN_MAJOR);
          }
 
          /* Memory qualifiers are allowed on buffer and image variables, while
           * the format qualifier is only accepted for images.
           */
          if (var_mode == ir_var_shader_storage ||
-             field_type->without_array()->is_image()) {
+             field_type->without_array()->is_image())
+         {
             /* For readonly and writeonly qualifiers the field definition,
              * if set, overwrites the layout qualifier.
              */
-            if (qual->flags.q.read_only || qual->flags.q.write_only) {
+            if (qual->flags.q.read_only || qual->flags.q.write_only)
+            {
                fields[i].memory_read_only = qual->flags.q.read_only;
                fields[i].memory_write_only = qual->flags.q.write_only;
-            } else {
+            }
+            else
+            {
                fields[i].memory_read_only =
-                  layout ? layout->flags.q.read_only : 0;
+                   layout ? layout->flags.q.read_only : 0;
                fields[i].memory_write_only =
-                  layout ? layout->flags.q.write_only : 0;
+                   layout ? layout->flags.q.write_only : 0;
             }
 
             /* For other qualifiers, we set the flag if either the layout
@@ -7691,20 +8382,26 @@ ast_process_struct_or_iface_block_members(exec_list *instructions,
             fields[i].memory_restrict = qual->flags.q.restrict_flag ||
                                         (layout && layout->flags.q.restrict_flag);
 
-            if (field_type->without_array()->is_image()) {
-               if (qual->flags.q.explicit_image_format) {
+            if (field_type->without_array()->is_image())
+            {
+               if (qual->flags.q.explicit_image_format)
+               {
                   if (qual->image_base_type !=
-                      field_type->without_array()->sampled_type) {
+                      field_type->without_array()->sampled_type)
+                  {
                      _mesa_glsl_error(&loc, state, "format qualifier doesn't "
-                                      "match the base data type of the image");
+                                                   "match the base data type of the image");
                   }
 
                   fields[i].image_format = qual->image_format;
-               } else {
-                  if (!qual->flags.q.write_only) {
+               }
+               else
+               {
+                  if (!qual->flags.q.write_only)
+                  {
                      _mesa_glsl_error(&loc, state, "image not qualified with "
-                                      "`writeonly' must have a format layout "
-                                      "qualifier");
+                                                   "`writeonly' must have a format layout "
+                                                   "qualifier");
                   }
 
                   fields[i].image_format = PIPE_FORMAT_NONE;
@@ -7713,12 +8410,15 @@ ast_process_struct_or_iface_block_members(exec_list *instructions,
          }
 
          /* Precision qualifiers do not hold any meaning in Desktop GLSL */
-         if (state->es_shader) {
+         if (state->es_shader)
+         {
             fields[i].precision = select_gles_precision(qual->precision,
                                                         field_type,
                                                         state,
                                                         &loc);
-         } else {
+         }
+         else
+         {
             fields[i].precision = qual->precision;
          }
 
@@ -7732,7 +8432,6 @@ ast_process_struct_or_iface_block_members(exec_list *instructions,
    return decl_count;
 }
 
-
 ir_rvalue *
 ast_struct_specifier::hir(exec_list *instructions,
                           struct _mesa_glsl_parse_state *state)
@@ -7740,48 +8439,56 @@ ast_struct_specifier::hir(exec_list *instructions,
    YYLTYPE loc = this->get_location();
 
    unsigned expl_location = 0;
-   if (layout && layout->flags.q.explicit_location) {
+   if (layout && layout->flags.q.explicit_location)
+   {
       if (!process_qualifier_constant(state, &loc, "location",
-                                      layout->location, &expl_location)) {
+                                      layout->location, &expl_location))
+      {
          return NULL;
-      } else {
+      }
+      else
+      {
          expl_location = VARYING_SLOT_VAR0 + expl_location;
       }
    }
 
    glsl_struct_field *fields;
    unsigned decl_count =
-      ast_process_struct_or_iface_block_members(instructions,
-                                                state,
-                                                &this->declarations,
-                                                &fields,
-                                                false,
-                                                GLSL_MATRIX_LAYOUT_INHERITED,
-                                                false /* allow_reserved_names */,
-                                                ir_var_auto,
-                                                layout,
-                                                0, /* for interface only */
-                                                0, /* for interface only */
-                                                0, /* for interface only */
-                                                expl_location,
-                                                0 /* for interface only */);
+       ast_process_struct_or_iface_block_members(instructions,
+                                                 state,
+                                                 &this->declarations,
+                                                 &fields,
+                                                 false,
+                                                 GLSL_MATRIX_LAYOUT_INHERITED,
+                                                 false /* allow_reserved_names */,
+                                                 ir_var_auto,
+                                                 layout,
+                                                 0, /* for interface only */
+                                                 0, /* for interface only */
+                                                 0, /* for interface only */
+                                                 expl_location,
+                                                 0 /* for interface only */);
 
    validate_identifier(this->name, loc, state);
 
    type = glsl_type::get_struct_instance(fields, decl_count, this->name);
 
-   if (!type->is_anonymous() && !state->symbols->add_type(name, type)) {
+   if (!type->is_anonymous() && !state->symbols->add_type(name, type))
+   {
       const glsl_type *match = state->symbols->get_type(name);
       /* allow struct matching for desktop GL - older UE4 does this */
       if (match != NULL && state->is_version(130, 0) && match->record_compare(type, true, false))
-         _mesa_glsl_warning(& loc, state, "struct `%s' previously defined", name);
+         _mesa_glsl_warning(&loc, state, "struct `%s' previously defined", name);
       else
-         _mesa_glsl_error(& loc, state, "struct `%s' previously defined", name);
-   } else {
+         _mesa_glsl_error(&loc, state, "struct `%s' previously defined", name);
+   }
+   else
+   {
       const glsl_type **s = reralloc(state, state->user_structures,
                                      const glsl_type *,
                                      state->num_user_structures + 1);
-      if (s != NULL) {
+      if (s != NULL)
+      {
          s[state->num_user_structures] = type;
          state->user_structures = s;
          state->num_user_structures++;
@@ -7793,7 +8500,6 @@ ast_struct_specifier::hir(exec_list *instructions,
    return NULL;
 }
 
-
 /**
  * Visitor class which detects whether a given interface block has been used.
  */
@@ -7801,13 +8507,14 @@ class interface_block_usage_visitor : public ir_hierarchical_visitor
 {
 public:
    interface_block_usage_visitor(ir_variable_mode mode, const glsl_type *block)
-      : mode(mode), block(block), found(false)
+       : mode(mode), block(block), found(false)
    {
    }
 
    virtual ir_visitor_status visit(ir_dereference_variable *ir)
    {
-      if (ir->var->data.mode == mode && ir->var->get_interface_type() == block) {
+      if (ir->var->data.mode == mode && ir->var->get_interface_type() == block)
+      {
          found = true;
          return visit_stop;
       }
@@ -7834,7 +8541,7 @@ is_unsized_array_last_element(ir_variable *v)
    assert(v->type->is_unsized_array());
 
    /* Check if it is the last element of the interface */
-   if (strcmp(interface_type->fields.structure[length-1].name, v->name) == 0)
+   if (strcmp(interface_type->fields.structure[length - 1].name, v->name) == 0)
       return true;
    return false;
 }
@@ -7849,6 +8556,11 @@ apply_memory_qualifiers(ir_variable *var, glsl_struct_field field)
    var->data.memory_restrict = field.memory_restrict;
 }
 
+void ast_interface_block::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled serialize ast_interface_block");
+}
+
 ir_rvalue *
 ast_interface_block::hir(exec_list *instructions,
                          struct _mesa_glsl_parse_state *state)
@@ -7856,7 +8568,8 @@ ast_interface_block::hir(exec_list *instructions,
    YYLTYPE loc = this->get_location();
 
    /* Interface blocks must be declared at global scope */
-   if (state->current_function != NULL) {
+   if (state->current_function != NULL)
+   {
       _mesa_glsl_error(&loc, state,
                        "Interface block `%s' must be declared "
                        "at global scope",
@@ -7883,7 +8596,8 @@ ast_interface_block::hir(exec_list *instructions,
     */
    ast_type_qualifier allowed_blk_qualifiers;
    allowed_blk_qualifiers.flags.i = 0;
-   if (this->layout.flags.q.buffer || this->layout.flags.q.uniform) {
+   if (this->layout.flags.q.buffer || this->layout.flags.q.uniform)
+   {
       allowed_blk_qualifiers.flags.q.shared = 1;
       allowed_blk_qualifiers.flags.q.packed = 1;
       allowed_blk_qualifiers.flags.q.std140 = 1;
@@ -7891,7 +8605,8 @@ ast_interface_block::hir(exec_list *instructions,
       allowed_blk_qualifiers.flags.q.column_major = 1;
       allowed_blk_qualifiers.flags.q.explicit_align = 1;
       allowed_blk_qualifiers.flags.q.explicit_binding = 1;
-      if (this->layout.flags.q.buffer) {
+      if (this->layout.flags.q.buffer)
+      {
          allowed_blk_qualifiers.flags.q.buffer = 1;
          allowed_blk_qualifiers.flags.q.std430 = 1;
          allowed_blk_qualifiers.flags.q.coherent = 1;
@@ -7899,36 +8614,47 @@ ast_interface_block::hir(exec_list *instructions,
          allowed_blk_qualifiers.flags.q.restrict_flag = 1;
          allowed_blk_qualifiers.flags.q.read_only = 1;
          allowed_blk_qualifiers.flags.q.write_only = 1;
-      } else {
+      }
+      else
+      {
          allowed_blk_qualifiers.flags.q.uniform = 1;
       }
-   } else {
+   }
+   else
+   {
       /* Interface block */
       assert(this->layout.flags.q.in || this->layout.flags.q.out);
 
       allowed_blk_qualifiers.flags.q.explicit_location = 1;
-      if (this->layout.flags.q.out) {
+      if (this->layout.flags.q.out)
+      {
          allowed_blk_qualifiers.flags.q.out = 1;
          if (state->stage == MESA_SHADER_GEOMETRY ||
-          state->stage == MESA_SHADER_TESS_CTRL ||
-          state->stage == MESA_SHADER_TESS_EVAL ||
-          state->stage == MESA_SHADER_VERTEX ) {
+             state->stage == MESA_SHADER_TESS_CTRL ||
+             state->stage == MESA_SHADER_TESS_EVAL ||
+             state->stage == MESA_SHADER_VERTEX)
+         {
             allowed_blk_qualifiers.flags.q.explicit_xfb_offset = 1;
             allowed_blk_qualifiers.flags.q.explicit_xfb_buffer = 1;
             allowed_blk_qualifiers.flags.q.xfb_buffer = 1;
             allowed_blk_qualifiers.flags.q.explicit_xfb_stride = 1;
             allowed_blk_qualifiers.flags.q.xfb_stride = 1;
-            if (state->stage == MESA_SHADER_GEOMETRY) {
+            if (state->stage == MESA_SHADER_GEOMETRY)
+            {
                allowed_blk_qualifiers.flags.q.stream = 1;
                allowed_blk_qualifiers.flags.q.explicit_stream = 1;
             }
-            if (state->stage == MESA_SHADER_TESS_CTRL) {
+            if (state->stage == MESA_SHADER_TESS_CTRL)
+            {
                allowed_blk_qualifiers.flags.q.patch = 1;
             }
          }
-      } else {
+      }
+      else
+      {
          allowed_blk_qualifiers.flags.q.in = 1;
-         if (state->stage == MESA_SHADER_TESS_EVAL) {
+         if (state->stage == MESA_SHADER_TESS_EVAL)
+         {
             allowed_blk_qualifiers.flags.q.patch = 1;
          }
       }
@@ -7939,13 +8665,20 @@ ast_interface_block::hir(exec_list *instructions,
                                this->block_name);
 
    enum glsl_interface_packing packing;
-   if (this->layout.flags.q.std140) {
+   if (this->layout.flags.q.std140)
+   {
       packing = GLSL_INTERFACE_PACKING_STD140;
-   } else if (this->layout.flags.q.packed) {
+   }
+   else if (this->layout.flags.q.packed)
+   {
       packing = GLSL_INTERFACE_PACKING_PACKED;
-   } else if (this->layout.flags.q.std430) {
+   }
+   else if (this->layout.flags.q.std430)
+   {
       packing = GLSL_INTERFACE_PACKING_STD430;
-   } else {
+   }
+   else
+   {
       /* The default layout is shared.
        */
       packing = GLSL_INTERFACE_PACKING_SHARED;
@@ -7953,19 +8686,28 @@ ast_interface_block::hir(exec_list *instructions,
 
    ir_variable_mode var_mode;
    const char *iface_type_name;
-   if (this->layout.flags.q.in) {
+   if (this->layout.flags.q.in)
+   {
       var_mode = ir_var_shader_in;
       iface_type_name = "in";
-   } else if (this->layout.flags.q.out) {
+   }
+   else if (this->layout.flags.q.out)
+   {
       var_mode = ir_var_shader_out;
       iface_type_name = "out";
-   } else if (this->layout.flags.q.uniform) {
+   }
+   else if (this->layout.flags.q.uniform)
+   {
       var_mode = ir_var_uniform;
       iface_type_name = "uniform";
-   } else if (this->layout.flags.q.buffer) {
+   }
+   else if (this->layout.flags.q.buffer)
+   {
       var_mode = ir_var_shader_storage;
       iface_type_name = "buffer";
-   } else {
+   }
+   else
+   {
       var_mode = ir_var_auto;
       iface_type_name = "UNKNOWN";
       assert(!"interface block layout qualifier not found!");
@@ -7984,7 +8726,8 @@ ast_interface_block::hir(exec_list *instructions,
    /* For blocks that accept memory qualifiers (i.e. shader storage), verify
     * that we don't have incompatible qualifiers
     */
-   if (this->layout.flags.q.read_only && this->layout.flags.q.write_only) {
+   if (this->layout.flags.q.read_only && this->layout.flags.q.write_only)
+   {
       _mesa_glsl_error(&loc, state,
                        "Interface block sets both readonly and writeonly");
    }
@@ -7992,7 +8735,8 @@ ast_interface_block::hir(exec_list *instructions,
    unsigned qual_stream;
    if (!process_qualifier_constant(state, &loc, "stream", this->layout.stream,
                                    &qual_stream) ||
-       !validate_stream_qualifier(&loc, state, qual_stream)) {
+       !validate_stream_qualifier(&loc, state, qual_stream))
+   {
       /* If the stream qualifier is invalid it doesn't make sense to continue
        * on and try to compare stream layouts on member variables against it
        * so just return early.
@@ -8003,68 +8747,83 @@ ast_interface_block::hir(exec_list *instructions,
    unsigned qual_xfb_buffer;
    if (!process_qualifier_constant(state, &loc, "xfb_buffer",
                                    layout.xfb_buffer, &qual_xfb_buffer) ||
-       !validate_xfb_buffer_qualifier(&loc, state, qual_xfb_buffer)) {
+       !validate_xfb_buffer_qualifier(&loc, state, qual_xfb_buffer))
+   {
       return NULL;
    }
 
    unsigned qual_xfb_offset = 0;
-   if (layout.flags.q.explicit_xfb_offset) {
+   if (layout.flags.q.explicit_xfb_offset)
+   {
       if (!process_qualifier_constant(state, &loc, "xfb_offset",
-                                      layout.offset, &qual_xfb_offset)) {
+                                      layout.offset, &qual_xfb_offset))
+      {
          return NULL;
       }
    }
 
    unsigned qual_xfb_stride = 0;
-   if (layout.flags.q.explicit_xfb_stride) {
+   if (layout.flags.q.explicit_xfb_stride)
+   {
       if (!process_qualifier_constant(state, &loc, "xfb_stride",
-                                      layout.xfb_stride, &qual_xfb_stride)) {
+                                      layout.xfb_stride, &qual_xfb_stride))
+      {
          return NULL;
       }
    }
 
    unsigned expl_location = 0;
-   if (layout.flags.q.explicit_location) {
+   if (layout.flags.q.explicit_location)
+   {
       if (!process_qualifier_constant(state, &loc, "location",
-                                      layout.location, &expl_location)) {
+                                      layout.location, &expl_location))
+      {
          return NULL;
-      } else {
+      }
+      else
+      {
          expl_location += this->layout.flags.q.patch ? VARYING_SLOT_PATCH0
                                                      : VARYING_SLOT_VAR0;
       }
    }
 
    unsigned expl_align = 0;
-   if (layout.flags.q.explicit_align) {
+   if (layout.flags.q.explicit_align)
+   {
       if (!process_qualifier_constant(state, &loc, "align",
-                                      layout.align, &expl_align)) {
+                                      layout.align, &expl_align))
+      {
          return NULL;
-      } else {
-         if (expl_align == 0 || expl_align & (expl_align - 1)) {
+      }
+      else
+      {
+         if (expl_align == 0 || expl_align & (expl_align - 1))
+         {
             _mesa_glsl_error(&loc, state, "align layout qualifier is not a "
-                             "power of 2.");
+                                          "power of 2.");
             return NULL;
          }
       }
    }
 
    unsigned int num_variables =
-      ast_process_struct_or_iface_block_members(&declared_variables,
-                                                state,
-                                                &this->declarations,
-                                                &fields,
-                                                true,
-                                                matrix_layout,
-                                                redeclaring_per_vertex,
-                                                var_mode,
-                                                &this->layout,
-                                                qual_stream,
-                                                qual_xfb_buffer,
-                                                qual_xfb_offset,
-                                                expl_location,
-                                                expl_align);
+       ast_process_struct_or_iface_block_members(&declared_variables,
+                                                 state,
+                                                 &this->declarations,
+                                                 &fields,
+                                                 true,
+                                                 matrix_layout,
+                                                 redeclaring_per_vertex,
+                                                 var_mode,
+                                                 &this->layout,
+                                                 qual_stream,
+                                                 qual_xfb_buffer,
+                                                 qual_xfb_offset,
+                                                 expl_location,
+                                                 expl_align);
 
-   if (!redeclaring_per_vertex) {
+   if (!redeclaring_per_vertex)
+   {
       validate_identifier(this->block_name, loc, state);
 
       /* From section 4.3.9 ("Interface Blocks") of the GLSL 4.50 spec:
@@ -8074,15 +8833,17 @@ ast_interface_block::hir(exec_list *instructions,
        *     scope for anything other than as a block name."
        */
       ir_variable *var = state->symbols->get_variable(this->block_name);
-      if (var && !var->type->is_interface()) {
+      if (var && !var->type->is_interface())
+      {
          _mesa_glsl_error(&loc, state, "Block name `%s' is "
-                          "already used in the scope.",
+                                       "already used in the scope.",
                           this->block_name);
       }
    }
 
    const glsl_type *earlier_per_vertex = NULL;
-   if (redeclaring_per_vertex) {
+   if (redeclaring_per_vertex)
+   {
       /* Find the previous declaration of gl_PerVertex.  If we're redeclaring
        * the named interface block gl_in, we can find it by looking at the
        * previous declaration of gl_in.  Otherwise we can find it by looking
@@ -8092,12 +8853,16 @@ ast_interface_block::hir(exec_list *instructions,
        * Also check that the instance name and array-ness of the redeclaration
        * are correct.
        */
-      switch (var_mode) {
+      switch (var_mode)
+      {
       case ir_var_shader_in:
          if (ir_variable *earlier_gl_in =
-             state->symbols->get_variable("gl_in")) {
+                 state->symbols->get_variable("gl_in"))
+         {
             earlier_per_vertex = earlier_gl_in->get_interface_type();
-         } else {
+         }
+         else
+         {
             _mesa_glsl_error(&loc, state,
                              "redeclaration of gl_PerVertex input not allowed "
                              "in the %s shader",
@@ -8105,7 +8870,8 @@ ast_interface_block::hir(exec_list *instructions,
          }
          if (this->instance_name == NULL ||
              strcmp(this->instance_name, "gl_in") != 0 || this->array_specifier == NULL ||
-             !this->array_specifier->is_single_dimension()) {
+             !this->array_specifier->is_single_dimension())
+         {
             _mesa_glsl_error(&loc, state,
                              "gl_PerVertex input must be redeclared as "
                              "gl_in[]");
@@ -8113,26 +8879,36 @@ ast_interface_block::hir(exec_list *instructions,
          break;
       case ir_var_shader_out:
          if (ir_variable *earlier_gl_Position =
-             state->symbols->get_variable("gl_Position")) {
+                 state->symbols->get_variable("gl_Position"))
+         {
             earlier_per_vertex = earlier_gl_Position->get_interface_type();
-         } else if (ir_variable *earlier_gl_out =
-               state->symbols->get_variable("gl_out")) {
+         }
+         else if (ir_variable *earlier_gl_out =
+                      state->symbols->get_variable("gl_out"))
+         {
             earlier_per_vertex = earlier_gl_out->get_interface_type();
-         } else {
+         }
+         else
+         {
             _mesa_glsl_error(&loc, state,
                              "redeclaration of gl_PerVertex output not "
                              "allowed in the %s shader",
                              _mesa_shader_stage_to_string(state->stage));
          }
-         if (state->stage == MESA_SHADER_TESS_CTRL) {
+         if (state->stage == MESA_SHADER_TESS_CTRL)
+         {
             if (this->instance_name == NULL ||
-                strcmp(this->instance_name, "gl_out") != 0 || this->array_specifier == NULL) {
+                strcmp(this->instance_name, "gl_out") != 0 || this->array_specifier == NULL)
+            {
                _mesa_glsl_error(&loc, state,
                                 "gl_PerVertex output must be redeclared as "
                                 "gl_out[]");
             }
-         } else {
-            if (this->instance_name != NULL) {
+         }
+         else
+         {
+            if (this->instance_name != NULL)
+            {
                _mesa_glsl_error(&loc, state,
                                 "gl_PerVertex output may not be redeclared with "
                                 "an instance name");
@@ -8146,7 +8922,8 @@ ast_interface_block::hir(exec_list *instructions,
          break;
       }
 
-      if (earlier_per_vertex == NULL) {
+      if (earlier_per_vertex == NULL)
+      {
          /* An error has already been reported.  Bail out to avoid null
           * dereferences later in this function.
           */
@@ -8154,33 +8931,37 @@ ast_interface_block::hir(exec_list *instructions,
       }
 
       /* Copy locations from the old gl_PerVertex interface block. */
-      for (unsigned i = 0; i < num_variables; i++) {
+      for (unsigned i = 0; i < num_variables; i++)
+      {
          int j = earlier_per_vertex->field_index(fields[i].name);
-         if (j == -1) {
+         if (j == -1)
+         {
             _mesa_glsl_error(&loc, state,
                              "redeclaration of gl_PerVertex must be a subset "
                              "of the built-in members of gl_PerVertex");
-         } else {
+         }
+         else
+         {
             fields[i].location =
-               earlier_per_vertex->fields.structure[j].location;
+                earlier_per_vertex->fields.structure[j].location;
             fields[i].offset =
-               earlier_per_vertex->fields.structure[j].offset;
+                earlier_per_vertex->fields.structure[j].offset;
             fields[i].interpolation =
-               earlier_per_vertex->fields.structure[j].interpolation;
+                earlier_per_vertex->fields.structure[j].interpolation;
             fields[i].centroid =
-               earlier_per_vertex->fields.structure[j].centroid;
+                earlier_per_vertex->fields.structure[j].centroid;
             fields[i].sample =
-               earlier_per_vertex->fields.structure[j].sample;
+                earlier_per_vertex->fields.structure[j].sample;
             fields[i].patch =
-               earlier_per_vertex->fields.structure[j].patch;
+                earlier_per_vertex->fields.structure[j].patch;
             fields[i].precision =
-               earlier_per_vertex->fields.structure[j].precision;
+                earlier_per_vertex->fields.structure[j].precision;
             fields[i].explicit_xfb_buffer =
-               earlier_per_vertex->fields.structure[j].explicit_xfb_buffer;
+                earlier_per_vertex->fields.structure[j].explicit_xfb_buffer;
             fields[i].xfb_buffer =
-               earlier_per_vertex->fields.structure[j].xfb_buffer;
+                earlier_per_vertex->fields.structure[j].xfb_buffer;
             fields[i].xfb_stride =
-               earlier_per_vertex->fields.structure[j].xfb_stride;
+                earlier_per_vertex->fields.structure[j].xfb_stride;
          }
       }
 
@@ -8197,7 +8978,8 @@ ast_interface_block::hir(exec_list *instructions,
        */
       interface_block_usage_visitor v(var_mode, earlier_per_vertex);
       v.run(instructions);
-      if (v.usage_found()) {
+      if (v.usage_found())
+      {
          _mesa_glsl_error(&loc, state,
                           "redeclaration of a built-in interface block must "
                           "appear before any use of any member of the "
@@ -8206,23 +8988,24 @@ ast_interface_block::hir(exec_list *instructions,
    }
 
    const glsl_type *block_type =
-      glsl_type::get_interface_instance(fields,
-                                        num_variables,
-                                        packing,
-                                        matrix_layout ==
-                                           GLSL_MATRIX_LAYOUT_ROW_MAJOR,
-                                        this->block_name);
+       glsl_type::get_interface_instance(fields,
+                                         num_variables,
+                                         packing,
+                                         matrix_layout ==
+                                             GLSL_MATRIX_LAYOUT_ROW_MAJOR,
+                                         this->block_name);
 
    unsigned component_size = block_type->contains_double() ? 8 : 4;
    int xfb_offset =
-      layout.flags.q.explicit_xfb_offset ? (int) qual_xfb_offset : -1;
+       layout.flags.q.explicit_xfb_offset ? (int)qual_xfb_offset : -1;
    validate_xfb_offset_qualifier(&loc, state, xfb_offset, block_type,
                                  component_size);
 
-   if (!state->symbols->add_interface(block_type->name, block_type, var_mode)) {
+   if (!state->symbols->add_interface(block_type->name, block_type, var_mode))
+   {
       YYLTYPE loc = this->get_location();
       _mesa_glsl_error(&loc, state, "interface block `%s' with type `%s' "
-                       "already taken in the current scope",
+                                    "already taken in the current scope",
                        this->block_name, iface_type_name);
    }
 
@@ -8240,21 +9023,25 @@ ast_interface_block::hir(exec_list *instructions,
     *     declared as an array.
     */
    if (state->stage == MESA_SHADER_GEOMETRY && this->array_specifier == NULL &&
-       var_mode == ir_var_shader_in) {
+       var_mode == ir_var_shader_in)
+   {
       _mesa_glsl_error(&loc, state, "geometry shader inputs must be arrays");
-   } else if ((state->stage == MESA_SHADER_TESS_CTRL ||
-               state->stage == MESA_SHADER_TESS_EVAL) &&
-              !this->layout.flags.q.patch &&
-              this->array_specifier == NULL &&
-              var_mode == ir_var_shader_in) {
+   }
+   else if ((state->stage == MESA_SHADER_TESS_CTRL ||
+             state->stage == MESA_SHADER_TESS_EVAL) &&
+            !this->layout.flags.q.patch &&
+            this->array_specifier == NULL &&
+            var_mode == ir_var_shader_in)
+   {
       _mesa_glsl_error(&loc, state, "per-vertex tessellation shader inputs must be arrays");
-   } else if (state->stage == MESA_SHADER_TESS_CTRL &&
-              !this->layout.flags.q.patch &&
-              this->array_specifier == NULL &&
-              var_mode == ir_var_shader_out) {
+   }
+   else if (state->stage == MESA_SHADER_TESS_CTRL &&
+            !this->layout.flags.q.patch &&
+            this->array_specifier == NULL &&
+            var_mode == ir_var_shader_out)
+   {
       _mesa_glsl_error(&loc, state, "tessellation control shader outputs must be arrays");
    }
-
 
    /* Page 39 (page 45 of the PDF) of section 4.3.7 in the GLSL ES 3.00 spec
     * says:
@@ -8263,8 +9050,10 @@ ast_interface_block::hir(exec_list *instructions,
     *     members inside a scope within its own name space, accessed with the
     *     field selector ( . ) operator (analogously to structures)."
     */
-   if (this->instance_name) {
-      if (redeclaring_per_vertex) {
+   if (this->instance_name)
+   {
+      if (redeclaring_per_vertex)
+      {
          /* When a built-in in an unnamed interface block is redeclared,
           * get_variable_being_redeclared() calls
           * check_builtin_array_max_size() to make sure that built-in array
@@ -8273,21 +9062,26 @@ ast_interface_block::hir(exec_list *instructions,
           * have to manually call check_builtin_array_max_size() for all parts
           * of the interface that are arrays.
           */
-         for (unsigned i = 0; i < num_variables; i++) {
-            if (fields[i].type->is_array()) {
+         for (unsigned i = 0; i < num_variables; i++)
+         {
+            if (fields[i].type->is_array())
+            {
                const unsigned size = fields[i].type->array_size();
                check_builtin_array_max_size(fields[i].name, size, loc, state);
             }
          }
-      } else {
+      }
+      else
+      {
          validate_identifier(this->instance_name, loc, state);
       }
 
       ir_variable *var;
 
-      if (this->array_specifier != NULL) {
+      if (this->array_specifier != NULL)
+      {
          const glsl_type *block_array_type =
-            process_array_type(&loc, block_type, this->array_specifier, state);
+             process_array_type(&loc, block_type, this->array_specifier, state);
 
          /* Section 4.3.7 (Interface Blocks) of the GLSL 1.50 spec says:
           *
@@ -8312,25 +9106,31 @@ ast_interface_block::hir(exec_list *instructions,
           * tessellation control shader output, and tessellation evaluation
           * shader input.
           */
-         if (block_array_type->is_unsized_array()) {
+         if (block_array_type->is_unsized_array())
+         {
             bool allow_inputs = state->stage == MESA_SHADER_GEOMETRY ||
                                 state->stage == MESA_SHADER_TESS_CTRL ||
                                 state->stage == MESA_SHADER_TESS_EVAL;
             bool allow_outputs = state->stage == MESA_SHADER_TESS_CTRL;
 
-            if (this->layout.flags.q.in) {
+            if (this->layout.flags.q.in)
+            {
                if (!allow_inputs)
                   _mesa_glsl_error(&loc, state,
                                    "unsized input block arrays not allowed in "
                                    "%s shader",
                                    _mesa_shader_stage_to_string(state->stage));
-            } else if (this->layout.flags.q.out) {
+            }
+            else if (this->layout.flags.q.out)
+            {
                if (!allow_outputs)
                   _mesa_glsl_error(&loc, state,
                                    "unsized output block arrays not allowed in "
                                    "%s shader",
                                    _mesa_shader_stage_to_string(state->stage));
-            } else {
+            }
+            else
+            {
                /* by elimination, this is a uniform block array */
                _mesa_glsl_error(&loc, state,
                                 "unsized uniform block arrays not allowed in "
@@ -8344,23 +9144,27 @@ ast_interface_block::hir(exec_list *instructions,
           *     * Arrays of arrays of blocks are not allowed
           */
          if (state->es_shader && block_array_type->is_array() &&
-             block_array_type->fields.array->is_array()) {
+             block_array_type->fields.array->is_array())
+         {
             _mesa_glsl_error(&loc, state,
                              "arrays of arrays interface blocks are "
                              "not allowed");
          }
 
-         var = new(state) ir_variable(block_array_type,
-                                      this->instance_name,
-                                      var_mode);
-      } else {
-         var = new(state) ir_variable(block_type,
-                                      this->instance_name,
-                                      var_mode);
+         var = new (state) ir_variable(block_array_type,
+                                       this->instance_name,
+                                       var_mode);
+      }
+      else
+      {
+         var = new (state) ir_variable(block_type,
+                                       this->instance_name,
+                                       var_mode);
       }
 
       var->data.matrix_layout = matrix_layout == GLSL_MATRIX_LAYOUT_INHERITED
-         ? GLSL_MATRIX_LAYOUT_COLUMN_MAJOR : matrix_layout;
+                                    ? GLSL_MATRIX_LAYOUT_COLUMN_MAJOR
+                                    : matrix_layout;
 
       if (var_mode == ir_var_shader_in || var_mode == ir_var_uniform)
          var->data.read_only = true;
@@ -8370,19 +9174,23 @@ ast_interface_block::hir(exec_list *instructions,
       if (state->stage == MESA_SHADER_GEOMETRY && var_mode == ir_var_shader_in)
          handle_geometry_shader_input_decl(state, loc, var);
       else if ((state->stage == MESA_SHADER_TESS_CTRL ||
-           state->stage == MESA_SHADER_TESS_EVAL) && var_mode == ir_var_shader_in)
+                state->stage == MESA_SHADER_TESS_EVAL) &&
+               var_mode == ir_var_shader_in)
          handle_tess_shader_input_decl(state, loc, var);
       else if (state->stage == MESA_SHADER_TESS_CTRL && var_mode == ir_var_shader_out)
          handle_tess_ctrl_shader_output_decl(state, loc, var);
 
-      for (unsigned i = 0; i < num_variables; i++) {
+      for (unsigned i = 0; i < num_variables; i++)
+      {
          if (var->data.mode == ir_var_shader_storage)
             apply_memory_qualifiers(var, fields[i]);
       }
 
       if (ir_variable *earlier =
-          state->symbols->get_variable(this->instance_name)) {
-         if (!redeclaring_per_vertex) {
+              state->symbols->get_variable(this->instance_name))
+      {
+         if (!redeclaring_per_vertex)
+         {
             _mesa_glsl_error(&loc, state, "`%s' redeclared",
                              this->instance_name);
          }
@@ -8390,14 +9198,18 @@ ast_interface_block::hir(exec_list *instructions,
          earlier->type = var->type;
          earlier->reinit_interface_type(block_type);
          delete var;
-      } else {
-         if (this->layout.flags.q.explicit_binding) {
+      }
+      else
+      {
+         if (this->layout.flags.q.explicit_binding)
+         {
             apply_explicit_binding(state, &loc, var, var->type,
                                    &this->layout);
          }
 
          var->data.stream = qual_stream;
-         if (layout.flags.q.explicit_location) {
+         if (layout.flags.q.explicit_location)
+         {
             var->data.location = expl_location;
             var->data.explicit_location = true;
          }
@@ -8405,17 +9217,20 @@ ast_interface_block::hir(exec_list *instructions,
          state->symbols->add_variable(var);
          instructions->push_tail(var);
       }
-   } else {
+   }
+   else
+   {
       /* In order to have an array size, the block must also be declared with
        * an instance name.
        */
       assert(this->array_specifier == NULL);
 
-      for (unsigned i = 0; i < num_variables; i++) {
+      for (unsigned i = 0; i < num_variables; i++)
+      {
          ir_variable *var =
-            new(state) ir_variable(fields[i].type,
-                                   ralloc_strdup(state, fields[i].name),
-                                   var_mode);
+             new (state) ir_variable(fields[i].type,
+                                     ralloc_strdup(state, fields[i].name),
+                                     var_mode);
          var->data.interpolation = fields[i].interpolation;
          var->data.centroid = fields[i].centroid;
          var->data.sample = fields[i].sample;
@@ -8439,16 +9254,21 @@ ast_interface_block::hir(exec_list *instructions,
             var->data.read_only = true;
 
          /* Precision qualifiers do not have any meaning in Desktop GLSL */
-         if (state->es_shader) {
+         if (state->es_shader)
+         {
             var->data.precision =
-               select_gles_precision(fields[i].precision, fields[i].type,
-                                     state, &loc);
+                select_gles_precision(fields[i].precision, fields[i].type,
+                                      state, &loc);
          }
 
-         if (fields[i].matrix_layout == GLSL_MATRIX_LAYOUT_INHERITED) {
+         if (fields[i].matrix_layout == GLSL_MATRIX_LAYOUT_INHERITED)
+         {
             var->data.matrix_layout = matrix_layout == GLSL_MATRIX_LAYOUT_INHERITED
-               ? GLSL_MATRIX_LAYOUT_COLUMN_MAJOR : matrix_layout;
-         } else {
+                                          ? GLSL_MATRIX_LAYOUT_COLUMN_MAJOR
+                                          : matrix_layout;
+         }
+         else
+         {
             var->data.matrix_layout = fields[i].matrix_layout;
          }
 
@@ -8458,21 +9278,27 @@ ast_interface_block::hir(exec_list *instructions,
          /* Examine var name here since var may get deleted in the next call */
          bool var_is_gl_id = is_gl_identifier(var->name);
 
-         if (redeclaring_per_vertex) {
+         if (redeclaring_per_vertex)
+         {
             bool is_redeclaration;
             var =
-               get_variable_being_redeclared(&var, loc, state,
-                                             true /* allow_all_redeclarations */,
-                                             &is_redeclaration);
-            if (!var_is_gl_id || !is_redeclaration) {
+                get_variable_being_redeclared(&var, loc, state,
+                                              true /* allow_all_redeclarations */,
+                                              &is_redeclaration);
+            if (!var_is_gl_id || !is_redeclaration)
+            {
                _mesa_glsl_error(&loc, state,
                                 "redeclaration of gl_PerVertex can only "
                                 "include built-in variables");
-            } else if (var->data.how_declared == ir_var_declared_normally) {
+            }
+            else if (var->data.how_declared == ir_var_declared_normally)
+            {
                _mesa_glsl_error(&loc, state,
                                 "`%s' has already been redeclared",
                                 var->name);
-            } else {
+            }
+            else
+            {
                var->data.how_declared = ir_var_declared_in_block;
                var->reinit_interface_type(block_type);
             }
@@ -8486,16 +9312,21 @@ ast_interface_block::hir(exec_list *instructions,
           * The UBO declaration itself doesn't get an ir_variable unless it
           * has an instance name.  This is ugly.
           */
-         if (this->layout.flags.q.explicit_binding) {
+         if (this->layout.flags.q.explicit_binding)
+         {
             apply_explicit_binding(state, &loc, var,
                                    var->get_interface_type(), &this->layout);
          }
 
-         if (var->type->is_unsized_array()) {
+         if (var->type->is_unsized_array())
+         {
             if (var->is_in_shader_storage_block() &&
-                is_unsized_array_last_element(var)) {
+                is_unsized_array_last_element(var))
+            {
                var->data.from_ssbo_unsized_array = true;
-            } else {
+            }
+            else
+            {
                /* From GLSL ES 3.10 spec, section 4.1.9 "Arrays":
                 *
                 * "If an array is declared as the last member of a shader storage
@@ -8507,11 +9338,13 @@ ast_interface_block::hir(exec_list *instructions,
                 * not last, as long as we can determine that they are implicitly
                 * sized.
                 */
-               if (state->es_shader) {
+               if (state->es_shader)
+               {
                   _mesa_glsl_error(&loc, state, "unsized array `%s' "
-                                   "definition: only last member of a shader "
-                                   "storage block can be defined as unsized "
-                                   "array", fields[i].name);
+                                                "definition: only last member of a shader "
+                                                "storage block can be defined as unsized "
+                                                "array",
+                                   fields[i].name);
                }
             }
          }
@@ -8520,7 +9353,8 @@ ast_interface_block::hir(exec_list *instructions,
          instructions->push_tail(var);
       }
 
-      if (redeclaring_per_vertex && block_type != earlier_per_vertex) {
+      if (redeclaring_per_vertex && block_type != earlier_per_vertex)
+      {
          /* From section 7.1 ("Built-in Language Variables") of the GLSL 4.10 spec:
           *
           *     It is also a compilation error ... to redeclare a built-in
@@ -8542,12 +9376,15 @@ ast_interface_block::hir(exec_list *instructions,
           * thinking there are conflicting definitions of gl_PerVertex in the
           * shader.
           */
-         foreach_in_list_safe(ir_instruction, node, instructions) {
+         foreach_in_list_safe(ir_instruction, node, instructions)
+         {
             ir_variable *const var = node->as_variable();
             if (var != NULL &&
                 var->get_interface_type() == earlier_per_vertex &&
-                var->data.mode == var_mode) {
-               if (var->data.how_declared == ir_var_declared_normally) {
+                var->data.mode == var_mode)
+            {
+               if (var->data.how_declared == ir_var_declared_normally)
+               {
                   _mesa_glsl_error(&loc, state,
                                    "redeclaration of gl_PerVertex cannot "
                                    "follow a redeclaration of `%s'",
@@ -8562,8 +9399,10 @@ ast_interface_block::hir(exec_list *instructions,
 
    return NULL;
 }
-
-
+void ast_tcs_output_layout::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled serialize ast_tcs_output_layout");
+}
 ir_rvalue *
 ast_tcs_output_layout::hir(exec_list *instructions,
                            struct _mesa_glsl_parse_state *state)
@@ -8571,18 +9410,19 @@ ast_tcs_output_layout::hir(exec_list *instructions,
    YYLTYPE loc = this->get_location();
 
    unsigned num_vertices;
-   if (!state->out_qualifier->vertices->
-          process_qualifier_constant(state, "vertices", &num_vertices,
-                                     false)) {
+   if (!state->out_qualifier->vertices->process_qualifier_constant(state, "vertices", &num_vertices,
+                                                                   false))
+   {
       /* return here to stop cascading incorrect error messages */
-     return NULL;
+      return NULL;
    }
 
    /* If any shader outputs occurred before this declaration and specified an
     * array size, make sure the size they specified is consistent with the
     * primitive type.
     */
-   if (state->tcs_output_size != 0 && state->tcs_output_size != num_vertices) {
+   if (state->tcs_output_size != 0 && state->tcs_output_size != num_vertices)
+   {
       _mesa_glsl_error(&loc, state,
                        "this tessellation control shader output layout "
                        "specifies %u vertices, but a previous output "
@@ -8596,7 +9436,8 @@ ast_tcs_output_layout::hir(exec_list *instructions,
    /* If any shader outputs occurred before this declaration and did not
     * specify an array size, their size is determined now.
     */
-   foreach_in_list (ir_instruction, node, instructions) {
+   foreach_in_list(ir_instruction, node, instructions)
+   {
       ir_variable *var = node->as_variable();
       if (var == NULL || var->data.mode != ir_var_shader_out)
          continue;
@@ -8605,13 +9446,17 @@ ast_tcs_output_layout::hir(exec_list *instructions,
       if (!var->type->is_unsized_array() || var->data.patch)
          continue;
 
-      if (var->data.max_array_access >= (int)num_vertices) {
+      if (var->data.max_array_access >= (int)num_vertices)
+      {
          _mesa_glsl_error(&loc, state,
                           "this tessellation control shader output layout "
                           "specifies %u vertices, but an access to element "
-                          "%u of output `%s' already exists", num_vertices,
+                          "%u of output `%s' already exists",
+                          num_vertices,
                           var->data.max_array_access, var->name);
-      } else {
+      }
+      else
+      {
          var->type = glsl_type::get_array_instance(var->type->fields.array,
                                                    num_vertices);
       }
@@ -8619,8 +9464,10 @@ ast_tcs_output_layout::hir(exec_list *instructions,
 
    return NULL;
 }
-
-
+void ast_gs_input_layout::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled serialize ast_gs_input_layout");
+}
 ir_rvalue *
 ast_gs_input_layout::hir(exec_list *instructions,
                          struct _mesa_glsl_parse_state *state)
@@ -8628,19 +9475,20 @@ ast_gs_input_layout::hir(exec_list *instructions,
    YYLTYPE loc = this->get_location();
 
    /* Should have been prevented by the parser. */
-   assert(!state->gs_input_prim_type_specified
-          || state->in_qualifier->prim_type == this->prim_type);
+   assert(!state->gs_input_prim_type_specified || state->in_qualifier->prim_type == this->prim_type);
 
    /* If any shader inputs occurred before this declaration and specified an
     * array size, make sure the size they specified is consistent with the
     * primitive type.
     */
    unsigned num_vertices = vertices_per_prim(this->prim_type);
-   if (state->gs_input_size != 0 && state->gs_input_size != num_vertices) {
+   if (state->gs_input_size != 0 && state->gs_input_size != num_vertices)
+   {
       _mesa_glsl_error(&loc, state,
                        "this geometry shader input layout implies %u vertices"
                        " per primitive, but a previous input is declared"
-                       " with size %u", num_vertices, state->gs_input_size);
+                       " with size %u",
+                       num_vertices, state->gs_input_size);
       return NULL;
    }
 
@@ -8649,7 +9497,8 @@ ast_gs_input_layout::hir(exec_list *instructions,
    /* If any shader inputs occurred before this declaration and did not
     * specify an array size, their size is determined now.
     */
-   foreach_in_list(ir_instruction, node, instructions) {
+   foreach_in_list(ir_instruction, node, instructions)
+   {
       ir_variable *var = node->as_variable();
       if (var == NULL || var->data.mode != ir_var_shader_in)
          continue;
@@ -8658,14 +9507,19 @@ ast_gs_input_layout::hir(exec_list *instructions,
        * array; skip it.
        */
 
-      if (var->type->is_unsized_array()) {
-         if (var->data.max_array_access >= (int)num_vertices) {
+      if (var->type->is_unsized_array())
+      {
+         if (var->data.max_array_access >= (int)num_vertices)
+         {
             _mesa_glsl_error(&loc, state,
                              "this geometry shader input layout implies %u"
                              " vertices, but an access to element %u of input"
-                             " `%s' already exists", num_vertices,
+                             " `%s' already exists",
+                             num_vertices,
                              var->data.max_array_access, var->name);
-         } else {
+         }
+         else
+         {
             var->type = glsl_type::get_array_instance(var->type->fields.array,
                                                       num_vertices);
          }
@@ -8674,8 +9528,10 @@ ast_gs_input_layout::hir(exec_list *instructions,
 
    return NULL;
 }
-
-
+void ast_cs_input_layout::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled serialize ast_cs_input_layout");
+}
 ir_rvalue *
 ast_cs_input_layout::hir(exec_list *instructions,
                          struct _mesa_glsl_parse_state *state)
@@ -8695,31 +9551,37 @@ ast_cs_input_layout::hir(exec_list *instructions,
     */
    GLuint64 total_invocations = 1;
    unsigned qual_local_size[3];
-   for (int i = 0; i < 3; i++) {
+   for (int i = 0; i < 3; i++)
+   {
 
       char *local_size_str = ralloc_asprintf(NULL, "invalid local_size_%c",
                                              'x' + i);
       /* Infer a local_size of 1 for unspecified dimensions */
-      if (this->local_size[i] == NULL) {
+      if (this->local_size[i] == NULL)
+      {
          qual_local_size[i] = 1;
-      } else if (!this->local_size[i]->
-             process_qualifier_constant(state, local_size_str,
-                                        &qual_local_size[i], false)) {
+      }
+      else if (!this->local_size[i]->process_qualifier_constant(state, local_size_str,
+                                                                &qual_local_size[i], false))
+      {
          ralloc_free(local_size_str);
          return NULL;
       }
       ralloc_free(local_size_str);
 
-      if (qual_local_size[i] > state->ctx->Const.MaxComputeWorkGroupSize[i]) {
+      if (qual_local_size[i] > state->ctx->Const.MaxComputeWorkGroupSize[i])
+      {
          _mesa_glsl_error(&loc, state,
                           "local_size_%c exceeds MAX_COMPUTE_WORK_GROUP_SIZE"
-                          " (%d)", 'x' + i,
+                          " (%d)",
+                          'x' + i,
                           state->ctx->Const.MaxComputeWorkGroupSize[i]);
          break;
       }
       total_invocations *= qual_local_size[i];
       if (total_invocations >
-          state->ctx->Const.MaxComputeWorkGroupInvocations) {
+          state->ctx->Const.MaxComputeWorkGroupInvocations)
+      {
          _mesa_glsl_error(&loc, state,
                           "product of local_sizes exceeds "
                           "MAX_COMPUTE_WORK_GROUP_INVOCATIONS (%d)",
@@ -8731,9 +9593,12 @@ ast_cs_input_layout::hir(exec_list *instructions,
    /* If any compute input layout declaration preceded this one, make sure it
     * was consistent with this one.
     */
-   if (state->cs_input_local_size_specified) {
-      for (int i = 0; i < 3; i++) {
-         if (state->cs_input_local_size[i] != qual_local_size[i]) {
+   if (state->cs_input_local_size_specified)
+   {
+      for (int i = 0; i < 3; i++)
+      {
+         if (state->cs_input_local_size[i] != qual_local_size[i])
+         {
             _mesa_glsl_error(&loc, state,
                              "compute shader input layout does not match"
                              " previous declaration");
@@ -8749,7 +9614,8 @@ ast_cs_input_layout::hir(exec_list *instructions,
     *     *local_size_y*, or *local_size_z* qualifiers, a compile-time error
     *     results
     */
-   if (state->cs_input_local_size_variable_specified) {
+   if (state->cs_input_local_size_variable_specified)
+   {
       _mesa_glsl_error(&loc, state,
                        "compute shader can't include both a variable and a "
                        "fixed local group size");
@@ -8764,8 +9630,8 @@ ast_cs_input_layout::hir(exec_list *instructions,
     * builtin_variable_generator::generate_constants() for why we didn't
     * declare it earlier).
     */
-   ir_variable *var = new(state->symbols)
-      ir_variable(glsl_type::uvec3_type, "gl_WorkGroupSize", ir_var_auto);
+   ir_variable *var = new (state->symbols)
+       ir_variable(glsl_type::uvec3_type, "gl_WorkGroupSize", ir_var_auto);
    var->data.how_declared = ir_var_declared_implicitly;
    var->data.read_only = true;
    instructions->push_tail(var);
@@ -8774,15 +9640,14 @@ ast_cs_input_layout::hir(exec_list *instructions,
    memset(&data, 0, sizeof(data));
    for (int i = 0; i < 3; i++)
       data.u[i] = qual_local_size[i];
-   var->constant_value = new(var) ir_constant(glsl_type::uvec3_type, &data);
+   var->constant_value = new (var) ir_constant(glsl_type::uvec3_type, &data);
    var->constant_initializer =
-      new(var) ir_constant(glsl_type::uvec3_type, &data);
+       new (var) ir_constant(glsl_type::uvec3_type, &data);
    var->data.has_initializer = true;
    var->data.is_implicit_initializer = false;
 
    return NULL;
 }
-
 
 static void
 detect_conflicting_assignments(struct _mesa_glsl_parse_state *state,
@@ -8799,30 +9664,35 @@ detect_conflicting_assignments(struct _mesa_glsl_parse_state *state,
    YYLTYPE loc;
    memset(&loc, 0, sizeof(loc));
 
-   foreach_in_list(ir_instruction, node, instructions) {
+   foreach_in_list(ir_instruction, node, instructions)
+   {
       ir_variable *var = node->as_variable();
 
       if (!var || !var->data.assigned)
          continue;
 
-      if (strcmp(var->name, "gl_FragColor") == 0) {
+      if (strcmp(var->name, "gl_FragColor") == 0)
+      {
          gl_FragColor_assigned = true;
-         if (!var->constant_initializer && state->zero_init) {
-            const ir_constant_data data = { { 0 } };
+         if (!var->constant_initializer && state->zero_init)
+         {
+            const ir_constant_data data = {{0}};
             var->data.has_initializer = true;
             var->data.is_implicit_initializer = true;
-            var->constant_initializer = new(var) ir_constant(var->type, &data);
+            var->constant_initializer = new (var) ir_constant(var->type, &data);
          }
       }
       else if (strcmp(var->name, "gl_FragData") == 0)
          gl_FragData_assigned = true;
-        else if (strcmp(var->name, "gl_SecondaryFragColorEXT") == 0)
+      else if (strcmp(var->name, "gl_SecondaryFragColorEXT") == 0)
          gl_FragSecondaryColor_assigned = true;
-        else if (strcmp(var->name, "gl_SecondaryFragDataEXT") == 0)
+      else if (strcmp(var->name, "gl_SecondaryFragDataEXT") == 0)
          gl_FragSecondaryData_assigned = true;
-      else if (!is_gl_identifier(var->name)) {
+      else if (!is_gl_identifier(var->name))
+      {
          if (state->stage == MESA_SHADER_FRAGMENT &&
-             var->data.mode == ir_var_shader_out) {
+             var->data.mode == ir_var_shader_out)
+         {
             user_defined_fs_output_assigned = true;
             user_defined_fs_output = var;
          }
@@ -8844,33 +9714,45 @@ detect_conflicting_assignments(struct _mesa_glsl_parse_state *state,
     *      assigned to. These incorrect usages all generate compile
     *      time errors."
     */
-   if (gl_FragColor_assigned && gl_FragData_assigned) {
+   if (gl_FragColor_assigned && gl_FragData_assigned)
+   {
       _mesa_glsl_error(&loc, state, "fragment shader writes to both "
-                       "`gl_FragColor' and `gl_FragData'");
-   } else if (gl_FragColor_assigned && user_defined_fs_output_assigned) {
+                                    "`gl_FragColor' and `gl_FragData'");
+   }
+   else if (gl_FragColor_assigned && user_defined_fs_output_assigned)
+   {
       _mesa_glsl_error(&loc, state, "fragment shader writes to both "
-                       "`gl_FragColor' and `%s'",
+                                    "`gl_FragColor' and `%s'",
                        user_defined_fs_output->name);
-   } else if (gl_FragSecondaryColor_assigned && gl_FragSecondaryData_assigned) {
+   }
+   else if (gl_FragSecondaryColor_assigned && gl_FragSecondaryData_assigned)
+   {
       _mesa_glsl_error(&loc, state, "fragment shader writes to both "
-                       "`gl_FragSecondaryColorEXT' and"
-                       " `gl_FragSecondaryDataEXT'");
-   } else if (gl_FragColor_assigned && gl_FragSecondaryData_assigned) {
+                                    "`gl_FragSecondaryColorEXT' and"
+                                    " `gl_FragSecondaryDataEXT'");
+   }
+   else if (gl_FragColor_assigned && gl_FragSecondaryData_assigned)
+   {
       _mesa_glsl_error(&loc, state, "fragment shader writes to both "
-                       "`gl_FragColor' and"
-                       " `gl_FragSecondaryDataEXT'");
-   } else if (gl_FragData_assigned && gl_FragSecondaryColor_assigned) {
+                                    "`gl_FragColor' and"
+                                    " `gl_FragSecondaryDataEXT'");
+   }
+   else if (gl_FragData_assigned && gl_FragSecondaryColor_assigned)
+   {
       _mesa_glsl_error(&loc, state, "fragment shader writes to both "
-                       "`gl_FragData' and"
-                       " `gl_FragSecondaryColorEXT'");
-   } else if (gl_FragData_assigned && user_defined_fs_output_assigned) {
+                                    "`gl_FragData' and"
+                                    " `gl_FragSecondaryColorEXT'");
+   }
+   else if (gl_FragData_assigned && user_defined_fs_output_assigned)
+   {
       _mesa_glsl_error(&loc, state, "fragment shader writes to both "
-                       "`gl_FragData' and `%s'",
+                                    "`gl_FragData' and `%s'",
                        user_defined_fs_output->name);
    }
 
    if ((gl_FragSecondaryColor_assigned || gl_FragSecondaryData_assigned) &&
-       !state->EXT_blend_func_extended_enable) {
+       !state->EXT_blend_func_extended_enable)
+   {
       _mesa_glsl_error(&loc, state,
                        "Dual source blending requires EXT_blend_func_extended");
    }
@@ -8889,19 +9771,23 @@ verify_subroutine_associated_funcs(struct _mesa_glsl_parse_state *state)
     *    name if the name is associated with a subroutine type."
     */
 
-   for (int i = 0; i < state->num_subroutines; i++) {
+   for (int i = 0; i < state->num_subroutines; i++)
+   {
       unsigned definitions = 0;
       ir_function *fn = state->subroutines[i];
       /* Calculate number of function definitions with the same name */
-      foreach_in_list(ir_function_signature, sig, &fn->signatures) {
-         if (sig->is_defined) {
-            if (++definitions > 1) {
+      foreach_in_list(ir_function_signature, sig, &fn->signatures)
+      {
+         if (sig->is_defined)
+         {
+            if (++definitions > 1)
+            {
                _mesa_glsl_error(&loc, state,
-                     "%s shader contains two or more function "
-                     "definitions with name `%s', which is "
-                     "associated with a subroutine type.\n",
-                     _mesa_shader_stage_to_string(state->stage),
-                     fn->name);
+                                "%s shader contains two or more function "
+                                "definitions with name `%s', which is "
+                                "associated with a subroutine type.\n",
+                                _mesa_shader_stage_to_string(state->stage),
+                                fn->name);
                return;
             }
          }
@@ -8917,14 +9803,16 @@ remove_per_vertex_blocks(exec_list *instructions,
     * if it exists in this shader type.
     */
    const glsl_type *per_vertex = NULL;
-   switch (mode) {
+   switch (mode)
+   {
    case ir_var_shader_in:
       if (ir_variable *gl_in = state->symbols->get_variable("gl_in"))
          per_vertex = gl_in->get_interface_type();
       break;
    case ir_var_shader_out:
       if (ir_variable *gl_Position =
-          state->symbols->get_variable("gl_Position")) {
+              state->symbols->get_variable("gl_Position"))
+      {
          per_vertex = gl_Position->get_interface_type();
       }
       break;
@@ -8950,16 +9838,21 @@ remove_per_vertex_blocks(exec_list *instructions,
    /* Remove any ir_variable declarations that refer to the interface block
     * we're removing.
     */
-   foreach_in_list_safe(ir_instruction, node, instructions) {
+   foreach_in_list_safe(ir_instruction, node, instructions)
+   {
       ir_variable *const var = node->as_variable();
       if (var != NULL && var->get_interface_type() == per_vertex &&
-          var->data.mode == mode) {
+          var->data.mode == mode)
+      {
          state->symbols->disable_variable(var->name);
          var->remove();
       }
    }
 }
-
+void ast_warnings_toggle::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled serialize ast_warnings_toggle");
+}
 ir_rvalue *
 ast_warnings_toggle::hir(exec_list *,
                          struct _mesa_glsl_parse_state *state)

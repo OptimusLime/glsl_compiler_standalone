@@ -23,6 +23,7 @@
 #include <getopt.h>
 #include <vector>
 #include <string>
+#include <fstream>
 
 /** @file standalone.cpp
  *
@@ -403,7 +404,7 @@ compile_shader(struct gl_context *ctx, struct gl_shader *shader)
    return;
 }
 
-extern "C" struct gl_shader_program *
+GLSL_API struct gl_shader_program *
 standalone_compile_shader(const struct standalone_options *_options,
                           unsigned num_files, char *const *files, struct gl_context *ctx)
 {
@@ -636,10 +637,23 @@ fail:
    return NULL;
 }
 
-extern "C" struct gl_shader_program *
+GLSL_API struct gl_shader_program *
 standalone_compile_shader_files(const struct standalone_options *_options,
                                 const char *file, struct gl_context *ctx)
 {
+
+   {
+      std::ofstream os("data.json");
+      cereal::JSONOutputArchive archive(os);
+
+      int someInt = 15;
+      double d = 2.2;
+
+      archive(                                             // Names the output the same as the variable name
+          someInt,                                         // No NVP - cereal will automatically generate an enumerated name
+          cereal::make_nvp("this_name_is_way_better", d)); // specify a name of your choosing
+   }
+
    int status = EXIT_SUCCESS;
    bool glsl_es = false;
 
@@ -869,7 +883,7 @@ fail:
    return NULL;
 }
 
-extern "C" void
+GLSL_API void
 standalone_compiler_cleanup(struct gl_shader_program *whole_program)
 {
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++)

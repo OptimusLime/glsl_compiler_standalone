@@ -23,28 +23,44 @@
 
 #include "ast.h"
 
-void
-ast_type_specifier::print(void) const
+void ast_type_specifier::print(void) const
 {
-   if (structure) {
+   if (structure)
+   {
       structure->print();
-   } else {
+   }
+   else
+   {
       printf("%s ", type_name);
    }
 
-   if (array_specifier) {
+   if (array_specifier)
+   {
       array_specifier->print();
    }
 }
 
-bool
-ast_fully_specified_type::has_qualifiers(_mesa_glsl_parse_state *state) const
+void ast_type_specifier::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   // if (structure) {
+   //    structure->print();
+   // } else {
+   //    printf("%s ", type_name);
+   // }
+
+   // if (array_specifier) {
+   //    array_specifier->print();
+   // }
+}
+
+bool ast_fully_specified_type::has_qualifiers(_mesa_glsl_parse_state *state) const
 {
    /* 'subroutine' isnt a real qualifier. */
    ast_type_qualifier subroutine_only;
    subroutine_only.flags.i = 0;
    subroutine_only.flags.q.subroutine = 1;
-   if (state->has_explicit_uniform_location()) {
+   if (state->has_explicit_uniform_location())
+   {
       subroutine_only.flags.q.explicit_index = 1;
    }
    return (this->qualifier.flags.i & ~subroutine_only.flags.i) != 0;
@@ -52,68 +68,27 @@ ast_fully_specified_type::has_qualifiers(_mesa_glsl_parse_state *state) const
 
 bool ast_type_qualifier::has_interpolation() const
 {
-   return this->flags.q.smooth
-          || this->flags.q.flat
-          || this->flags.q.noperspective;
+   return this->flags.q.smooth || this->flags.q.flat || this->flags.q.noperspective;
 }
 
-bool
-ast_type_qualifier::has_layout() const
+bool ast_type_qualifier::has_layout() const
 {
-   return this->flags.q.origin_upper_left
-          || this->flags.q.pixel_center_integer
-          || this->flags.q.depth_type
-          || this->flags.q.std140
-          || this->flags.q.std430
-          || this->flags.q.shared
-          || this->flags.q.column_major
-          || this->flags.q.row_major
-          || this->flags.q.packed
-          || this->flags.q.bindless_sampler
-          || this->flags.q.bindless_image
-          || this->flags.q.bound_sampler
-          || this->flags.q.bound_image
-          || this->flags.q.explicit_align
-          || this->flags.q.explicit_component
-          || this->flags.q.explicit_location
-          || this->flags.q.explicit_image_format
-          || this->flags.q.explicit_index
-          || this->flags.q.explicit_binding
-          || this->flags.q.explicit_offset
-          || this->flags.q.explicit_stream
-          || this->flags.q.explicit_xfb_buffer
-          || this->flags.q.explicit_xfb_offset
-          || this->flags.q.explicit_xfb_stride;
+   return this->flags.q.origin_upper_left || this->flags.q.pixel_center_integer || this->flags.q.depth_type || this->flags.q.std140 || this->flags.q.std430 || this->flags.q.shared || this->flags.q.column_major || this->flags.q.row_major || this->flags.q.packed || this->flags.q.bindless_sampler || this->flags.q.bindless_image || this->flags.q.bound_sampler || this->flags.q.bound_image || this->flags.q.explicit_align || this->flags.q.explicit_component || this->flags.q.explicit_location || this->flags.q.explicit_image_format || this->flags.q.explicit_index || this->flags.q.explicit_binding || this->flags.q.explicit_offset || this->flags.q.explicit_stream || this->flags.q.explicit_xfb_buffer || this->flags.q.explicit_xfb_offset || this->flags.q.explicit_xfb_stride;
 }
 
-bool
-ast_type_qualifier::has_storage() const
+bool ast_type_qualifier::has_storage() const
 {
-   return this->flags.q.constant
-          || this->flags.q.attribute
-          || this->flags.q.varying
-          || this->flags.q.in
-          || this->flags.q.out
-          || this->flags.q.uniform
-          || this->flags.q.buffer
-          || this->flags.q.shared_storage;
+   return this->flags.q.constant || this->flags.q.attribute || this->flags.q.varying || this->flags.q.in || this->flags.q.out || this->flags.q.uniform || this->flags.q.buffer || this->flags.q.shared_storage;
 }
 
-bool
-ast_type_qualifier::has_auxiliary_storage() const
+bool ast_type_qualifier::has_auxiliary_storage() const
 {
-   return this->flags.q.centroid
-          || this->flags.q.sample
-          || this->flags.q.patch;
+   return this->flags.q.centroid || this->flags.q.sample || this->flags.q.patch;
 }
 
 bool ast_type_qualifier::has_memory() const
 {
-   return this->flags.q.coherent
-          || this->flags.q._volatile
-          || this->flags.q.restrict_flag
-          || this->flags.q.read_only
-          || this->flags.q.write_only;
+   return this->flags.q.coherent || this->flags.q._volatile || this->flags.q.restrict_flag || this->flags.q.read_only || this->flags.q.write_only;
 }
 
 bool ast_type_qualifier::is_subroutine_decl() const
@@ -130,12 +105,11 @@ validate_prim_type(YYLTYPE *loc,
    /* Input layout qualifiers can be specified multiple
     * times in separate declarations, as long as they match.
     */
-   if (qualifier.flags.q.prim_type && new_qualifier.flags.q.prim_type
-       && qualifier.prim_type != new_qualifier.prim_type) {
+   if (qualifier.flags.q.prim_type && new_qualifier.flags.q.prim_type && qualifier.prim_type != new_qualifier.prim_type)
+   {
       _mesa_glsl_error(loc, state,
                        "conflicting input primitive %s specified",
-                       state->stage == MESA_SHADER_GEOMETRY ?
-                       "type" : "mode");
+                       state->stage == MESA_SHADER_GEOMETRY ? "type" : "mode");
       return false;
    }
 
@@ -148,8 +122,8 @@ validate_vertex_spacing(YYLTYPE *loc,
                         const ast_type_qualifier &qualifier,
                         const ast_type_qualifier &new_qualifier)
 {
-   if (qualifier.flags.q.vertex_spacing && new_qualifier.flags.q.vertex_spacing
-       && qualifier.vertex_spacing != new_qualifier.vertex_spacing) {
+   if (qualifier.flags.q.vertex_spacing && new_qualifier.flags.q.vertex_spacing && qualifier.vertex_spacing != new_qualifier.vertex_spacing)
+   {
       _mesa_glsl_error(loc, state,
                        "conflicting vertex spacing specified");
       return false;
@@ -164,8 +138,8 @@ validate_ordering(YYLTYPE *loc,
                   const ast_type_qualifier &qualifier,
                   const ast_type_qualifier &new_qualifier)
 {
-   if (qualifier.flags.q.ordering && new_qualifier.flags.q.ordering
-       && qualifier.ordering != new_qualifier.ordering) {
+   if (qualifier.flags.q.ordering && new_qualifier.flags.q.ordering && qualifier.ordering != new_qualifier.ordering)
+   {
       _mesa_glsl_error(loc, state,
                        "conflicting ordering specified");
       return false;
@@ -179,8 +153,7 @@ validate_point_mode(ASSERTED const ast_type_qualifier &qualifier,
                     ASSERTED const ast_type_qualifier &new_qualifier)
 {
    /* Point mode can only be true if the flag is set. */
-   assert (!qualifier.flags.q.point_mode || !new_qualifier.flags.q.point_mode
-           || (qualifier.point_mode && new_qualifier.point_mode));
+   assert(!qualifier.flags.q.point_mode || !new_qualifier.flags.q.point_mode || (qualifier.point_mode && new_qualifier.point_mode));
 
    return true;
 }
@@ -188,22 +161,26 @@ validate_point_mode(ASSERTED const ast_type_qualifier &qualifier,
 static void
 merge_bindless_qualifier(_mesa_glsl_parse_state *state)
 {
-   if (state->default_uniform_qualifier->flags.q.bindless_sampler) {
+   if (state->default_uniform_qualifier->flags.q.bindless_sampler)
+   {
       state->bindless_sampler_specified = true;
       state->default_uniform_qualifier->flags.q.bindless_sampler = false;
    }
 
-   if (state->default_uniform_qualifier->flags.q.bindless_image) {
+   if (state->default_uniform_qualifier->flags.q.bindless_image)
+   {
       state->bindless_image_specified = true;
       state->default_uniform_qualifier->flags.q.bindless_image = false;
    }
 
-   if (state->default_uniform_qualifier->flags.q.bound_sampler) {
+   if (state->default_uniform_qualifier->flags.q.bound_sampler)
+   {
       state->bound_sampler_specified = true;
       state->default_uniform_qualifier->flags.q.bound_sampler = false;
    }
 
-   if (state->default_uniform_qualifier->flags.q.bound_image) {
+   if (state->default_uniform_qualifier->flags.q.bound_image)
+   {
       state->bound_image_specified = true;
       state->default_uniform_qualifier->flags.q.bound_image = false;
    }
@@ -219,12 +196,11 @@ merge_bindless_qualifier(_mesa_glsl_parse_state *state)
  * The is_single_layout_merge and is_multiple_layouts_merge parameters are
  * used to differentiate among them.
  */
-bool
-ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
-                                    _mesa_glsl_parse_state *state,
-                                    const ast_type_qualifier &q,
-                                    bool is_single_layout_merge,
-                                    bool is_multiple_layouts_merge)
+bool ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
+                                         _mesa_glsl_parse_state *state,
+                                         const ast_type_qualifier &q,
+                                         bool is_single_layout_merge,
+                                         bool is_multiple_layouts_merge)
 {
    bool r = true;
    ast_type_qualifier ubo_mat_mask;
@@ -272,7 +248,8 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
    input_layout_mask.flags.q.smooth = 1;
    input_layout_mask.flags.q.non_coherent = 1;
 
-   if (state->has_bindless()) {
+   if (state->has_bindless())
+   {
       /* Allow to use image qualifiers with shader inputs/outputs. */
       input_layout_mask.flags.q.coherent = 1;
       input_layout_mask.flags.q._volatile = 1;
@@ -288,73 +265,92 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
     */
    ast_type_qualifier allowed_duplicates_mask;
    allowed_duplicates_mask.flags.i =
-      ubo_mat_mask.flags.i |
-      ubo_layout_mask.flags.i |
-      ubo_binding_mask.flags.i;
+       ubo_mat_mask.flags.i |
+       ubo_layout_mask.flags.i |
+       ubo_binding_mask.flags.i;
 
    /* Geometry shaders can have several layout qualifiers
     * assigning different stream values.
     */
-   if (state->stage == MESA_SHADER_GEOMETRY) {
+   if (state->stage == MESA_SHADER_GEOMETRY)
+   {
       allowed_duplicates_mask.flags.i |=
-         stream_layout_mask.flags.i;
+          stream_layout_mask.flags.i;
    }
 
    if (is_single_layout_merge && !state->has_enhanced_layouts() &&
-       (this->flags.i & q.flags.i & ~allowed_duplicates_mask.flags.i) != 0) {
+       (this->flags.i & q.flags.i & ~allowed_duplicates_mask.flags.i) != 0)
+   {
       _mesa_glsl_error(loc, state, "duplicate layout qualifiers used");
       return false;
    }
 
-   if (is_multiple_layouts_merge && !state->has_420pack_or_es31()) {
+   if (is_multiple_layouts_merge && !state->has_420pack_or_es31())
+   {
       _mesa_glsl_error(loc, state,
                        "duplicate layout(...) qualifiers");
       return false;
    }
 
-   if (q.flags.q.prim_type) {
+   if (q.flags.q.prim_type)
+   {
       r &= validate_prim_type(loc, state, *this, q);
       this->flags.q.prim_type = 1;
       this->prim_type = q.prim_type;
    }
 
-   if (q.flags.q.max_vertices) {
-      if (this->flags.q.max_vertices
-          && !is_single_layout_merge && !is_multiple_layouts_merge) {
+   if (q.flags.q.max_vertices)
+   {
+      if (this->flags.q.max_vertices && !is_single_layout_merge && !is_multiple_layouts_merge)
+      {
          this->max_vertices->merge_qualifier(q.max_vertices);
-      } else {
+      }
+      else
+      {
          this->flags.q.max_vertices = 1;
          this->max_vertices = q.max_vertices;
       }
    }
 
-   if (q.subroutine_list) {
-      if (this->subroutine_list) {
+   if (q.subroutine_list)
+   {
+      if (this->subroutine_list)
+      {
          _mesa_glsl_error(loc, state,
                           "conflicting subroutine qualifiers used");
-      } else {
+      }
+      else
+      {
          this->subroutine_list = q.subroutine_list;
       }
    }
 
-   if (q.flags.q.invocations) {
-      if (this->flags.q.invocations
-          && !is_single_layout_merge && !is_multiple_layouts_merge) {
+   if (q.flags.q.invocations)
+   {
+      if (this->flags.q.invocations && !is_single_layout_merge && !is_multiple_layouts_merge)
+      {
          this->invocations->merge_qualifier(q.invocations);
-      } else {
+      }
+      else
+      {
          this->flags.q.invocations = 1;
          this->invocations = q.invocations;
       }
    }
 
    if (state->stage == MESA_SHADER_GEOMETRY &&
-       state->has_explicit_attrib_stream()) {
-      if (!this->flags.q.explicit_stream) {
-         if (q.flags.q.stream) {
+       state->has_explicit_attrib_stream())
+   {
+      if (!this->flags.q.explicit_stream)
+      {
+         if (q.flags.q.stream)
+         {
             this->flags.q.stream = 1;
             this->stream = q.stream;
-         } else if (!this->flags.q.stream && this->flags.q.out &&
-                    !this->flags.q.in) {
+         }
+         else if (!this->flags.q.stream && this->flags.q.out &&
+                  !this->flags.q.in)
+         {
             /* Assign default global stream value */
             this->flags.q.stream = 1;
             this->stream = state->out_qualifier->stream;
@@ -362,49 +358,61 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
       }
    }
 
-   if (state->has_enhanced_layouts()) {
-      if (!this->flags.q.explicit_xfb_buffer) {
-         if (q.flags.q.xfb_buffer) {
+   if (state->has_enhanced_layouts())
+   {
+      if (!this->flags.q.explicit_xfb_buffer)
+      {
+         if (q.flags.q.xfb_buffer)
+         {
             this->flags.q.xfb_buffer = 1;
             this->xfb_buffer = q.xfb_buffer;
-         } else if (!this->flags.q.xfb_buffer && this->flags.q.out &&
-                    !this->flags.q.in) {
+         }
+         else if (!this->flags.q.xfb_buffer && this->flags.q.out &&
+                  !this->flags.q.in)
+         {
             /* Assign global xfb_buffer value */
             this->flags.q.xfb_buffer = 1;
             this->xfb_buffer = state->out_qualifier->xfb_buffer;
          }
       }
 
-      if (q.flags.q.explicit_xfb_stride) {
+      if (q.flags.q.explicit_xfb_stride)
+      {
          this->flags.q.xfb_stride = 1;
          this->flags.q.explicit_xfb_stride = 1;
          this->xfb_stride = q.xfb_stride;
       }
    }
 
-   if (q.flags.q.vertices) {
-      if (this->flags.q.vertices
-          && !is_single_layout_merge && !is_multiple_layouts_merge) {
+   if (q.flags.q.vertices)
+   {
+      if (this->flags.q.vertices && !is_single_layout_merge && !is_multiple_layouts_merge)
+      {
          this->vertices->merge_qualifier(q.vertices);
-      } else {
+      }
+      else
+      {
          this->flags.q.vertices = 1;
          this->vertices = q.vertices;
       }
    }
 
-   if (q.flags.q.vertex_spacing) {
+   if (q.flags.q.vertex_spacing)
+   {
       r &= validate_vertex_spacing(loc, state, *this, q);
       this->flags.q.vertex_spacing = 1;
       this->vertex_spacing = q.vertex_spacing;
    }
 
-   if (q.flags.q.ordering) {
+   if (q.flags.q.ordering)
+   {
       r &= validate_ordering(loc, state, *this, q);
       this->flags.q.ordering = 1;
       this->ordering = q.ordering;
    }
 
-   if (q.flags.q.point_mode) {
+   if (q.flags.q.point_mode)
+   {
       r &= validate_point_mode(*this, q);
       this->flags.q.point_mode = 1;
       this->point_mode = q.point_mode;
@@ -418,12 +426,16 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
    if ((q.flags.i & ubo_layout_mask.flags.i) != 0)
       this->flags.i &= ~ubo_layout_mask.flags.i;
 
-   for (int i = 0; i < 3; i++) {
-      if (q.flags.q.local_size & (1 << i)) {
-         if (this->local_size[i]
-             && !is_single_layout_merge && !is_multiple_layouts_merge) {
+   for (int i = 0; i < 3; i++)
+   {
+      if (q.flags.q.local_size & (1 << i))
+      {
+         if (this->local_size[i] && !is_single_layout_merge && !is_multiple_layouts_merge)
+         {
             this->local_size[i]->merge_qualifier(q.local_size[i]);
-         } else {
+         }
+         else
+         {
             this->local_size[i] = q.local_size[i];
          }
       }
@@ -444,7 +456,8 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
    if (q.flags.q.bound_image)
       this->flags.q.bound_image = true;
 
-   if (q.flags.q.derivative_group) {
+   if (q.flags.q.derivative_group)
+   {
       this->flags.q.derivative_group = true;
       this->derivative_group = q.derivative_group;
    }
@@ -452,7 +465,8 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
    this->flags.i |= q.flags.i;
 
    if (this->flags.q.in &&
-       (this->flags.i & ~input_layout_mask.flags.i) != 0) {
+       (this->flags.i & ~input_layout_mask.flags.i) != 0)
+   {
       _mesa_glsl_error(loc, state, "invalid input layout qualifier used");
       return false;
    }
@@ -466,7 +480,7 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
    if (q.flags.q.explicit_index)
       this->index = q.index;
 
-  if (q.flags.q.explicit_component)
+   if (q.flags.q.explicit_component)
       this->component = q.component;
 
    if (q.flags.q.explicit_binding)
@@ -478,7 +492,8 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
    if (q.precision != ast_precision_none)
       this->precision = q.precision;
 
-   if (q.flags.q.explicit_image_format) {
+   if (q.flags.q.explicit_image_format)
+   {
       this->image_format = q.image_format;
       this->image_base_type = q.image_base_type;
    }
@@ -491,7 +506,8 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
 
    if (state->EXT_gpu_shader4_enable &&
        state->stage == MESA_SHADER_FRAGMENT &&
-       this->flags.q.varying && q.flags.q.out) {
+       this->flags.q.varying && q.flags.q.out)
+   {
       this->flags.q.varying = 0;
       this->flags.q.out = 1;
    }
@@ -499,19 +515,21 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
    return r;
 }
 
-bool
-ast_type_qualifier::validate_out_qualifier(YYLTYPE *loc,
-                                           _mesa_glsl_parse_state *state)
+bool ast_type_qualifier::validate_out_qualifier(YYLTYPE *loc,
+                                                _mesa_glsl_parse_state *state)
 {
    bool r = true;
    ast_type_qualifier valid_out_mask;
    valid_out_mask.flags.i = 0;
 
-   switch (state->stage) {
+   switch (state->stage)
+   {
    case MESA_SHADER_GEOMETRY:
-      if (this->flags.q.prim_type) {
+      if (this->flags.q.prim_type)
+      {
          /* Make sure this is a valid output primitive type. */
-         switch (this->prim_type) {
+         switch (this->prim_type)
+         {
          case GL_POINTS:
          case GL_LINE_STRIP:
          case GL_TRIANGLE_STRIP:
@@ -519,7 +537,7 @@ ast_type_qualifier::validate_out_qualifier(YYLTYPE *loc,
          default:
             r = false;
             _mesa_glsl_error(loc, state, "invalid geometry shader output "
-                             "primitive type");
+                                         "primitive type");
             break;
          }
       }
@@ -558,7 +576,8 @@ ast_type_qualifier::validate_out_qualifier(YYLTYPE *loc,
    }
 
    /* Generate an error when invalid output layout qualifiers are used. */
-   if ((this->flags.i & ~valid_out_mask.flags.i) != 0) {
+   if ((this->flags.i & ~valid_out_mask.flags.i) != 0)
+   {
       r = false;
       _mesa_glsl_error(loc, state, "invalid output layout qualifiers used");
    }
@@ -566,21 +585,21 @@ ast_type_qualifier::validate_out_qualifier(YYLTYPE *loc,
    return r;
 }
 
-bool
-ast_type_qualifier::merge_into_out_qualifier(YYLTYPE *loc,
-                                             _mesa_glsl_parse_state *state,
-                                             ast_node* &node)
+bool ast_type_qualifier::merge_into_out_qualifier(YYLTYPE *loc,
+                                                  _mesa_glsl_parse_state *state,
+                                                  ast_node *&node)
 {
    const bool r = state->out_qualifier->merge_qualifier(loc, state,
                                                         *this, false);
 
-   switch (state->stage) {
+   switch (state->stage)
+   {
    case MESA_SHADER_GEOMETRY:
       /* Allow future assignments of global out's stream id value */
       state->out_qualifier->flags.q.explicit_stream = 0;
       break;
    case MESA_SHADER_TESS_CTRL:
-      node = new(state->linalloc) ast_tcs_output_layout(*loc);
+      node = new (state->linalloc) ast_tcs_output_layout(*loc);
       break;
    default:
       break;
@@ -593,19 +612,21 @@ ast_type_qualifier::merge_into_out_qualifier(YYLTYPE *loc,
    return r;
 }
 
-bool
-ast_type_qualifier::validate_in_qualifier(YYLTYPE *loc,
-                                          _mesa_glsl_parse_state *state)
+bool ast_type_qualifier::validate_in_qualifier(YYLTYPE *loc,
+                                               _mesa_glsl_parse_state *state)
 {
    bool r = true;
    ast_type_qualifier valid_in_mask;
    valid_in_mask.flags.i = 0;
 
-   switch (state->stage) {
+   switch (state->stage)
+   {
    case MESA_SHADER_TESS_EVAL:
-      if (this->flags.q.prim_type) {
+      if (this->flags.q.prim_type)
+      {
          /* Make sure this is a valid input primitive type. */
-         switch (this->prim_type) {
+         switch (this->prim_type)
+         {
          case GL_TRIANGLES:
          case GL_QUADS:
          case GL_ISOLINES:
@@ -625,9 +646,11 @@ ast_type_qualifier::validate_in_qualifier(YYLTYPE *loc,
       valid_in_mask.flags.q.point_mode = 1;
       break;
    case MESA_SHADER_GEOMETRY:
-      if (this->flags.q.prim_type) {
+      if (this->flags.q.prim_type)
+      {
          /* Make sure this is a valid input primitive type. */
-         switch (this->prim_type) {
+         switch (this->prim_type)
+         {
          case GL_POINTS:
          case GL_LINES:
          case GL_LINES_ADJACENCY:
@@ -668,7 +691,8 @@ ast_type_qualifier::validate_in_qualifier(YYLTYPE *loc,
    }
 
    /* Generate an error when invalid input layout qualifiers are used. */
-   if ((this->flags.i & ~valid_in_mask.flags.i) != 0) {
+   if ((this->flags.i & ~valid_in_mask.flags.i) != 0)
+   {
       r = false;
       _mesa_glsl_error(loc, state, "invalid input layout qualifiers used");
    }
@@ -685,10 +709,9 @@ ast_type_qualifier::validate_in_qualifier(YYLTYPE *loc,
    return r;
 }
 
-bool
-ast_type_qualifier::merge_into_in_qualifier(YYLTYPE *loc,
-                                            _mesa_glsl_parse_state *state,
-                                            ast_node* &node)
+bool ast_type_qualifier::merge_into_in_qualifier(YYLTYPE *loc,
+                                                 _mesa_glsl_parse_state *state,
+                                                 ast_node *&node)
 {
    bool r = true;
    void *lin_ctx = state->linalloc;
@@ -696,73 +719,88 @@ ast_type_qualifier::merge_into_in_qualifier(YYLTYPE *loc,
    /* We create the gs_input_layout node before merging so, in the future, no
     * more repeated nodes will be created as we will have the flag set.
     */
-   if (state->stage == MESA_SHADER_GEOMETRY
-       && this->flags.q.prim_type && !state->in_qualifier->flags.q.prim_type) {
-      node = new(lin_ctx) ast_gs_input_layout(*loc, this->prim_type);
+   if (state->stage == MESA_SHADER_GEOMETRY && this->flags.q.prim_type && !state->in_qualifier->flags.q.prim_type)
+   {
+      node = new (lin_ctx) ast_gs_input_layout(*loc, this->prim_type);
    }
 
    r = state->in_qualifier->merge_qualifier(loc, state, *this, false);
 
-   if (state->in_qualifier->flags.q.early_fragment_tests) {
+   if (state->in_qualifier->flags.q.early_fragment_tests)
+   {
       state->fs_early_fragment_tests = true;
       state->in_qualifier->flags.q.early_fragment_tests = false;
    }
 
-   if (state->in_qualifier->flags.q.inner_coverage) {
+   if (state->in_qualifier->flags.q.inner_coverage)
+   {
       state->fs_inner_coverage = true;
       state->in_qualifier->flags.q.inner_coverage = false;
    }
 
-   if (state->in_qualifier->flags.q.post_depth_coverage) {
+   if (state->in_qualifier->flags.q.post_depth_coverage)
+   {
       state->fs_post_depth_coverage = true;
       state->in_qualifier->flags.q.post_depth_coverage = false;
    }
 
-   if (state->fs_inner_coverage && state->fs_post_depth_coverage) {
+   if (state->fs_inner_coverage && state->fs_post_depth_coverage)
+   {
       _mesa_glsl_error(loc, state,
                        "inner_coverage & post_depth_coverage layout qualifiers "
                        "are mutally exclusives");
       r = false;
    }
 
-   if (state->in_qualifier->flags.q.pixel_interlock_ordered) {
+   if (state->in_qualifier->flags.q.pixel_interlock_ordered)
+   {
       state->fs_pixel_interlock_ordered = true;
       state->in_qualifier->flags.q.pixel_interlock_ordered = false;
    }
 
-   if (state->in_qualifier->flags.q.pixel_interlock_unordered) {
+   if (state->in_qualifier->flags.q.pixel_interlock_unordered)
+   {
       state->fs_pixel_interlock_unordered = true;
       state->in_qualifier->flags.q.pixel_interlock_unordered = false;
    }
 
-   if (state->in_qualifier->flags.q.sample_interlock_ordered) {
+   if (state->in_qualifier->flags.q.sample_interlock_ordered)
+   {
       state->fs_sample_interlock_ordered = true;
       state->in_qualifier->flags.q.sample_interlock_ordered = false;
    }
 
-   if (state->in_qualifier->flags.q.sample_interlock_unordered) {
+   if (state->in_qualifier->flags.q.sample_interlock_unordered)
+   {
       state->fs_sample_interlock_unordered = true;
       state->in_qualifier->flags.q.sample_interlock_unordered = false;
    }
 
    if (state->fs_pixel_interlock_ordered +
-       state->fs_pixel_interlock_unordered +
-       state->fs_sample_interlock_ordered +
-       state->fs_sample_interlock_unordered > 1) {
+           state->fs_pixel_interlock_unordered +
+           state->fs_sample_interlock_ordered +
+           state->fs_sample_interlock_unordered >
+       1)
+   {
       _mesa_glsl_error(loc, state,
                        "only one interlock mode can be used at any time.");
       r = false;
    }
 
-   if (state->in_qualifier->flags.q.derivative_group) {
-      if (state->cs_derivative_group != DERIVATIVE_GROUP_NONE) {
+   if (state->in_qualifier->flags.q.derivative_group)
+   {
+      if (state->cs_derivative_group != DERIVATIVE_GROUP_NONE)
+      {
          if (state->in_qualifier->derivative_group != DERIVATIVE_GROUP_NONE &&
-             state->cs_derivative_group != state->in_qualifier->derivative_group) {
+             state->cs_derivative_group != state->in_qualifier->derivative_group)
+         {
             _mesa_glsl_error(loc, state,
                              "conflicting derivative groups.");
             r = false;
          }
-      } else {
+      }
+      else
+      {
          state->cs_derivative_group = state->in_qualifier->derivative_group;
       }
    }
@@ -771,15 +809,17 @@ ast_type_qualifier::merge_into_in_qualifier(YYLTYPE *loc,
     * all existing nodes is checked later, when the AST node is transformed
     * into HIR.
     */
-   if (state->in_qualifier->flags.q.local_size) {
-      node = new(lin_ctx) ast_cs_input_layout(*loc,
-                                              state->in_qualifier->local_size);
+   if (state->in_qualifier->flags.q.local_size)
+   {
+      node = new (lin_ctx) ast_cs_input_layout(*loc,
+                                               state->in_qualifier->local_size);
       state->in_qualifier->flags.q.local_size = 0;
       for (int i = 0; i < 3; i++)
          state->in_qualifier->local_size[i] = NULL;
    }
 
-   if (state->in_qualifier->flags.q.local_size_variable) {
+   if (state->in_qualifier->flags.q.local_size_variable)
+   {
       state->cs_input_local_size_variable_specified = true;
       state->in_qualifier->flags.q.local_size_variable = false;
    }
@@ -787,24 +827,28 @@ ast_type_qualifier::merge_into_in_qualifier(YYLTYPE *loc,
    return r;
 }
 
-bool
-ast_type_qualifier::push_to_global(YYLTYPE *loc,
-                                   _mesa_glsl_parse_state *state)
+bool ast_type_qualifier::push_to_global(YYLTYPE *loc,
+                                        _mesa_glsl_parse_state *state)
 {
-   if (this->flags.q.xfb_stride) {
+   if (this->flags.q.xfb_stride)
+   {
       this->flags.q.xfb_stride = 0;
 
       unsigned buff_idx;
       if (process_qualifier_constant(state, loc, "xfb_buffer",
-                                     this->xfb_buffer, &buff_idx)) {
-         if (state->out_qualifier->out_xfb_stride[buff_idx]) {
+                                     this->xfb_buffer, &buff_idx))
+      {
+         if (state->out_qualifier->out_xfb_stride[buff_idx])
+         {
             state->out_qualifier->out_xfb_stride[buff_idx]->merge_qualifier(
-               new(state->linalloc) ast_layout_expression(*loc,
-                                                          this->xfb_stride));
-         } else {
+                new (state->linalloc) ast_layout_expression(*loc,
+                                                            this->xfb_stride));
+         }
+         else
+         {
             state->out_qualifier->out_xfb_stride[buff_idx] =
-               new(state->linalloc) ast_layout_expression(*loc,
-                                                          this->xfb_stride);
+                new (state->linalloc) ast_layout_expression(*loc,
+                                                            this->xfb_stride);
          }
       }
    }
@@ -820,11 +864,10 @@ ast_type_qualifier::push_to_global(YYLTYPE *loc,
  * \param message        The error message to print.
  * \param allowed_flags  A list of valid flags.
  */
-bool
-ast_type_qualifier::validate_flags(YYLTYPE *loc,
-                                   _mesa_glsl_parse_state *state,
-                                   const ast_type_qualifier &allowed_flags,
-                                   const char *message, const char *name)
+bool ast_type_qualifier::validate_flags(YYLTYPE *loc,
+                                        _mesa_glsl_parse_state *state,
+                                        const ast_type_qualifier &allowed_flags,
+                                        const char *message, const char *name)
 {
    ast_type_qualifier bad;
    bad.flags.i = this->flags.i & ~allowed_flags.flags.i;
@@ -900,18 +943,22 @@ ast_type_qualifier::validate_flags(YYLTYPE *loc,
                     bad.flags.q.bound_image ? " bound_image" : "",
                     bad.flags.q.post_depth_coverage ? " post_depth_coverage" : "",
                     bad.flags.q.pixel_interlock_ordered ? " pixel_interlock_ordered" : "",
-                    bad.flags.q.pixel_interlock_unordered ? " pixel_interlock_unordered": "",
-                    bad.flags.q.sample_interlock_ordered ? " sample_interlock_ordered": "",
-                    bad.flags.q.sample_interlock_unordered ? " sample_interlock_unordered": "",
+                    bad.flags.q.pixel_interlock_unordered ? " pixel_interlock_unordered" : "",
+                    bad.flags.q.sample_interlock_ordered ? " sample_interlock_ordered" : "",
+                    bad.flags.q.sample_interlock_unordered ? " sample_interlock_unordered" : "",
                     bad.flags.q.non_coherent ? " noncoherent" : "");
    return false;
 }
 
-bool
-ast_layout_expression::process_qualifier_constant(struct _mesa_glsl_parse_state *state,
-                                                  const char *qual_indentifier,
-                                                  unsigned *value,
-                                                  bool can_be_zero)
+void ast_layout_expression::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled serialize ast_layout_expression");
+}
+
+bool ast_layout_expression::process_qualifier_constant(struct _mesa_glsl_parse_state *state,
+                                                       const char *qual_indentifier,
+                                                       unsigned *value,
+                                                       bool can_be_zero)
 {
    int min_value = 0;
    bool first_pass = true;
@@ -921,7 +968,8 @@ ast_layout_expression::process_qualifier_constant(struct _mesa_glsl_parse_state 
       min_value = 1;
 
    for (exec_node *node = layout_const_expressions.get_head_raw();
-        !node->is_tail_sentinel(); node = node->next) {
+        !node->is_tail_sentinel(); node = node->next)
+   {
 
       exec_list dummy_instructions;
       ast_node *const_expression = exec_node_data(ast_node, node, link);
@@ -929,30 +977,37 @@ ast_layout_expression::process_qualifier_constant(struct _mesa_glsl_parse_state 
       ir_rvalue *const ir = const_expression->hir(&dummy_instructions, state);
 
       ir_constant *const const_int =
-         ir->constant_expression_value(ralloc_parent(ir));
+          ir->constant_expression_value(ralloc_parent(ir));
 
-      if (const_int == NULL || !const_int->type->is_integer_32()) {
+      if (const_int == NULL || !const_int->type->is_integer_32())
+      {
          YYLTYPE loc = const_expression->get_location();
          _mesa_glsl_error(&loc, state, "%s must be an integral constant "
-                          "expression", qual_indentifier);
+                                       "expression",
+                          qual_indentifier);
          return false;
       }
 
-      if (const_int->value.i[0] < min_value) {
+      if (const_int->value.i[0] < min_value)
+      {
          YYLTYPE loc = const_expression->get_location();
          _mesa_glsl_error(&loc, state, "%s layout qualifier is invalid "
-                          "(%d < %d)", qual_indentifier,
+                                       "(%d < %d)",
+                          qual_indentifier,
                           const_int->value.i[0], min_value);
          return false;
       }
 
-      if (!first_pass && *value != const_int->value.u[0]) {
+      if (!first_pass && *value != const_int->value.u[0])
+      {
          YYLTYPE loc = const_expression->get_location();
          _mesa_glsl_error(&loc, state, "%s layout qualifier does not "
-		          "match previous declaration (%d vs %d)",
+                                       "match previous declaration (%d vs %d)",
                           qual_indentifier, *value, const_int->value.i[0]);
          return false;
-      } else {
+      }
+      else
+      {
          first_pass = false;
          *value = const_int->value.u[0];
       }
@@ -969,16 +1024,16 @@ ast_layout_expression::process_qualifier_constant(struct _mesa_glsl_parse_state 
    return true;
 }
 
-bool
-process_qualifier_constant(struct _mesa_glsl_parse_state *state,
-                           YYLTYPE *loc,
-                           const char *qual_indentifier,
-                           ast_expression *const_expression,
-                           unsigned *value)
+bool process_qualifier_constant(struct _mesa_glsl_parse_state *state,
+                                YYLTYPE *loc,
+                                const char *qual_indentifier,
+                                ast_expression *const_expression,
+                                unsigned *value)
 {
    exec_list dummy_instructions;
 
-   if (const_expression == NULL) {
+   if (const_expression == NULL)
+   {
       *value = 0;
       return true;
    }
@@ -986,14 +1041,17 @@ process_qualifier_constant(struct _mesa_glsl_parse_state *state,
    ir_rvalue *const ir = const_expression->hir(&dummy_instructions, state);
 
    ir_constant *const const_int =
-      ir->constant_expression_value(ralloc_parent(ir));
-   if (const_int == NULL || !const_int->type->is_integer_32()) {
+       ir->constant_expression_value(ralloc_parent(ir));
+   if (const_int == NULL || !const_int->type->is_integer_32())
+   {
       _mesa_glsl_error(loc, state, "%s must be an integral constant "
-                       "expression", qual_indentifier);
+                                   "expression",
+                       qual_indentifier);
       return false;
    }
 
-   if (const_int->value.i[0] < 0) {
+   if (const_int->value.i[0] < 0)
+   {
       _mesa_glsl_error(loc, state, "%s layout qualifier is invalid (%d < 0)",
                        qual_indentifier, const_int->value.u[0]);
       return false;

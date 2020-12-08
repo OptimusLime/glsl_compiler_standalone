@@ -25,6 +25,8 @@
 #include <stdarg.h>
 #include <string.h>
 #include <assert.h>
+#include <cereal/archives/json.hpp>
+#include <fstream>
 
 #include "main/context.h"
 #include "main/debug_output.h"
@@ -51,25 +53,23 @@ glsl_compute_version_string(void *mem_ctx, bool is_es, unsigned version)
                           version / 100, version % 100);
 }
 
-
 static const unsigned known_desktop_glsl_versions[] =
-   { 110, 120, 130, 140, 150, 330, 400, 410, 420, 430, 440, 450, 460 };
+    {110, 120, 130, 140, 150, 330, 400, 410, 420, 430, 440, 450, 460};
 static const unsigned known_desktop_gl_versions[] =
-   {  20,  21,  30,  31,  32,  33,  40,  41,  42,  43,  44,  45, 46 };
-
+    {20, 21, 30, 31, 32, 33, 40, 41, 42, 43, 44, 45, 46};
 
 _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
-					       gl_shader_stage stage,
+                                               gl_shader_stage stage,
                                                void *mem_ctx)
-   : ctx(_ctx), cs_input_local_size_specified(false), cs_input_local_size(),
-     switch_state(), warnings_enabled(true)
+    : ctx(_ctx), cs_input_local_size_specified(false), cs_input_local_size(),
+      switch_state(), warnings_enabled(true)
 {
    assert(stage < MESA_SHADER_STAGES);
    this->stage = stage;
 
    this->scanner = NULL;
    this->translation_unit.make_empty();
-   this->symbols = new(mem_ctx) glsl_symbol_table;
+   this->symbols = new (mem_ctx) glsl_symbol_table;
 
    this->linalloc = linear_alloc_parent(this, 0);
 
@@ -82,11 +82,16 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    /* Set default language version and extensions */
    this->language_version = 110;
    this->forced_language_version = ctx->Const.ForceGLSLVersion;
-   if (ctx->Const.GLSLZeroInit == 1) {
+   if (ctx->Const.GLSLZeroInit == 1)
+   {
       this->zero_init = (1u << ir_var_auto) | (1u << ir_var_temporary) | (1u << ir_var_shader_out);
-   } else if (ctx->Const.GLSLZeroInit == 2) {
+   }
+   else if (ctx->Const.GLSLZeroInit == 2)
+   {
       this->zero_init = (1u << ir_var_auto) | (1u << ir_var_temporary) | (1u << ir_var_function_out);
-   } else {
+   }
+   else
+   {
       this->zero_init = 0;
    }
    this->gl_version = 20;
@@ -95,7 +100,8 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->ARB_texture_rectangle_enable = true;
 
    /* OpenGL ES 2.0 has different defaults from desktop GL. */
-   if (ctx->API == API_OPENGLES2) {
+   if (ctx->API == API_OPENGLES2)
+   {
       this->language_version = 100;
       this->es_shader = true;
       this->ARB_texture_rectangle_enable = false;
@@ -140,21 +146,21 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->Const.MaxCombinedAtomicCounters = ctx->Const.MaxCombinedAtomicCounters;
    this->Const.MaxAtomicBufferBindings = ctx->Const.MaxAtomicBufferBindings;
    this->Const.MaxVertexAtomicCounterBuffers =
-      ctx->Const.Program[MESA_SHADER_VERTEX].MaxAtomicBuffers;
+       ctx->Const.Program[MESA_SHADER_VERTEX].MaxAtomicBuffers;
    this->Const.MaxTessControlAtomicCounterBuffers =
-      ctx->Const.Program[MESA_SHADER_TESS_CTRL].MaxAtomicBuffers;
+       ctx->Const.Program[MESA_SHADER_TESS_CTRL].MaxAtomicBuffers;
    this->Const.MaxTessEvaluationAtomicCounterBuffers =
-      ctx->Const.Program[MESA_SHADER_TESS_EVAL].MaxAtomicBuffers;
+       ctx->Const.Program[MESA_SHADER_TESS_EVAL].MaxAtomicBuffers;
    this->Const.MaxGeometryAtomicCounterBuffers =
-      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxAtomicBuffers;
+       ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxAtomicBuffers;
    this->Const.MaxFragmentAtomicCounterBuffers =
-      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxAtomicBuffers;
+       ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxAtomicBuffers;
    this->Const.MaxComputeAtomicCounterBuffers =
-      ctx->Const.Program[MESA_SHADER_COMPUTE].MaxAtomicBuffers;
+       ctx->Const.Program[MESA_SHADER_COMPUTE].MaxAtomicBuffers;
    this->Const.MaxCombinedAtomicCounterBuffers =
-      ctx->Const.MaxCombinedAtomicBuffers;
+       ctx->Const.MaxCombinedAtomicBuffers;
    this->Const.MaxAtomicCounterBufferSize =
-      ctx->Const.MaxAtomicBufferSize;
+       ctx->Const.MaxAtomicBufferSize;
 
    /* ARB_enhanced_layouts constants */
    this->Const.MaxTransformFeedbackBuffers = ctx->Const.MaxTransformFeedbackBuffers;
@@ -226,38 +232,43 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
     * outside the compatibility contexts of 3.x.
     */
    this->num_supported_versions = 0;
-   if (_mesa_is_desktop_gl(ctx)) {
-      for (unsigned i = 0; i < ARRAY_SIZE(known_desktop_glsl_versions); i++) {
-         if (known_desktop_glsl_versions[i] <= ctx->Const.GLSLVersion) {
-            this->supported_versions[this->num_supported_versions].ver
-               = known_desktop_glsl_versions[i];
-            this->supported_versions[this->num_supported_versions].gl_ver
-               = known_desktop_gl_versions[i];
+   if (_mesa_is_desktop_gl(ctx))
+   {
+      for (unsigned i = 0; i < ARRAY_SIZE(known_desktop_glsl_versions); i++)
+      {
+         if (known_desktop_glsl_versions[i] <= ctx->Const.GLSLVersion)
+         {
+            this->supported_versions[this->num_supported_versions].ver = known_desktop_glsl_versions[i];
+            this->supported_versions[this->num_supported_versions].gl_ver = known_desktop_gl_versions[i];
             this->supported_versions[this->num_supported_versions].es = false;
             this->num_supported_versions++;
          }
       }
    }
-   if (ctx->API == API_OPENGLES2 || ctx->Extensions.ARB_ES2_compatibility) {
+   if (ctx->API == API_OPENGLES2 || ctx->Extensions.ARB_ES2_compatibility)
+   {
       this->supported_versions[this->num_supported_versions].ver = 100;
       this->supported_versions[this->num_supported_versions].gl_ver = 20;
       this->supported_versions[this->num_supported_versions].es = true;
       this->num_supported_versions++;
    }
-   if (_mesa_is_gles3(ctx) || ctx->Extensions.ARB_ES3_compatibility) {
+   if (_mesa_is_gles3(ctx) || ctx->Extensions.ARB_ES3_compatibility)
+   {
       this->supported_versions[this->num_supported_versions].ver = 300;
       this->supported_versions[this->num_supported_versions].gl_ver = 30;
       this->supported_versions[this->num_supported_versions].es = true;
       this->num_supported_versions++;
    }
-   if (_mesa_is_gles31(ctx) || ctx->Extensions.ARB_ES3_1_compatibility) {
+   if (_mesa_is_gles31(ctx) || ctx->Extensions.ARB_ES3_1_compatibility)
+   {
       this->supported_versions[this->num_supported_versions].ver = 310;
       this->supported_versions[this->num_supported_versions].gl_ver = 31;
       this->supported_versions[this->num_supported_versions].es = true;
       this->num_supported_versions++;
    }
    if ((ctx->API == API_OPENGLES2 && ctx->Version >= 32) ||
-       ctx->Extensions.ARB_ES3_2_compatibility) {
+       ctx->Extensions.ARB_ES3_2_compatibility)
+   {
       this->supported_versions[this->num_supported_versions].ver = 320;
       this->supported_versions[this->num_supported_versions].gl_ver = 32;
       this->supported_versions[this->num_supported_versions].es = true;
@@ -268,17 +279,18 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
     * versions are supported.
     */
    char *supported = ralloc_strdup(this, "");
-   for (unsigned i = 0; i < this->num_supported_versions; i++) {
+   for (unsigned i = 0; i < this->num_supported_versions; i++)
+   {
       unsigned ver = this->supported_versions[i].ver;
       const char *const prefix = (i == 0)
-	 ? ""
-	 : ((i == this->num_supported_versions - 1) ? ", and " : ", ");
+                                     ? ""
+                                     : ((i == this->num_supported_versions - 1) ? ", and " : ", ");
       const char *const suffix = (this->supported_versions[i].es) ? " ES" : "";
 
-      ralloc_asprintf_append(& supported, "%s%u.%02u%s",
-			     prefix,
-			     ver / 100, ver % 100,
-			     suffix);
+      ralloc_asprintf_append(&supported, "%s%u.%02u%s",
+                             prefix,
+                             ver / 100, ver % 100,
+                             suffix);
    }
 
    this->supported_version_string = supported;
@@ -286,11 +298,11 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    if (ctx->Const.ForceGLSLExtensionsWarn)
       _mesa_glsl_process_extension("all", NULL, "warn", NULL, this);
 
-   this->default_uniform_qualifier = new(this) ast_type_qualifier();
+   this->default_uniform_qualifier = new (this) ast_type_qualifier();
    this->default_uniform_qualifier->flags.q.shared = 1;
    this->default_uniform_qualifier->flags.q.column_major = 1;
 
-   this->default_shader_storage_qualifier = new(this) ast_type_qualifier();
+   this->default_shader_storage_qualifier = new (this) ast_type_qualifier();
    this->default_shader_storage_qualifier->flags.q.shared = 1;
    this->default_shader_storage_qualifier->flags.q.column_major = 1;
 
@@ -303,8 +315,8 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->gs_input_prim_type_specified = false;
    this->tcs_output_vertices_specified = false;
    this->gs_input_size = 0;
-   this->in_qualifier = new(this) ast_type_qualifier();
-   this->out_qualifier = new(this) ast_type_qualifier();
+   this->in_qualifier = new (this) ast_type_qualifier();
+   this->out_qualifier = new (this) ast_type_qualifier();
    this->fs_early_fragment_tests = false;
    this->fs_inner_coverage = false;
    this->fs_post_depth_coverage = false;
@@ -316,11 +328,11 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    memset(this->atomic_counter_offsets, 0,
           sizeof(this->atomic_counter_offsets));
    this->allow_extension_directive_midshader =
-      ctx->Const.AllowGLSLExtensionDirectiveMidShader;
+       ctx->Const.AllowGLSLExtensionDirectiveMidShader;
    this->allow_glsl_120_subset_in_110 =
-      ctx->Const.AllowGLSL120SubsetIn110;
+       ctx->Const.AllowGLSL120SubsetIn110;
    this->allow_builtin_variable_redeclaration =
-      ctx->Const.AllowGLSLBuiltinVariableRedeclaration;
+       ctx->Const.AllowGLSLBuiltinVariableRedeclaration;
 
    this->cs_input_local_size_variable_specified = false;
 
@@ -347,10 +359,9 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
  * "foo unsupported") is called, the error message will be "foo unsupported in
  * GLSL 1.20 (GLSL 1.30 or GLSL 3.00 ES required)".
  */
-bool
-_mesa_glsl_parse_state::check_version(unsigned required_glsl_version,
-                                      unsigned required_glsl_es_version,
-                                      YYLTYPE *locp, const char *fmt, ...)
+bool _mesa_glsl_parse_state::check_version(unsigned required_glsl_version,
+                                           unsigned required_glsl_es_version,
+                                           YYLTYPE *locp, const char *fmt, ...)
 {
    if (this->is_version(required_glsl_version, required_glsl_es_version))
       return true;
@@ -359,19 +370,22 @@ _mesa_glsl_parse_state::check_version(unsigned required_glsl_version,
    va_start(args, fmt);
    char *problem = ralloc_vasprintf(this, fmt, args);
    va_end(args);
-   const char *glsl_version_string
-      = glsl_compute_version_string(this, false, required_glsl_version);
-   const char *glsl_es_version_string
-      = glsl_compute_version_string(this, true, required_glsl_es_version);
+   const char *glsl_version_string = glsl_compute_version_string(this, false, required_glsl_version);
+   const char *glsl_es_version_string = glsl_compute_version_string(this, true, required_glsl_es_version);
    const char *requirement_string = "";
-   if (required_glsl_version && required_glsl_es_version) {
+   if (required_glsl_version && required_glsl_es_version)
+   {
       requirement_string = ralloc_asprintf(this, " (%s or %s required)",
                                            glsl_version_string,
                                            glsl_es_version_string);
-   } else if (required_glsl_version) {
+   }
+   else if (required_glsl_version)
+   {
       requirement_string = ralloc_asprintf(this, " (%s required)",
                                            glsl_version_string);
-   } else if (required_glsl_es_version) {
+   }
+   else if (required_glsl_es_version)
+   {
       requirement_string = ralloc_asprintf(this, " (%s required)",
                                            glsl_es_version_string);
    }
@@ -390,50 +404,67 @@ _mesa_glsl_parse_state::check_version(unsigned required_glsl_version,
  * \param ident is a string identifier that follows the integer, if any is
  * present.  Otherwise NULL.
  */
-void
-_mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version,
-                                                  const char *ident)
+void _mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version,
+                                                       const char *ident)
 {
    bool es_token_present = false;
    bool compat_token_present = false;
-   if (ident) {
-      if (strcmp(ident, "es") == 0) {
+   if (ident)
+   {
+      if (strcmp(ident, "es") == 0)
+      {
          es_token_present = true;
-      } else if (version >= 150) {
-         if (strcmp(ident, "core") == 0) {
+      }
+      else if (version >= 150)
+      {
+         if (strcmp(ident, "core") == 0)
+         {
             /* Accept the token.  There's no need to record that this is
              * a core profile shader since that's the only profile we support.
              */
-         } else if (strcmp(ident, "compatibility") == 0) {
+         }
+         else if (strcmp(ident, "compatibility") == 0)
+         {
             compat_token_present = true;
 
-            if (this->ctx->API != API_OPENGL_COMPAT) {
+            if (this->ctx->API != API_OPENGL_COMPAT)
+            {
                _mesa_glsl_error(locp, this,
                                 "the compatibility profile is not supported");
             }
-         } else {
+         }
+         else
+         {
             _mesa_glsl_error(locp, this,
                              "\"%s\" is not a valid shading language profile; "
-                             "if present, it must be \"core\"", ident);
+                             "if present, it must be \"core\"",
+                             ident);
          }
-      } else {
+      }
+      else
+      {
          _mesa_glsl_error(locp, this,
                           "illegal text following version number");
       }
    }
 
    this->es_shader = es_token_present;
-   if (version == 100) {
-      if (es_token_present) {
+   if (version == 100)
+   {
+      if (es_token_present)
+      {
          _mesa_glsl_error(locp, this,
                           "GLSL 1.00 ES should be selected using "
                           "`#version 100'");
-      } else {
+      }
+      else
+      {
          this->es_shader = true;
       }
    }
 
-   if (this->es_shader) {
+   if (this->es_shader)
+   {
       this->ARB_texture_rectangle_enable = false;
    }
 
@@ -448,18 +479,20 @@ _mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version,
                          (!this->es_shader && this->language_version < 140);
 
    bool supported = false;
-   for (unsigned i = 0; i < this->num_supported_versions; i++) {
-      if (this->supported_versions[i].ver == this->language_version
-          && this->supported_versions[i].es == this->es_shader) {
+   for (unsigned i = 0; i < this->num_supported_versions; i++)
+   {
+      if (this->supported_versions[i].ver == this->language_version && this->supported_versions[i].es == this->es_shader)
+      {
          this->gl_version = this->supported_versions[i].gl_ver;
          supported = true;
          break;
       }
    }
 
-   if (!supported) {
+   if (!supported)
+   {
       _mesa_glsl_error(locp, this, "%s is not supported. "
-                       "Supported versions are: %s",
+                                   "Supported versions are: %s",
                        this->get_version_string(),
                        this->supported_version_string);
 
@@ -467,23 +500,23 @@ _mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version,
        * Later calls to _mesa_glsl_initialize_types will misbehave if
        * the version is invalid.
        */
-      switch (this->ctx->API) {
+      switch (this->ctx->API)
+      {
       case API_OPENGL_COMPAT:
       case API_OPENGL_CORE:
-	 this->language_version = this->ctx->Const.GLSLVersion;
-	 break;
+         this->language_version = this->ctx->Const.GLSLVersion;
+         break;
 
       case API_OPENGLES:
-	 assert(!"Should not get here.");
-	 /* FALLTHROUGH */
+         assert(!"Should not get here.");
+         /* FALLTHROUGH */
 
       case API_OPENGLES2:
-	 this->language_version = 100;
-	 break;
+         this->language_version = 100;
+         break;
       }
    }
 }
-
 
 /* This helper function will append the given message to the shader's
    info log and report it via GL_ARB_debug_output. Per that extension,
@@ -501,9 +534,12 @@ _mesa_glsl_msg(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
    /* Get the offset that the new message will be written to. */
    int msg_offset = strlen(state->info_log);
 
-   if (locp->path) {
+   if (locp->path)
+   {
       ralloc_asprintf_append(&state->info_log, "\"%s\"", locp->path);
-   } else {
+   }
+   else
+   {
       ralloc_asprintf_append(&state->info_log, "%u", locp->source);
    }
    ralloc_asprintf_append(&state->info_log, ":%u(%u): %s: ",
@@ -521,9 +557,8 @@ _mesa_glsl_msg(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
    ralloc_strcat(&state->info_log, "\n");
 }
 
-void
-_mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
-		 const char *fmt, ...)
+void _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
+                      const char *fmt, ...)
 {
    va_list ap;
 
@@ -534,12 +569,11 @@ _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
    va_end(ap);
 }
 
-
-void
-_mesa_glsl_warning(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
-		   const char *fmt, ...)
+void _mesa_glsl_warning(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
+                        const char *fmt, ...)
 {
-   if (state->warnings_enabled) {
+   if (state->warnings_enabled)
+   {
       va_list ap;
 
       va_start(ap, fmt);
@@ -548,12 +582,12 @@ _mesa_glsl_warning(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
    }
 }
 
-
 /**
  * Enum representing the possible behaviors that can be specified in
  * an #extension directive.
  */
-enum ext_behavior {
+enum ext_behavior
+{
    extension_disable,
    extension_enable,
    extension_require,
@@ -563,7 +597,8 @@ enum ext_behavior {
 /**
  * Element type for _mesa_glsl_supported_extensions
  */
-struct _mesa_glsl_extension {
+struct _mesa_glsl_extension
+{
    /**
     * Name of the extension when referred to in a GLSL extension
     * statement
@@ -589,7 +624,7 @@ struct _mesa_glsl_extension {
     * See note in _mesa_glsl_extension::supported_flag about "pointer
     * to member" types.
     */
-   bool _mesa_glsl_parse_state::* enable_flag;
+   bool _mesa_glsl_parse_state::*enable_flag;
 
    /**
     * Flag in the _mesa_glsl_parse_state struct that should be set
@@ -598,8 +633,7 @@ struct _mesa_glsl_extension {
     * See note in _mesa_glsl_extension::supported_flag about "pointer
     * to member" types.
     */
-   bool _mesa_glsl_parse_state::* warn_flag;
-
+   bool _mesa_glsl_parse_state::*warn_flag;
 
    bool compatible_with_state(const _mesa_glsl_parse_state *state,
                               gl_api api, uint8_t gl_version) const;
@@ -607,171 +641,174 @@ struct _mesa_glsl_extension {
 };
 
 /** Checks if the context supports a user-facing extension */
-#define EXT(name_str, driver_cap, ...) \
-static UNUSED bool \
-has_##name_str(const struct gl_context *ctx, gl_api api, uint8_t version) \
-{ \
-   return ctx->Extensions.driver_cap && (version >= \
-          _mesa_extension_table[MESA_EXTENSION_##name_str].version[api]); \
-}
+#define EXT(name_str, driver_cap, ...)                                                                      \
+   static UNUSED bool                                                                                       \
+       has_##name_str(const struct gl_context *ctx, gl_api api, uint8_t version)                            \
+   {                                                                                                        \
+      return ctx->Extensions.driver_cap && (version >=                                                      \
+                                            _mesa_extension_table[MESA_EXTENSION_##name_str].version[api]); \
+   }
 #include "main/extensions_table.h"
 #undef EXT
 
-#define EXT(NAME)                                           \
-   { "GL_" #NAME, false, has_##NAME,                        \
-     &_mesa_glsl_parse_state::NAME##_enable,                \
-     &_mesa_glsl_parse_state::NAME##_warn }
+#define EXT(NAME)                                 \
+   {                                              \
+      "GL_" #NAME, false, has_##NAME,             \
+          &_mesa_glsl_parse_state::NAME##_enable, \
+          &_mesa_glsl_parse_state::NAME##_warn    \
+   }
 
-#define EXT_AEP(NAME)                                       \
-   { "GL_" #NAME, true, has_##NAME,                         \
-     &_mesa_glsl_parse_state::NAME##_enable,                \
-     &_mesa_glsl_parse_state::NAME##_warn }
+#define EXT_AEP(NAME)                             \
+   {                                              \
+      "GL_" #NAME, true, has_##NAME,              \
+          &_mesa_glsl_parse_state::NAME##_enable, \
+          &_mesa_glsl_parse_state::NAME##_warn    \
+   }
 
 /**
  * Table of extensions that can be enabled/disabled within a shader,
  * and the conditions under which they are supported.
  */
 static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
-   /* ARB extensions go here, sorted alphabetically.
+    /* ARB extensions go here, sorted alphabetically.
     */
-   EXT(ARB_ES3_1_compatibility),
-   EXT(ARB_ES3_2_compatibility),
-   EXT(ARB_arrays_of_arrays),
-   EXT(ARB_bindless_texture),
-   EXT(ARB_compatibility),
-   EXT(ARB_compute_shader),
-   EXT(ARB_compute_variable_group_size),
-   EXT(ARB_conservative_depth),
-   EXT(ARB_cull_distance),
-   EXT(ARB_derivative_control),
-   EXT(ARB_draw_buffers),
-   EXT(ARB_draw_instanced),
-   EXT(ARB_enhanced_layouts),
-   EXT(ARB_explicit_attrib_location),
-   EXT(ARB_explicit_uniform_location),
-   EXT(ARB_fragment_coord_conventions),
-   EXT(ARB_fragment_layer_viewport),
-   EXT(ARB_fragment_shader_interlock),
-   EXT(ARB_gpu_shader5),
-   EXT(ARB_gpu_shader_fp64),
-   EXT(ARB_gpu_shader_int64),
-   EXT(ARB_post_depth_coverage),
-   EXT(ARB_sample_shading),
-   EXT(ARB_separate_shader_objects),
-   EXT(ARB_shader_atomic_counter_ops),
-   EXT(ARB_shader_atomic_counters),
-   EXT(ARB_shader_ballot),
-   EXT(ARB_shader_bit_encoding),
-   EXT(ARB_shader_clock),
-   EXT(ARB_shader_draw_parameters),
-   EXT(ARB_shader_group_vote),
-   EXT(ARB_shader_image_load_store),
-   EXT(ARB_shader_image_size),
-   EXT(ARB_shader_precision),
-   EXT(ARB_shader_stencil_export),
-   EXT(ARB_shader_storage_buffer_object),
-   EXT(ARB_shader_subroutine),
-   EXT(ARB_shader_texture_image_samples),
-   EXT(ARB_shader_texture_lod),
-   EXT(ARB_shader_viewport_layer_array),
-   EXT(ARB_shading_language_420pack),
-   EXT(ARB_shading_language_include),
-   EXT(ARB_shading_language_packing),
-   EXT(ARB_tessellation_shader),
-   EXT(ARB_texture_cube_map_array),
-   EXT(ARB_texture_gather),
-   EXT(ARB_texture_multisample),
-   EXT(ARB_texture_query_levels),
-   EXT(ARB_texture_query_lod),
-   EXT(ARB_texture_rectangle),
-   EXT(ARB_uniform_buffer_object),
-   EXT(ARB_vertex_attrib_64bit),
-   EXT(ARB_viewport_array),
+    EXT(ARB_ES3_1_compatibility),
+    EXT(ARB_ES3_2_compatibility),
+    EXT(ARB_arrays_of_arrays),
+    EXT(ARB_bindless_texture),
+    EXT(ARB_compatibility),
+    EXT(ARB_compute_shader),
+    EXT(ARB_compute_variable_group_size),
+    EXT(ARB_conservative_depth),
+    EXT(ARB_cull_distance),
+    EXT(ARB_derivative_control),
+    EXT(ARB_draw_buffers),
+    EXT(ARB_draw_instanced),
+    EXT(ARB_enhanced_layouts),
+    EXT(ARB_explicit_attrib_location),
+    EXT(ARB_explicit_uniform_location),
+    EXT(ARB_fragment_coord_conventions),
+    EXT(ARB_fragment_layer_viewport),
+    EXT(ARB_fragment_shader_interlock),
+    EXT(ARB_gpu_shader5),
+    EXT(ARB_gpu_shader_fp64),
+    EXT(ARB_gpu_shader_int64),
+    EXT(ARB_post_depth_coverage),
+    EXT(ARB_sample_shading),
+    EXT(ARB_separate_shader_objects),
+    EXT(ARB_shader_atomic_counter_ops),
+    EXT(ARB_shader_atomic_counters),
+    EXT(ARB_shader_ballot),
+    EXT(ARB_shader_bit_encoding),
+    EXT(ARB_shader_clock),
+    EXT(ARB_shader_draw_parameters),
+    EXT(ARB_shader_group_vote),
+    EXT(ARB_shader_image_load_store),
+    EXT(ARB_shader_image_size),
+    EXT(ARB_shader_precision),
+    EXT(ARB_shader_stencil_export),
+    EXT(ARB_shader_storage_buffer_object),
+    EXT(ARB_shader_subroutine),
+    EXT(ARB_shader_texture_image_samples),
+    EXT(ARB_shader_texture_lod),
+    EXT(ARB_shader_viewport_layer_array),
+    EXT(ARB_shading_language_420pack),
+    EXT(ARB_shading_language_include),
+    EXT(ARB_shading_language_packing),
+    EXT(ARB_tessellation_shader),
+    EXT(ARB_texture_cube_map_array),
+    EXT(ARB_texture_gather),
+    EXT(ARB_texture_multisample),
+    EXT(ARB_texture_query_levels),
+    EXT(ARB_texture_query_lod),
+    EXT(ARB_texture_rectangle),
+    EXT(ARB_uniform_buffer_object),
+    EXT(ARB_vertex_attrib_64bit),
+    EXT(ARB_viewport_array),
 
-   /* KHR extensions go here, sorted alphabetically.
+    /* KHR extensions go here, sorted alphabetically.
     */
-   EXT_AEP(KHR_blend_equation_advanced),
+    EXT_AEP(KHR_blend_equation_advanced),
 
-   /* OES extensions go here, sorted alphabetically.
+    /* OES extensions go here, sorted alphabetically.
     */
-   EXT(OES_EGL_image_external),
-   EXT(OES_EGL_image_external_essl3),
-   EXT(OES_geometry_point_size),
-   EXT(OES_geometry_shader),
-   EXT(OES_gpu_shader5),
-   EXT(OES_primitive_bounding_box),
-   EXT_AEP(OES_sample_variables),
-   EXT_AEP(OES_shader_image_atomic),
-   EXT(OES_shader_io_blocks),
-   EXT_AEP(OES_shader_multisample_interpolation),
-   EXT(OES_standard_derivatives),
-   EXT(OES_tessellation_point_size),
-   EXT(OES_tessellation_shader),
-   EXT(OES_texture_3D),
-   EXT(OES_texture_buffer),
-   EXT(OES_texture_cube_map_array),
-   EXT_AEP(OES_texture_storage_multisample_2d_array),
-   EXT(OES_viewport_array),
+    EXT(OES_EGL_image_external),
+    EXT(OES_EGL_image_external_essl3),
+    EXT(OES_geometry_point_size),
+    EXT(OES_geometry_shader),
+    EXT(OES_gpu_shader5),
+    EXT(OES_primitive_bounding_box),
+    EXT_AEP(OES_sample_variables),
+    EXT_AEP(OES_shader_image_atomic),
+    EXT(OES_shader_io_blocks),
+    EXT_AEP(OES_shader_multisample_interpolation),
+    EXT(OES_standard_derivatives),
+    EXT(OES_tessellation_point_size),
+    EXT(OES_tessellation_shader),
+    EXT(OES_texture_3D),
+    EXT(OES_texture_buffer),
+    EXT(OES_texture_cube_map_array),
+    EXT_AEP(OES_texture_storage_multisample_2d_array),
+    EXT(OES_viewport_array),
 
-   /* All other extensions go here, sorted alphabetically.
+    /* All other extensions go here, sorted alphabetically.
     */
-   EXT(AMD_conservative_depth),
-   EXT(AMD_gpu_shader_int64),
-   EXT(AMD_shader_stencil_export),
-   EXT(AMD_shader_trinary_minmax),
-   EXT(AMD_texture_texture4),
-   EXT(AMD_vertex_shader_layer),
-   EXT(AMD_vertex_shader_viewport_index),
-   EXT(ANDROID_extension_pack_es31a),
-   EXT(EXT_blend_func_extended),
-   EXT(EXT_demote_to_helper_invocation),
-   EXT(EXT_frag_depth),
-   EXT(EXT_draw_buffers),
-   EXT(EXT_draw_instanced),
-   EXT(EXT_clip_cull_distance),
-   EXT(EXT_geometry_point_size),
-   EXT_AEP(EXT_geometry_shader),
-   EXT(EXT_gpu_shader4),
-   EXT_AEP(EXT_gpu_shader5),
-   EXT_AEP(EXT_primitive_bounding_box),
-   EXT(EXT_separate_shader_objects),
-   EXT(EXT_shader_framebuffer_fetch),
-   EXT(EXT_shader_framebuffer_fetch_non_coherent),
-   EXT(EXT_shader_group_vote),
-   EXT(EXT_shader_image_load_formatted),
-   EXT(EXT_shader_image_load_store),
-   EXT(EXT_shader_implicit_conversions),
-   EXT(EXT_shader_integer_mix),
-   EXT_AEP(EXT_shader_io_blocks),
-   EXT(EXT_shader_samples_identical),
-   EXT(EXT_tessellation_point_size),
-   EXT_AEP(EXT_tessellation_shader),
-   EXT(EXT_texture_array),
-   EXT_AEP(EXT_texture_buffer),
-   EXT_AEP(EXT_texture_cube_map_array),
-   EXT(EXT_texture_query_lod),
-   EXT(EXT_texture_shadow_lod),
-   EXT(INTEL_conservative_rasterization),
-   EXT(INTEL_shader_atomic_float_minmax),
-   EXT(INTEL_shader_integer_functions2),
-   EXT(MESA_shader_integer_functions),
-   EXT(NV_compute_shader_derivatives),
-   EXT(NV_fragment_shader_interlock),
-   EXT(NV_image_formats),
-   EXT(NV_shader_atomic_float),
-   EXT(NV_shader_atomic_int64),
-   EXT(NV_viewport_array2),
+    EXT(AMD_conservative_depth),
+    EXT(AMD_gpu_shader_int64),
+    EXT(AMD_shader_stencil_export),
+    EXT(AMD_shader_trinary_minmax),
+    EXT(AMD_texture_texture4),
+    EXT(AMD_vertex_shader_layer),
+    EXT(AMD_vertex_shader_viewport_index),
+    EXT(ANDROID_extension_pack_es31a),
+    EXT(EXT_blend_func_extended),
+    EXT(EXT_demote_to_helper_invocation),
+    EXT(EXT_frag_depth),
+    EXT(EXT_draw_buffers),
+    EXT(EXT_draw_instanced),
+    EXT(EXT_clip_cull_distance),
+    EXT(EXT_geometry_point_size),
+    EXT_AEP(EXT_geometry_shader),
+    EXT(EXT_gpu_shader4),
+    EXT_AEP(EXT_gpu_shader5),
+    EXT_AEP(EXT_primitive_bounding_box),
+    EXT(EXT_separate_shader_objects),
+    EXT(EXT_shader_framebuffer_fetch),
+    EXT(EXT_shader_framebuffer_fetch_non_coherent),
+    EXT(EXT_shader_group_vote),
+    EXT(EXT_shader_image_load_formatted),
+    EXT(EXT_shader_image_load_store),
+    EXT(EXT_shader_implicit_conversions),
+    EXT(EXT_shader_integer_mix),
+    EXT_AEP(EXT_shader_io_blocks),
+    EXT(EXT_shader_samples_identical),
+    EXT(EXT_tessellation_point_size),
+    EXT_AEP(EXT_tessellation_shader),
+    EXT(EXT_texture_array),
+    EXT_AEP(EXT_texture_buffer),
+    EXT_AEP(EXT_texture_cube_map_array),
+    EXT(EXT_texture_query_lod),
+    EXT(EXT_texture_shadow_lod),
+    EXT(INTEL_conservative_rasterization),
+    EXT(INTEL_shader_atomic_float_minmax),
+    EXT(INTEL_shader_integer_functions2),
+    EXT(MESA_shader_integer_functions),
+    EXT(NV_compute_shader_derivatives),
+    EXT(NV_fragment_shader_interlock),
+    EXT(NV_image_formats),
+    EXT(NV_shader_atomic_float),
+    EXT(NV_shader_atomic_int64),
+    EXT(NV_viewport_array2),
 };
 
 #undef EXT
-
 
 /**
  * Determine whether a given extension is compatible with the target,
  * API, and extension information in the current parser state.
  */
 bool _mesa_glsl_extension::compatible_with_state(
-      const _mesa_glsl_parse_state *state, gl_api api, uint8_t gl_version) const
+    const _mesa_glsl_parse_state *state, gl_api api, uint8_t gl_version) const
 {
    return this->available_pred(state->ctx, api, gl_version);
 }
@@ -788,7 +825,7 @@ void _mesa_glsl_extension::set_flags(_mesa_glsl_parse_state *state,
     * _mesa_glsl_extension::supported_flag for more info.
     */
    state->*(this->enable_flag) = (behavior != extension_disable);
-   state->*(this->warn_flag)   = (behavior == extension_warn);
+   state->*(this->warn_flag) = (behavior == extension_warn);
 }
 
 /**
@@ -797,34 +834,44 @@ void _mesa_glsl_extension::set_flags(_mesa_glsl_parse_state *state,
  */
 static const _mesa_glsl_extension *find_extension(const char *name)
 {
-   for (unsigned i = 0; i < ARRAY_SIZE(_mesa_glsl_supported_extensions); ++i) {
-      if (strcmp(name, _mesa_glsl_supported_extensions[i].name) == 0) {
+   for (unsigned i = 0; i < ARRAY_SIZE(_mesa_glsl_supported_extensions); ++i)
+   {
+      if (strcmp(name, _mesa_glsl_supported_extensions[i].name) == 0)
+      {
          return &_mesa_glsl_supported_extensions[i];
       }
    }
    return NULL;
 }
 
-bool
-_mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
-			     const char *behavior_string, YYLTYPE *behavior_locp,
-			     _mesa_glsl_parse_state *state)
+bool _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
+                                  const char *behavior_string, YYLTYPE *behavior_locp,
+                                  _mesa_glsl_parse_state *state)
 {
    uint8_t gl_version = state->ctx->Extensions.Version;
    gl_api api = state->ctx->API;
    ext_behavior behavior;
-   if (strcmp(behavior_string, "warn") == 0) {
+   if (strcmp(behavior_string, "warn") == 0)
+   {
       behavior = extension_warn;
-   } else if (strcmp(behavior_string, "require") == 0) {
+   }
+   else if (strcmp(behavior_string, "require") == 0)
+   {
       behavior = extension_require;
-   } else if (strcmp(behavior_string, "enable") == 0) {
+   }
+   else if (strcmp(behavior_string, "enable") == 0)
+   {
       behavior = extension_enable;
-   } else if (strcmp(behavior_string, "disable") == 0) {
+   }
+   else if (strcmp(behavior_string, "disable") == 0)
+   {
       behavior = extension_disable;
-   } else {
+   }
+   else
+   {
       _mesa_glsl_error(behavior_locp, state,
-		       "unknown extension behavior `%s'",
-		       behavior_string);
+                       "unknown extension behavior `%s'",
+                       behavior_string);
       return false;
    }
 
@@ -839,31 +886,42 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
    if (gl_version != 0xff)
       gl_version = state->gl_version;
 
-   if (strcmp(name, "all") == 0) {
-      if ((behavior == extension_enable) || (behavior == extension_require)) {
-	 _mesa_glsl_error(name_locp, state, "cannot %s all extensions",
-			  (behavior == extension_enable)
-			  ? "enable" : "require");
-	 return false;
-      } else {
+   if (strcmp(name, "all") == 0)
+   {
+      if ((behavior == extension_enable) || (behavior == extension_require))
+      {
+         _mesa_glsl_error(name_locp, state, "cannot %s all extensions",
+                          (behavior == extension_enable)
+                              ? "enable"
+                              : "require");
+         return false;
+      }
+      else
+      {
          for (unsigned i = 0;
-              i < ARRAY_SIZE(_mesa_glsl_supported_extensions); ++i) {
-            const _mesa_glsl_extension *extension
-               = &_mesa_glsl_supported_extensions[i];
-            if (extension->compatible_with_state(state, api, gl_version)) {
+              i < ARRAY_SIZE(_mesa_glsl_supported_extensions); ++i)
+         {
+            const _mesa_glsl_extension *extension = &_mesa_glsl_supported_extensions[i];
+            if (extension->compatible_with_state(state, api, gl_version))
+            {
                _mesa_glsl_supported_extensions[i].set_flags(state, behavior);
             }
          }
       }
-   } else {
+   }
+   else
+   {
       const _mesa_glsl_extension *extension = find_extension(name);
-      if (extension && extension->compatible_with_state(state, api, gl_version)) {
+      if (extension && extension->compatible_with_state(state, api, gl_version))
+      {
          extension->set_flags(state, behavior);
-         if (extension->available_pred == has_ANDROID_extension_pack_es31a) {
+         if (extension->available_pred == has_ANDROID_extension_pack_es31a)
+         {
             for (unsigned i = 0;
-                 i < ARRAY_SIZE(_mesa_glsl_supported_extensions); ++i) {
+                 i < ARRAY_SIZE(_mesa_glsl_supported_extensions); ++i)
+            {
                const _mesa_glsl_extension *extension =
-                  &_mesa_glsl_supported_extensions[i];
+                   &_mesa_glsl_supported_extensions[i];
 
                if (!extension->aep)
                   continue;
@@ -875,14 +933,19 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
                extension->set_flags(state, behavior);
             }
          }
-      } else {
+      }
+      else
+      {
          static const char fmt[] = "extension `%s' unsupported in %s shader";
 
-         if (behavior == extension_require) {
+         if (behavior == extension_require)
+         {
             _mesa_glsl_error(name_locp, state, fmt,
                              name, _mesa_shader_stage_to_string(state->stage));
             return false;
-         } else {
+         }
+         else
+         {
             _mesa_glsl_warning(name_locp, state, fmt,
                                name, _mesa_shader_stage_to_string(state->stage));
          }
@@ -891,7 +954,6 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 
    return true;
 }
-
 
 /**
  * Recurses through <type> and <expr> if <expr> is an aggregate initializer
@@ -939,15 +1001,15 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
  * This pass is necessary because the right-hand side of <type> e = { ... }
  * doesn't contain sufficient information to determine if the types match.
  */
-void
-_mesa_ast_set_aggregate_type(const glsl_type *type,
-                             ast_expression *expr)
+void _mesa_ast_set_aggregate_type(const glsl_type *type,
+                                  ast_expression *expr)
 {
    ast_aggregate_initializer *ai = (ast_aggregate_initializer *)expr;
    ai->constructor_type = type;
 
    /* If the aggregate is an array, recursively set its elements' types. */
-   if (type->is_array()) {
+   if (type->is_array())
+   {
       /* Each array element has the type type->fields.array.
        *
        * E.g., if <type> if struct S[2] we want to set each element's type to
@@ -955,7 +1017,8 @@ _mesa_ast_set_aggregate_type(const glsl_type *type,
        */
       for (exec_node *expr_node = ai->expressions.get_head_raw();
            !expr_node->is_tail_sentinel();
-           expr_node = expr_node->next) {
+           expr_node = expr_node->next)
+      {
          ast_expression *expr = exec_node_data(ast_expression, expr_node,
                                                link);
 
@@ -963,25 +1026,32 @@ _mesa_ast_set_aggregate_type(const glsl_type *type,
             _mesa_ast_set_aggregate_type(type->fields.array, expr);
       }
 
-   /* If the aggregate is a struct, recursively set its fields' types. */
-   } else if (type->is_struct()) {
+      /* If the aggregate is a struct, recursively set its fields' types. */
+   }
+   else if (type->is_struct())
+   {
       exec_node *expr_node = ai->expressions.get_head_raw();
 
       /* Iterate through the struct's fields. */
       for (unsigned i = 0; !expr_node->is_tail_sentinel() && i < type->length;
-           i++, expr_node = expr_node->next) {
+           i++, expr_node = expr_node->next)
+      {
          ast_expression *expr = exec_node_data(ast_expression, expr_node,
                                                link);
 
-         if (expr->oper == ast_aggregate) {
+         if (expr->oper == ast_aggregate)
+         {
             _mesa_ast_set_aggregate_type(type->fields.structure[i].type, expr);
          }
       }
-   /* If the aggregate is a matrix, set its columns' types. */
-   } else if (type->is_matrix()) {
+      /* If the aggregate is a matrix, set its columns' types. */
+   }
+   else if (type->is_matrix())
+   {
       for (exec_node *expr_node = ai->expressions.get_head_raw();
            !expr_node->is_tail_sentinel();
-           expr_node = expr_node->next) {
+           expr_node = expr_node->next)
+      {
          ast_expression *expr = exec_node_data(ast_expression, expr_node,
                                                link);
 
@@ -991,39 +1061,53 @@ _mesa_ast_set_aggregate_type(const glsl_type *type,
    }
 }
 
-void
-_mesa_ast_process_interface_block(YYLTYPE *locp,
-                                  _mesa_glsl_parse_state *state,
-                                  ast_interface_block *const block,
-                                  const struct ast_type_qualifier &q)
+void _mesa_ast_process_interface_block(YYLTYPE *locp,
+                                       _mesa_glsl_parse_state *state,
+                                       ast_interface_block *const block,
+                                       const struct ast_type_qualifier &q)
 {
-   if (q.flags.q.buffer) {
-      if (!state->has_shader_storage_buffer_objects()) {
+   if (q.flags.q.buffer)
+   {
+      if (!state->has_shader_storage_buffer_objects())
+      {
          _mesa_glsl_error(locp, state,
                           "#version 430 / GL_ARB_shader_storage_buffer_object "
                           "required for defining shader storage blocks");
-      } else if (state->ARB_shader_storage_buffer_object_warn) {
+      }
+      else if (state->ARB_shader_storage_buffer_object_warn)
+      {
          _mesa_glsl_warning(locp, state,
                             "#version 430 / GL_ARB_shader_storage_buffer_object "
                             "required for defining shader storage blocks");
       }
-   } else if (q.flags.q.uniform) {
-      if (!state->has_uniform_buffer_objects()) {
+   }
+   else if (q.flags.q.uniform)
+   {
+      if (!state->has_uniform_buffer_objects())
+      {
          _mesa_glsl_error(locp, state,
                           "#version 140 / GL_ARB_uniform_buffer_object "
                           "required for defining uniform blocks");
-      } else if (state->ARB_uniform_buffer_object_warn) {
+      }
+      else if (state->ARB_uniform_buffer_object_warn)
+      {
          _mesa_glsl_warning(locp, state,
                             "#version 140 / GL_ARB_uniform_buffer_object "
                             "required for defining uniform blocks");
       }
-   } else {
-      if (!state->has_shader_io_blocks()) {
-         if (state->es_shader) {
+   }
+   else
+   {
+      if (!state->has_shader_io_blocks())
+      {
+         if (state->es_shader)
+         {
             _mesa_glsl_error(locp, state,
                              "GL_OES_shader_io_blocks or #version 320 "
                              "required for using interface blocks");
-         } else {
+         }
+         else
+         {
             _mesa_glsl_error(locp, state,
                              "#version 150 required for using "
                              "interface blocks");
@@ -1035,11 +1119,14 @@ _mesa_ast_process_interface_block(YYLTYPE *locp,
     * "It is illegal to have an input block in a vertex shader
     *  or an output block in a fragment shader"
     */
-   if ((state->stage == MESA_SHADER_VERTEX) && q.flags.q.in) {
+   if ((state->stage == MESA_SHADER_VERTEX) && q.flags.q.in)
+   {
       _mesa_glsl_error(locp, state,
                        "`in' interface block is not allowed for "
                        "a vertex shader");
-   } else if ((state->stage == MESA_SHADER_FRAGMENT) && q.flags.q.out) {
+   }
+   else if ((state->stage == MESA_SHADER_FRAGMENT) && q.flags.q.out)
+   {
       _mesa_glsl_error(locp, state,
                        "`out' interface block is not allowed for "
                        "a fragment shader");
@@ -1049,9 +1136,10 @@ _mesa_ast_process_interface_block(YYLTYPE *locp,
     * the same language versions, we don't have to explicitly
     * version-check both things.
     */
-   if (block->instance_name != NULL) {
+   if (block->instance_name != NULL)
+   {
       state->check_version(150, 300, locp, "interface blocks with "
-                           "an instance name are not allowed");
+                                           "an instance name are not allowed");
    }
 
    ast_type_qualifier::bitset_t interface_type_mask;
@@ -1079,31 +1167,37 @@ _mesa_ast_process_interface_block(YYLTYPE *locp,
 
    if (state->stage == MESA_SHADER_GEOMETRY &&
        state->has_explicit_attrib_stream() &&
-       block->default_layout.flags.q.out) {
+       block->default_layout.flags.q.out)
+   {
       /* Assign global layout's stream value. */
       block->default_layout.flags.q.stream = 1;
       block->default_layout.flags.q.explicit_stream = 0;
       block->default_layout.stream = state->out_qualifier->stream;
    }
 
-   if (state->has_enhanced_layouts() && block->default_layout.flags.q.out) {
+   if (state->has_enhanced_layouts() && block->default_layout.flags.q.out)
+   {
       /* Assign global layout's xfb_buffer value. */
       block->default_layout.flags.q.xfb_buffer = 1;
       block->default_layout.flags.q.explicit_xfb_buffer = 0;
       block->default_layout.xfb_buffer = state->out_qualifier->xfb_buffer;
    }
 
-   foreach_list_typed (ast_declarator_list, member, link, &block->declarations) {
-      ast_type_qualifier& qualifier = member->type->qualifier;
-      if ((qualifier.flags.i & interface_type_mask) == 0) {
+   foreach_list_typed(ast_declarator_list, member, link, &block->declarations)
+   {
+      ast_type_qualifier &qualifier = member->type->qualifier;
+      if ((qualifier.flags.i & interface_type_mask) == 0)
+      {
          /* GLSLangSpec.1.50.11, 4.3.7 (Interface Blocks):
           * "If no optional qualifier is used in a member declaration, the
           *  qualifier of the variable is just in, out, or uniform as declared
           *  by interface-qualifier."
           */
          qualifier.flags.i |= block_interface_qualifier;
-      } else if ((qualifier.flags.i & interface_type_mask) !=
-                 block_interface_qualifier) {
+      }
+      else if ((qualifier.flags.i & interface_type_mask) !=
+               block_interface_qualifier)
+      {
          /* GLSLangSpec.1.50.11, 4.3.7 (Interface Blocks):
           * "If optional qualifiers are used, they can include interpolation
           *  and storage qualifiers and they must declare an input, output,
@@ -1130,7 +1224,8 @@ _mesa_ast_type_qualifier_print(const struct ast_type_qualifier *q)
    if (q->is_subroutine_decl())
       printf("subroutine ");
 
-   if (q->subroutine_list) {
+   if (q->subroutine_list)
+   {
       printf("subroutine (");
       q->subroutine_list->print();
       printf(")");
@@ -1150,12 +1245,13 @@ _mesa_ast_type_qualifier_print(const struct ast_type_qualifier *q)
 
    if (q->flags.q.in && q->flags.q.out)
       printf("inout ");
-   else {
+   else
+   {
       if (q->flags.q.in)
-	 printf("in ");
+         printf("in ");
 
       if (q->flags.q.out)
-	 printf("out ");
+         printf("out ");
    }
 
    if (q->flags.q.centroid)
@@ -1176,13 +1272,15 @@ _mesa_ast_type_qualifier_print(const struct ast_type_qualifier *q)
       printf("noperspective ");
 }
 
-
-void
-ast_node::print(void) const
+void ast_node::print(void) const
 {
    printf("unhandled node ");
 }
 
+void ast_node::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive ");
+}
 
 ast_node::ast_node(void)
 {
@@ -1194,7 +1292,6 @@ ast_node::ast_node(void)
    this->location.last_column = 0;
 }
 
-
 static void
 ast_opt_array_dimensions_print(const ast_array_specifier *array_specifier)
 {
@@ -1202,35 +1299,38 @@ ast_opt_array_dimensions_print(const ast_array_specifier *array_specifier)
       array_specifier->print();
 }
 
-
-void
-ast_compound_statement::print(void) const
+void ast_compound_statement::print(void) const
 {
    printf("{\n");
 
-   foreach_list_typed(ast_node, ast, link, &this->statements) {
+   foreach_list_typed(ast_node, ast, link, &this->statements)
+   {
       ast->print();
    }
 
    printf("}\n");
 }
 
+void ast_compound_statement::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_compound_statement ");
+}
 
 ast_compound_statement::ast_compound_statement(int new_scope,
-					       ast_node *statements)
+                                               ast_node *statements)
 {
    this->new_scope = new_scope;
 
-   if (statements != NULL) {
+   if (statements != NULL)
+   {
       this->statements.push_degenerate_list_at_head(&statements->link);
    }
 }
 
-
-void
-ast_expression::print(void) const
+void ast_expression::print(void) const
 {
-   switch (oper) {
+   switch (oper)
+   {
    case ast_assign:
    case ast_mul_assign:
    case ast_div_assign:
@@ -1283,15 +1383,17 @@ ast_expression::print(void) const
       printf("] ");
       break;
 
-   case ast_function_call: {
+   case ast_function_call:
+   {
       subexpressions[0]->print();
       printf("( ");
 
-      foreach_list_typed (ast_node, ast, link, &this->expressions) {
-	 if (&ast->link != this->expressions.get_head())
-	    printf(", ");
+      foreach_list_typed(ast_node, ast, link, &this->expressions)
+      {
+         if (&ast->link != this->expressions.get_head())
+            printf(", ");
 
-	 ast->print();
+         ast->print();
       }
 
       printf(") ");
@@ -1328,29 +1430,34 @@ ast_expression::print(void) const
 
    case ast_bool_constant:
       printf("%s ",
-	     primary_expression.bool_constant
-	     ? "true" : "false");
+             primary_expression.bool_constant
+                 ? "true"
+                 : "false");
       break;
 
-   case ast_sequence: {
+   case ast_sequence:
+   {
       printf("( ");
-      foreach_list_typed (ast_node, ast, link, & this->expressions) {
-	 if (&ast->link != this->expressions.get_head())
-	    printf(", ");
+      foreach_list_typed(ast_node, ast, link, &this->expressions)
+      {
+         if (&ast->link != this->expressions.get_head())
+            printf(", ");
 
-	 ast->print();
+         ast->print();
       }
       printf(") ");
       break;
    }
 
-   case ast_aggregate: {
+   case ast_aggregate:
+   {
       printf("{ ");
-      foreach_list_typed (ast_node, ast, link, & this->expressions) {
-	 if (&ast->link != this->expressions.get_head())
-	    printf(", ");
+      foreach_list_typed(ast_node, ast, link, &this->expressions)
+      {
+         if (&ast->link != this->expressions.get_head())
+            printf(", ");
 
-	 ast->print();
+         ast->print();
       }
       printf("} ");
       break;
@@ -1362,11 +1469,15 @@ ast_expression::print(void) const
    }
 }
 
+void ast_expression::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_expression ");
+}
+
 ast_expression::ast_expression(int oper,
-			       ast_expression *ex0,
-			       ast_expression *ex1,
-			       ast_expression *ex2) :
-   primary_expression()
+                               ast_expression *ex0,
+                               ast_expression *ex1,
+                               ast_expression *ex2) : primary_expression()
 {
    this->oper = ast_operators(oper);
    this->subexpressions[0] = ex0;
@@ -1376,97 +1487,105 @@ ast_expression::ast_expression(int oper,
    this->is_lhs = false;
 }
 
-
-void
-ast_expression_statement::print(void) const
+void ast_expression_statement::print(void) const
 {
    if (expression)
       expression->print();
 
    printf("; ");
 }
+void ast_expression_statement::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_expression_statement ");
+}
 
-
-ast_expression_statement::ast_expression_statement(ast_expression *ex) :
-   expression(ex)
+ast_expression_statement::ast_expression_statement(ast_expression *ex) : expression(ex)
 {
    /* empty */
 }
 
-
-void
-ast_function::print(void) const
+void ast_function::print(void) const
 {
    return_type->print();
    printf(" %s (", identifier);
 
-   foreach_list_typed(ast_node, ast, link, & this->parameters) {
+   foreach_list_typed(ast_node, ast, link, &this->parameters)
+   {
       ast->print();
    }
 
    printf(")");
 }
-
+void ast_function::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_function ");
+}
 
 ast_function::ast_function(void)
-   : return_type(NULL), identifier(NULL), is_definition(false),
-     signature(NULL)
+    : return_type(NULL), identifier(NULL), is_definition(false),
+      signature(NULL)
 {
    /* empty */
 }
 
-
-void
-ast_fully_specified_type::print(void) const
+void ast_fully_specified_type::print(void) const
 {
-   _mesa_ast_type_qualifier_print(& qualifier);
+   _mesa_ast_type_qualifier_print(&qualifier);
    specifier->print();
 }
+void ast_fully_specified_type::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_fully_specified_type ");
+}
 
-
-void
-ast_parameter_declarator::print(void) const
+void ast_parameter_declarator::print(void) const
 {
    type->print();
    if (identifier)
       printf("%s ", identifier);
    ast_opt_array_dimensions_print(array_specifier);
 }
+void ast_parameter_declarator::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_parameter_declaration ");
+}
 
-
-void
-ast_function_definition::print(void) const
+void ast_function_definition::print(void) const
 {
    prototype->print();
    body->print();
 }
+void ast_function_definition::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_function_definition ");
+}
 
-
-void
-ast_declaration::print(void) const
+void ast_declaration::print(void) const
 {
    printf("%s ", identifier);
    ast_opt_array_dimensions_print(array_specifier);
 
-   if (initializer) {
+   if (initializer)
+   {
       printf("= ");
       initializer->print();
    }
 }
-
+void ast_declaration::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_declaration ");
+}
 
 ast_declaration::ast_declaration(const char *identifier,
-				 ast_array_specifier *array_specifier,
-				 ast_expression *initializer)
+                                 ast_array_specifier *array_specifier,
+                                 ast_expression *initializer)
 {
    this->identifier = identifier;
    this->array_specifier = array_specifier;
    this->initializer = initializer;
 }
 
-
-void
-ast_declarator_list::print(void) const
+void ast_declarator_list::print(void) const
 {
    assert(type || invariant);
 
@@ -1477,16 +1596,20 @@ ast_declarator_list::print(void) const
    else
       printf("precise ");
 
-   foreach_list_typed (ast_node, ast, link, & this->declarations) {
+   foreach_list_typed(ast_node, ast, link, &this->declarations)
+   {
       if (&ast->link != this->declarations.get_head())
-	 printf(", ");
+         printf(", ");
 
       ast->print();
    }
 
    printf("; ");
 }
-
+void ast_declarator_list::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_declarator_list ");
+}
 
 ast_declarator_list::ast_declarator_list(ast_fully_specified_type *type)
 {
@@ -1495,10 +1618,10 @@ ast_declarator_list::ast_declarator_list(ast_fully_specified_type *type)
    this->precise = false;
 }
 
-void
-ast_jump_statement::print(void) const
+void ast_jump_statement::print(void) const
 {
-   switch (mode) {
+   switch (mode)
+   {
    case ast_continue:
       printf("continue; ");
       break;
@@ -1508,7 +1631,7 @@ ast_jump_statement::print(void) const
    case ast_return:
       printf("return ");
       if (opt_return_value)
-	 opt_return_value->print();
+         opt_return_value->print();
 
       printf("; ");
       break;
@@ -1517,10 +1640,13 @@ ast_jump_statement::print(void) const
       break;
    }
 }
-
+void ast_jump_statement::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_jump_statement ");
+}
 
 ast_jump_statement::ast_jump_statement(int mode, ast_expression *return_value)
-   : opt_return_value(NULL)
+    : opt_return_value(NULL)
 {
    this->mode = ast_jump_modes(mode);
 
@@ -1528,16 +1654,16 @@ ast_jump_statement::ast_jump_statement(int mode, ast_expression *return_value)
       opt_return_value = return_value;
 }
 
-
-void
-ast_demote_statement::print(void) const
+void ast_demote_statement::print(void) const
 {
    printf("demote; ");
 }
+void ast_demote_statement::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_demote_statement ");
+}
 
-
-void
-ast_selection_statement::print(void) const
+void ast_selection_statement::print(void) const
 {
    printf("if ( ");
    condition->print();
@@ -1545,25 +1671,27 @@ ast_selection_statement::print(void) const
 
    then_statement->print();
 
-   if (else_statement) {
+   if (else_statement)
+   {
       printf("else ");
       else_statement->print();
    }
 }
-
+void ast_selection_statement::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_selection_statement ");
+}
 
 ast_selection_statement::ast_selection_statement(ast_expression *condition,
-						 ast_node *then_statement,
-						 ast_node *else_statement)
+                                                 ast_node *then_statement,
+                                                 ast_node *else_statement)
 {
    this->condition = condition;
    this->then_statement = then_statement;
    this->else_statement = else_statement;
 }
 
-
-void
-ast_switch_statement::print(void) const
+void ast_switch_statement::print(void) const
 {
    printf("switch ( ");
    test_expression->print();
@@ -1571,110 +1699,128 @@ ast_switch_statement::print(void) const
 
    body->print();
 }
-
+void ast_switch_statement::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_switch_statement ");
+}
 
 ast_switch_statement::ast_switch_statement(ast_expression *test_expression,
-					   ast_node *body)
+                                           ast_node *body)
 {
    this->test_expression = test_expression;
    this->body = body;
 }
 
-
-void
-ast_switch_body::print(void) const
+void ast_switch_body::print(void) const
 {
    printf("{\n");
-   if (stmts != NULL) {
+   if (stmts != NULL)
+   {
       stmts->print();
    }
    printf("}\n");
 }
-
+void ast_switch_body::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_switch_body ");
+}
 
 ast_switch_body::ast_switch_body(ast_case_statement_list *stmts)
 {
    this->stmts = stmts;
 }
 
-
 void ast_case_label::print(void) const
 {
-   if (test_value != NULL) {
+   if (test_value != NULL)
+   {
       printf("case ");
       test_value->print();
       printf(": ");
-   } else {
+   }
+   else
+   {
       printf("default: ");
    }
 }
-
+void ast_case_label::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_cast_label ");
+}
 
 ast_case_label::ast_case_label(ast_expression *test_value)
 {
    this->test_value = test_value;
 }
 
-
 void ast_case_label_list::print(void) const
 {
-   foreach_list_typed(ast_node, ast, link, & this->labels) {
+   foreach_list_typed(ast_node, ast, link, &this->labels)
+   {
       ast->print();
    }
    printf("\n");
 }
-
+void ast_case_label_list::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_case_label_list ");
+}
 
 ast_case_label_list::ast_case_label_list(void)
 {
 }
 
-
 void ast_case_statement::print(void) const
 {
    labels->print();
-   foreach_list_typed(ast_node, ast, link, & this->stmts) {
+   foreach_list_typed(ast_node, ast, link, &this->stmts)
+   {
       ast->print();
       printf("\n");
    }
 }
-
+void ast_case_statement::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_case_statement ");
+}
 
 ast_case_statement::ast_case_statement(ast_case_label_list *labels)
 {
    this->labels = labels;
 }
 
-
 void ast_case_statement_list::print(void) const
 {
-   foreach_list_typed(ast_node, ast, link, & this->cases) {
+   foreach_list_typed(ast_node, ast, link, &this->cases)
+   {
       ast->print();
    }
 }
-
+void ast_case_statement_list::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_case_statement_list ");
+}
 
 ast_case_statement_list::ast_case_statement_list(void)
 {
 }
 
-
-void
-ast_iteration_statement::print(void) const
+void ast_iteration_statement::print(void) const
 {
-   switch (mode) {
+   switch (mode)
+   {
    case ast_for:
       printf("for( ");
       if (init_statement)
-	 init_statement->print();
+         init_statement->print();
       printf("; ");
 
       if (condition)
-	 condition->print();
+         condition->print();
       printf("; ");
 
       if (rest_expression)
-	 rest_expression->print();
+         rest_expression->print();
       printf(") ");
 
       body->print();
@@ -1683,7 +1829,7 @@ ast_iteration_statement::print(void) const
    case ast_while:
       printf("while ( ");
       if (condition)
-	 condition->print();
+         condition->print();
       printf(") ");
       body->print();
       break;
@@ -1693,18 +1839,22 @@ ast_iteration_statement::print(void) const
       body->print();
       printf("while ( ");
       if (condition)
-	 condition->print();
+         condition->print();
       printf("); ");
       break;
    }
 }
 
+void ast_iteration_statement::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_iteration_statement ");
+}
 
 ast_iteration_statement::ast_iteration_statement(int mode,
-						 ast_node *init,
-						 ast_node *condition,
-						 ast_expression *rest_expression,
-						 ast_node *body)
+                                                 ast_node *init,
+                                                 ast_node *condition,
+                                                 ast_expression *rest_expression,
+                                                 ast_node *body)
 {
    this->mode = ast_iteration_modes(mode);
    this->init_statement = init;
@@ -1713,54 +1863,64 @@ ast_iteration_statement::ast_iteration_statement(int mode,
    this->body = body;
 }
 
-
-void
-ast_struct_specifier::print(void) const
+void ast_struct_specifier::print(void) const
 {
    printf("struct %s { ", name);
-   foreach_list_typed(ast_node, ast, link, &this->declarations) {
+   foreach_list_typed(ast_node, ast, link, &this->declarations)
+   {
       ast->print();
    }
    printf("} ");
 }
-
+void ast_struct_specifier::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_struct_specifier ");
+}
 
 ast_struct_specifier::ast_struct_specifier(const char *identifier,
-					   ast_declarator_list *declarator_list)
-   : name(identifier), layout(NULL), declarations(), is_declaration(true),
-     type(NULL)
+                                           ast_declarator_list *declarator_list)
+    : name(identifier), layout(NULL), declarations(), is_declaration(true),
+      type(NULL)
 {
    this->declarations.push_degenerate_list_at_head(&declarator_list->link);
 }
 
 void ast_subroutine_list::print(void) const
 {
-   foreach_list_typed (ast_node, ast, link, & this->declarations) {
+   foreach_list_typed(ast_node, ast, link, &this->declarations)
+   {
       if (&ast->link != this->declarations.get_head())
          printf(", ");
       ast->print();
    }
 }
+void ast_subroutine_list::serializeToJSON(cereal::JSONOutputArchive &archive)
+{
+   printf("unhandled node archive:: ast_subroutine_list ");
+}
 
 static void
 set_shader_inout_layout(struct gl_shader *shader,
-		     struct _mesa_glsl_parse_state *state)
+                        struct _mesa_glsl_parse_state *state)
 {
    /* Should have been prevented by the parser. */
    if (shader->Stage != MESA_SHADER_GEOMETRY &&
        shader->Stage != MESA_SHADER_TESS_EVAL &&
-       shader->Stage != MESA_SHADER_COMPUTE) {
+       shader->Stage != MESA_SHADER_COMPUTE)
+   {
       assert(!state->in_qualifier->flags.i);
    }
 
-   if (shader->Stage != MESA_SHADER_COMPUTE) {
+   if (shader->Stage != MESA_SHADER_COMPUTE)
+   {
       /* Should have been prevented by the parser. */
       assert(!state->cs_input_local_size_specified);
       assert(!state->cs_input_local_size_variable_specified);
       assert(state->cs_derivative_group == DERIVATIVE_GROUP_NONE);
    }
 
-   if (shader->Stage != MESA_SHADER_FRAGMENT) {
+   if (shader->Stage != MESA_SHADER_FRAGMENT)
+   {
       /* Should have been prevented by the parser. */
       assert(!state->fs_uses_gl_fragcoord);
       assert(!state->fs_redeclares_gl_fragcoord);
@@ -1775,30 +1935,36 @@ set_shader_inout_layout(struct gl_shader *shader,
       assert(!state->fs_sample_interlock_unordered);
    }
 
-   for (unsigned i = 0; i < MAX_FEEDBACK_BUFFERS; i++) {
-      if (state->out_qualifier->out_xfb_stride[i]) {
+   for (unsigned i = 0; i < MAX_FEEDBACK_BUFFERS; i++)
+   {
+      if (state->out_qualifier->out_xfb_stride[i])
+      {
          unsigned xfb_stride;
-         if (state->out_qualifier->out_xfb_stride[i]->
-                process_qualifier_constant(state, "xfb_stride", &xfb_stride,
-                true)) {
+         if (state->out_qualifier->out_xfb_stride[i]->process_qualifier_constant(state, "xfb_stride", &xfb_stride,
+                                                                                 true))
+         {
             shader->TransformFeedbackBufferStride[i] = xfb_stride;
          }
       }
    }
 
-   switch (shader->Stage) {
+   switch (shader->Stage)
+   {
    case MESA_SHADER_TESS_CTRL:
       shader->info.TessCtrl.VerticesOut = 0;
-      if (state->tcs_output_vertices_specified) {
+      if (state->tcs_output_vertices_specified)
+      {
          unsigned vertices;
-         if (state->out_qualifier->vertices->
-               process_qualifier_constant(state, "vertices", &vertices,
-                                          false)) {
+         if (state->out_qualifier->vertices->process_qualifier_constant(state, "vertices", &vertices,
+                                                                        false))
+         {
 
             YYLTYPE loc = state->out_qualifier->vertices->get_location();
-            if (vertices > state->Const.MaxPatchVertices) {
+            if (vertices > state->Const.MaxPatchVertices)
+            {
                _mesa_glsl_error(&loc, state, "vertices (%d) exceeds "
-                                "GL_MAX_PATCH_VERTICES", vertices);
+                                             "GL_MAX_PATCH_VERTICES",
+                                vertices);
             }
             shader->info.TessCtrl.VerticesOut = vertices;
          }
@@ -1823,13 +1989,15 @@ set_shader_inout_layout(struct gl_shader *shader,
       break;
    case MESA_SHADER_GEOMETRY:
       shader->info.Geom.VerticesOut = -1;
-      if (state->out_qualifier->flags.q.max_vertices) {
+      if (state->out_qualifier->flags.q.max_vertices)
+      {
          unsigned qual_max_vertices;
-         if (state->out_qualifier->max_vertices->
-               process_qualifier_constant(state, "max_vertices",
-                                          &qual_max_vertices, true)) {
+         if (state->out_qualifier->max_vertices->process_qualifier_constant(state, "max_vertices",
+                                                                            &qual_max_vertices, true))
+         {
 
-            if (qual_max_vertices > state->Const.MaxGeometryOutputVertices) {
+            if (qual_max_vertices > state->Const.MaxGeometryOutputVertices)
+            {
                YYLTYPE loc = state->out_qualifier->max_vertices->get_location();
                _mesa_glsl_error(&loc, state,
                                 "maximum output vertices (%d) exceeds "
@@ -1840,27 +2008,35 @@ set_shader_inout_layout(struct gl_shader *shader,
          }
       }
 
-      if (state->gs_input_prim_type_specified) {
+      if (state->gs_input_prim_type_specified)
+      {
          shader->info.Geom.InputType = state->in_qualifier->prim_type;
-      } else {
+      }
+      else
+      {
          shader->info.Geom.InputType = PRIM_UNKNOWN;
       }
 
-      if (state->out_qualifier->flags.q.prim_type) {
+      if (state->out_qualifier->flags.q.prim_type)
+      {
          shader->info.Geom.OutputType = state->out_qualifier->prim_type;
-      } else {
+      }
+      else
+      {
          shader->info.Geom.OutputType = PRIM_UNKNOWN;
       }
 
       shader->info.Geom.Invocations = 0;
-      if (state->in_qualifier->flags.q.invocations) {
+      if (state->in_qualifier->flags.q.invocations)
+      {
          unsigned invocations;
-         if (state->in_qualifier->invocations->
-               process_qualifier_constant(state, "invocations",
-                                          &invocations, false)) {
+         if (state->in_qualifier->invocations->process_qualifier_constant(state, "invocations",
+                                                                          &invocations, false))
+         {
 
             YYLTYPE loc = state->in_qualifier->invocations->get_location();
-            if (invocations > state->Const.MaxGeometryShaderInvocations) {
+            if (invocations > state->Const.MaxGeometryShaderInvocations)
+            {
                _mesa_glsl_error(&loc, state,
                                 "invocations (%d) exceeds "
                                 "GL_MAX_GEOMETRY_SHADER_INVOCATIONS",
@@ -1872,42 +2048,54 @@ set_shader_inout_layout(struct gl_shader *shader,
       break;
 
    case MESA_SHADER_COMPUTE:
-      if (state->cs_input_local_size_specified) {
+      if (state->cs_input_local_size_specified)
+      {
          for (int i = 0; i < 3; i++)
             shader->info.Comp.LocalSize[i] = state->cs_input_local_size[i];
-      } else {
+      }
+      else
+      {
          for (int i = 0; i < 3; i++)
             shader->info.Comp.LocalSize[i] = 0;
       }
 
       shader->info.Comp.LocalSizeVariable =
-         state->cs_input_local_size_variable_specified;
+          state->cs_input_local_size_variable_specified;
 
       shader->info.Comp.DerivativeGroup = state->cs_derivative_group;
 
-      if (state->NV_compute_shader_derivatives_enable) {
+      if (state->NV_compute_shader_derivatives_enable)
+      {
          /* We allow multiple cs_input_layout nodes, but do not store them in
           * a convenient place, so for now live with an empty location error.
           */
          YYLTYPE loc = {0};
-         if (shader->info.Comp.DerivativeGroup == DERIVATIVE_GROUP_QUADS) {
-            if (shader->info.Comp.LocalSize[0] % 2 != 0) {
+         if (shader->info.Comp.DerivativeGroup == DERIVATIVE_GROUP_QUADS)
+         {
+            if (shader->info.Comp.LocalSize[0] % 2 != 0)
+            {
                _mesa_glsl_error(&loc, state, "derivative_group_quadsNV must be used with a "
-                                "local group size whose first dimension "
-                                "is a multiple of 2\n");
+                                             "local group size whose first dimension "
+                                             "is a multiple of 2\n");
             }
-            if (shader->info.Comp.LocalSize[1] % 2 != 0) {
+            if (shader->info.Comp.LocalSize[1] % 2 != 0)
+            {
                _mesa_glsl_error(&loc, state, "derivative_group_quadsNV must be used with a "
-                                "local group size whose second dimension "
-                                "is a multiple of 2\n");
+                                             "local group size whose second dimension "
+                                             "is a multiple of 2\n");
             }
-         } else if (shader->info.Comp.DerivativeGroup == DERIVATIVE_GROUP_LINEAR) {
+         }
+         else if (shader->info.Comp.DerivativeGroup == DERIVATIVE_GROUP_LINEAR)
+         {
             if ((shader->info.Comp.LocalSize[0] *
                  shader->info.Comp.LocalSize[1] *
-                 shader->info.Comp.LocalSize[2]) % 4 != 0) {
+                 shader->info.Comp.LocalSize[2]) %
+                    4 !=
+                0)
+            {
                _mesa_glsl_error(&loc, state, "derivative_group_linearNV must be used with a "
-                            "local group size whose total number of invocations "
-                            "is a multiple of 4\n");
+                                             "local group size whose total number of invocations "
+                                             "is a multiple of 4\n");
             }
          }
       }
@@ -1920,7 +2108,7 @@ set_shader_inout_layout(struct gl_shader *shader,
       shader->pixel_center_integer = state->fs_pixel_center_integer;
       shader->origin_upper_left = state->fs_origin_upper_left;
       shader->ARB_fragment_coord_conventions_enable =
-         state->ARB_fragment_coord_conventions_enable;
+          state->ARB_fragment_coord_conventions_enable;
       shader->EarlyFragmentTests = state->fs_early_fragment_tests;
       shader->InnerCoverage = state->fs_inner_coverage;
       shader->PostDepthCoverage = state->fs_post_depth_coverage;
@@ -1947,18 +2135,20 @@ set_shader_inout_layout(struct gl_shader *shader,
 /* src can be NULL if only the symbols found in the exec_list should be
  * copied
  */
-void
-_mesa_glsl_copy_symbols_from_table(struct exec_list *shader_ir,
-                                   struct glsl_symbol_table *src,
-                                   struct glsl_symbol_table *dest)
+void _mesa_glsl_copy_symbols_from_table(struct exec_list *shader_ir,
+                                        struct glsl_symbol_table *src,
+                                        struct glsl_symbol_table *dest)
 {
-   foreach_in_list (ir_instruction, ir, shader_ir) {
-      switch (ir->ir_type) {
+   foreach_in_list(ir_instruction, ir, shader_ir)
+   {
+      switch (ir->ir_type)
+      {
       case ir_type_function:
-         dest->add_function((ir_function *) ir);
+         dest->add_function((ir_function *)ir);
          break;
-      case ir_type_variable: {
-         ir_variable *const var = (ir_variable *) ir;
+      case ir_type_variable:
+      {
+         ir_variable *const var = (ir_variable *)ir;
 
          if (var->data.mode != ir_var_temporary)
             dest->add_variable(var);
@@ -1969,7 +2159,8 @@ _mesa_glsl_copy_symbols_from_table(struct exec_list *shader_ir,
       }
    }
 
-   if (src != NULL) {
+   if (src != NULL)
+   {
       /* Explicitly copy the gl_PerVertex interface definitions because these
        * are needed to check they are the same during the interstage link.
        * They can’t necessarily be found via the exec_list because the members
@@ -1977,7 +2168,7 @@ _mesa_glsl_copy_symbols_from_table(struct exec_list *shader_ir,
        * in that case.
        */
       const glsl_type *iface =
-         src->get_interface("gl_PerVertex", ir_var_shader_in);
+          src->get_interface("gl_PerVertex", ir_var_shader_in);
       if (iface)
          dest->add_interface(iface->name, iface, ir_var_shader_in);
 
@@ -1987,128 +2178,142 @@ _mesa_glsl_copy_symbols_from_table(struct exec_list *shader_ir,
    }
 }
 
-extern "C" {
-
-static void
-assign_subroutine_indexes(struct _mesa_glsl_parse_state *state)
+extern "C"
 {
-   int j, k;
-   int index = 0;
 
-   for (j = 0; j < state->num_subroutines; j++) {
-      while (state->subroutines[j]->subroutine_index == -1) {
-         for (k = 0; k < state->num_subroutines; k++) {
-            if (state->subroutines[k]->subroutine_index == index)
+   static void
+   assign_subroutine_indexes(struct _mesa_glsl_parse_state *state)
+   {
+      int j, k;
+      int index = 0;
+
+      for (j = 0; j < state->num_subroutines; j++)
+      {
+         while (state->subroutines[j]->subroutine_index == -1)
+         {
+            for (k = 0; k < state->num_subroutines; k++)
+            {
+               if (state->subroutines[k]->subroutine_index == index)
+                  break;
+               else if (k == state->num_subroutines - 1)
+               {
+                  state->subroutines[j]->subroutine_index = index;
+               }
+            }
+            index++;
+         }
+      }
+   }
+
+   static void
+   add_builtin_defines(struct _mesa_glsl_parse_state *state,
+                       void (*add_builtin_define)(struct glcpp_parser *, const char *, int),
+                       struct glcpp_parser *data,
+                       unsigned version,
+                       bool es)
+   {
+      unsigned gl_version = state->ctx->Extensions.Version;
+      gl_api api = state->ctx->API;
+
+      if (gl_version != 0xff)
+      {
+         unsigned i;
+         for (i = 0; i < state->num_supported_versions; i++)
+         {
+            if (state->supported_versions[i].ver == version &&
+                state->supported_versions[i].es == es)
+            {
+               gl_version = state->supported_versions[i].gl_ver;
                break;
-            else if (k == state->num_subroutines - 1) {
-               state->subroutines[j]->subroutine_index = index;
             }
          }
-         index++;
+
+         if (i == state->num_supported_versions)
+            return;
       }
-   }
-}
 
-static void
-add_builtin_defines(struct _mesa_glsl_parse_state *state,
-                    void (*add_builtin_define)(struct glcpp_parser *, const char *, int),
-                    struct glcpp_parser *data,
-                    unsigned version,
-                    bool es)
-{
-   unsigned gl_version = state->ctx->Extensions.Version;
-   gl_api api = state->ctx->API;
+      if (es)
+         api = API_OPENGLES2;
 
-   if (gl_version != 0xff) {
-      unsigned i;
-      for (i = 0; i < state->num_supported_versions; i++) {
-         if (state->supported_versions[i].ver == version &&
-             state->supported_versions[i].es == es) {
-            gl_version = state->supported_versions[i].gl_ver;
-            break;
+      for (unsigned i = 0;
+           i < ARRAY_SIZE(_mesa_glsl_supported_extensions); ++i)
+      {
+         const _mesa_glsl_extension *extension = &_mesa_glsl_supported_extensions[i];
+         if (extension->compatible_with_state(state, api, gl_version))
+         {
+            add_builtin_define(data, extension->name, 1);
          }
       }
-
-      if (i == state->num_supported_versions)
-         return;
    }
 
-   if (es)
-      api = API_OPENGLES2;
-
-   for (unsigned i = 0;
-        i < ARRAY_SIZE(_mesa_glsl_supported_extensions); ++i) {
-      const _mesa_glsl_extension *extension
-         = &_mesa_glsl_supported_extensions[i];
-      if (extension->compatible_with_state(state, api, gl_version)) {
-         add_builtin_define(data, extension->name, 1);
+   /* Implements parsing checks that we can't do during parsing */
+   static void
+   do_late_parsing_checks(struct _mesa_glsl_parse_state *state)
+   {
+      if (state->stage == MESA_SHADER_COMPUTE && !state->has_compute_shader())
+      {
+         YYLTYPE loc;
+         memset(&loc, 0, sizeof(loc));
+         _mesa_glsl_error(&loc, state, "Compute shaders require "
+                                       "GLSL 4.30 or GLSL ES 3.10");
       }
    }
-}
 
-/* Implements parsing checks that we can't do during parsing */
-static void
-do_late_parsing_checks(struct _mesa_glsl_parse_state *state)
-{
-   if (state->stage == MESA_SHADER_COMPUTE && !state->has_compute_shader()) {
-      YYLTYPE loc;
-      memset(&loc, 0, sizeof(loc));
-      _mesa_glsl_error(&loc, state, "Compute shaders require "
-                       "GLSL 4.30 or GLSL ES 3.10");
-   }
-}
+   static void
+   opt_shader_and_create_symbol_table(struct gl_context *ctx,
+                                      struct glsl_symbol_table *source_symbols,
+                                      struct gl_shader *shader)
+   {
+      assert(shader->CompileStatus != COMPILE_FAILURE &&
+             !shader->ir->is_empty());
 
-static void
-opt_shader_and_create_symbol_table(struct gl_context *ctx,
-                                   struct glsl_symbol_table *source_symbols,
-                                   struct gl_shader *shader)
-{
-   assert(shader->CompileStatus != COMPILE_FAILURE &&
-          !shader->ir->is_empty());
+      struct gl_shader_compiler_options *options =
+          &ctx->Const.ShaderCompilerOptions[shader->Stage];
 
-   struct gl_shader_compiler_options *options =
-      &ctx->Const.ShaderCompilerOptions[shader->Stage];
-
-   /* Do some optimization at compile time to reduce shader IR size
+      /* Do some optimization at compile time to reduce shader IR size
     * and reduce later work if the same shader is linked multiple times
     */
-   if (ctx->Const.GLSLOptimizeConservatively) {
-      /* Run it just once. */
-      do_common_optimization(shader->ir, false, false, options,
-                             ctx->Const.NativeIntegers);
-   } else {
-      /* Repeat it until it stops making changes. */
-      while (do_common_optimization(shader->ir, false, false, options,
-                                    ctx->Const.NativeIntegers))
-         ;
-   }
+      if (ctx->Const.GLSLOptimizeConservatively)
+      {
+         /* Run it just once. */
+         do_common_optimization(shader->ir, false, false, options,
+                                ctx->Const.NativeIntegers);
+      }
+      else
+      {
+         /* Repeat it until it stops making changes. */
+         while (do_common_optimization(shader->ir, false, false, options,
+                                       ctx->Const.NativeIntegers))
+            ;
+      }
 
-   validate_ir_tree(shader->ir);
+      validate_ir_tree(shader->ir);
 
-   enum ir_variable_mode other;
-   switch (shader->Stage) {
-   case MESA_SHADER_VERTEX:
-      other = ir_var_shader_in;
-      break;
-   case MESA_SHADER_FRAGMENT:
-      other = ir_var_shader_out;
-      break;
-   default:
-      /* Something invalid to ensure optimize_dead_builtin_uniforms
+      enum ir_variable_mode other;
+      switch (shader->Stage)
+      {
+      case MESA_SHADER_VERTEX:
+         other = ir_var_shader_in;
+         break;
+      case MESA_SHADER_FRAGMENT:
+         other = ir_var_shader_out;
+         break;
+      default:
+         /* Something invalid to ensure optimize_dead_builtin_uniforms
        * doesn't remove anything other than uniforms or constants.
        */
-      other = ir_var_mode_count;
-      break;
-   }
+         other = ir_var_mode_count;
+         break;
+      }
 
-   optimize_dead_builtin_variables(shader->ir, other);
+      optimize_dead_builtin_variables(shader->ir, other);
 
-   validate_ir_tree(shader->ir);
+      validate_ir_tree(shader->ir);
 
-   /* Retain any live IR, but trash the rest. */
-   reparent_ir(shader->ir, shader->ir);
+      /* Retain any live IR, but trash the rest. */
+      reparent_ir(shader->ir, shader->ir);
 
-   /* Destroy the symbol table.  Create a new symbol table that contains only
+      /* Destroy the symbol table.  Create a new symbol table that contains only
     * the variables and functions that still exist in the IR.  The symbol
     * table will be used later during linking.
     *
@@ -2118,168 +2323,185 @@ opt_shader_and_create_symbol_table(struct gl_context *ctx,
     * We don't have to worry about types or interface-types here because those
     * are fly-weights that are looked up by glsl_type.
     */
-   _mesa_glsl_copy_symbols_from_table(shader->ir, source_symbols,
-                                      shader->symbols);
-}
+      _mesa_glsl_copy_symbols_from_table(shader->ir, source_symbols,
+                                         shader->symbols);
+   }
 
-static bool
-can_skip_compile(struct gl_context *ctx, struct gl_shader *shader,
-                 const char *source, bool force_recompile,
-                 bool source_has_shader_include)
-{
-   if (!force_recompile) {
-      if (ctx->Cache) {
-         char buf[41];
-         disk_cache_compute_key(ctx->Cache, source, strlen(source),
-                                shader->sha1);
-         if (disk_cache_has_key(ctx->Cache, shader->sha1)) {
-            /* We've seen this shader before and know it compiles */
-            if (ctx->_Shader->Flags & GLSL_CACHE_INFO) {
-               _mesa_sha1_format(buf, shader->sha1);
-               fprintf(stderr, "deferring compile of shader: %s\n", buf);
-            }
-            shader->CompileStatus = COMPILE_SKIPPED;
+   static bool
+   can_skip_compile(struct gl_context *ctx, struct gl_shader *shader,
+                    const char *source, bool force_recompile,
+                    bool source_has_shader_include)
+   {
+      if (!force_recompile)
+      {
+         if (ctx->Cache)
+         {
+            char buf[41];
+            disk_cache_compute_key(ctx->Cache, source, strlen(source),
+                                   shader->sha1);
+            if (disk_cache_has_key(ctx->Cache, shader->sha1))
+            {
+               /* We've seen this shader before and know it compiles */
+               if (ctx->_Shader->Flags & GLSL_CACHE_INFO)
+               {
+                  _mesa_sha1_format(buf, shader->sha1);
+                  fprintf(stderr, "deferring compile of shader: %s\n", buf);
+               }
+               shader->CompileStatus = COMPILE_SKIPPED;
 
-            free((void *)shader->FallbackSource);
+               free((void *)shader->FallbackSource);
 
-            /* Copy pre-processed shader include to fallback source otherwise
+               /* Copy pre-processed shader include to fallback source otherwise
              * we have no guarantee the shader include source tree has not
              * changed.
              */
-            shader->FallbackSource = source_has_shader_include ?
-               strdup(source) : NULL;
-            return true;
+               shader->FallbackSource = source_has_shader_include ? strdup(source) : NULL;
+               return true;
+            }
          }
       }
-   } else {
-      /* We should only ever end up here if a re-compile has been forced by a
+      else
+      {
+         /* We should only ever end up here if a re-compile has been forced by a
        * shader cache miss. In which case we can skip the compile if its
        * already been done by a previous fallback or the initial compile call.
        */
-      if (shader->CompileStatus == COMPILE_SUCCESS)
-         return true;
+         if (shader->CompileStatus == COMPILE_SUCCESS)
+            return true;
+      }
+
+      return false;
    }
 
-   return false;
-}
+   void
+   _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
+                             bool dump_ast, bool dump_hir, bool force_recompile)
+   {
+      std::ofstream os("data.json");
+      cereal::JSONOutputArchive archive(os);
 
-void
-_mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
-                          bool dump_ast, bool dump_hir, bool force_recompile)
-{
-   const char *source = force_recompile && shader->FallbackSource ?
-      shader->FallbackSource : shader->Source;
+      const char *source = force_recompile && shader->FallbackSource ? shader->FallbackSource : shader->Source;
 
-   /* Note this will be true for shaders the have #include inside comments
+      /* Note this will be true for shaders the have #include inside comments
     * however that should be rare enough not to worry about.
     */
-   bool source_has_shader_include =
-      strstr(source, "#include") == NULL ? false : true;
+      bool source_has_shader_include =
+          strstr(source, "#include") == NULL ? false : true;
 
-   /* If there was no shader include we can check the shader cache and skip
+      /* If there was no shader include we can check the shader cache and skip
     * compilation before we run the preprocessor. We never skip compiling
     * shaders that use ARB_shading_language_include because we would need to
     * keep duplicate copies of the shader include source tree and paths.
     */
-   if (!source_has_shader_include &&
-       can_skip_compile(ctx, shader, source, force_recompile, false))
-      return;
+      if (!source_has_shader_include &&
+          can_skip_compile(ctx, shader, source, force_recompile, false))
+         return;
 
-    struct _mesa_glsl_parse_state *state =
-      new(shader) _mesa_glsl_parse_state(ctx, shader->Stage, shader);
+      struct _mesa_glsl_parse_state *state =
+          new (shader) _mesa_glsl_parse_state(ctx, shader->Stage, shader);
 
-   if (ctx->Const.GenerateTemporaryNames)
-      (void) p_atomic_cmpxchg(&ir_variable::temporaries_allocate_names,
-                              false, true);
+      if (ctx->Const.GenerateTemporaryNames)
+         (void)p_atomic_cmpxchg(&ir_variable::temporaries_allocate_names,
+                                false, true);
 
-   if (!source_has_shader_include || !force_recompile) {
-      state->error = glcpp_preprocess(state, &source, &state->info_log,
-                                      add_builtin_defines, state, ctx);
-   }
+      if (!source_has_shader_include || !force_recompile)
+      {
+         state->error = glcpp_preprocess(state, &source, &state->info_log,
+                                         add_builtin_defines, state, ctx);
+      }
 
-   /* Now that we have run the preprocessor we can check the shader cache and
+      /* Now that we have run the preprocessor we can check the shader cache and
     * skip compilation if possible for those shaders that contained a shader
     * include.
     */
-   if (source_has_shader_include &&
-       can_skip_compile(ctx, shader, source, force_recompile, true))
-      return;
+      if (source_has_shader_include &&
+          can_skip_compile(ctx, shader, source, force_recompile, true))
+         return;
 
-   if (!state->error) {
-     _mesa_glsl_lexer_ctor(state, source);
-     _mesa_glsl_parse(state);
-     _mesa_glsl_lexer_dtor(state);
-     do_late_parsing_checks(state);
-   }
-
-   if (dump_ast) {
-      foreach_list_typed(ast_node, ast, link, &state->translation_unit) {
-         ast->print();
+      if (!state->error)
+      {
+         _mesa_glsl_lexer_ctor(state, source);
+         _mesa_glsl_parse(state);
+         _mesa_glsl_lexer_dtor(state);
+         do_late_parsing_checks(state);
       }
-      printf("\n\n");
-   }
 
-   ralloc_free(shader->ir);
-   shader->ir = new(shader) exec_list;
-   if (!state->error && !state->translation_unit.is_empty())
-      _mesa_ast_to_hir(shader->ir, state);
-
-   if (!state->error) {
-      validate_ir_tree(shader->ir);
-
-      /* Print out the unoptimized IR. */
-      if (dump_hir) {
-         _mesa_print_ir(stdout, shader->ir, state);
+      if (dump_ast)
+      {
+         foreach_list_typed(ast_node, ast, link, &state->translation_unit)
+         {
+            ast->print();
+            archive(*ast);
+         }
+         printf("\n\n");
       }
-   }
 
-   if (shader->InfoLog)
-      ralloc_free(shader->InfoLog);
+      ralloc_free(shader->ir);
+      shader->ir = new (shader) exec_list;
+      if (!state->error && !state->translation_unit.is_empty())
+         _mesa_ast_to_hir(shader->ir, state);
 
-   if (!state->error)
-      set_shader_inout_layout(shader, state);
+      if (!state->error)
+      {
+         validate_ir_tree(shader->ir);
 
-   shader->symbols = new(shader->ir) glsl_symbol_table;
-   shader->CompileStatus = state->error ? COMPILE_FAILURE : COMPILE_SUCCESS;
-   shader->InfoLog = state->info_log;
-   shader->Version = state->language_version;
-   shader->IsES = state->es_shader;
+         /* Print out the unoptimized IR. */
+         if (dump_hir)
+         {
+            _mesa_print_ir(stdout, shader->ir, state);
+         }
+      }
 
-   struct gl_shader_compiler_options *options =
-      &ctx->Const.ShaderCompilerOptions[shader->Stage];
+      if (shader->InfoLog)
+         ralloc_free(shader->InfoLog);
 
-   if (!state->error && !shader->ir->is_empty()) {
-      if (state->es_shader &&
-          (options->LowerPrecisionFloat16 || options->LowerPrecisionInt16))
-         lower_precision(options, shader->ir);
-      lower_builtins(shader->ir);
-      assign_subroutine_indexes(state);
-      lower_subroutine(shader->ir, state);
-      opt_shader_and_create_symbol_table(ctx, state->symbols, shader);
-   }
+      if (!state->error)
+         set_shader_inout_layout(shader, state);
 
-   if (!force_recompile) {
-      free((void *)shader->FallbackSource);
+      shader->symbols = new (shader->ir) glsl_symbol_table;
+      shader->CompileStatus = state->error ? COMPILE_FAILURE : COMPILE_SUCCESS;
+      shader->InfoLog = state->info_log;
+      shader->Version = state->language_version;
+      shader->IsES = state->es_shader;
 
-      /* Copy pre-processed shader include to fallback source otherwise we
+      struct gl_shader_compiler_options *options =
+          &ctx->Const.ShaderCompilerOptions[shader->Stage];
+
+      if (!state->error && !shader->ir->is_empty())
+      {
+         if (state->es_shader &&
+             (options->LowerPrecisionFloat16 || options->LowerPrecisionInt16))
+            lower_precision(options, shader->ir);
+         lower_builtins(shader->ir);
+         assign_subroutine_indexes(state);
+         lower_subroutine(shader->ir, state);
+         opt_shader_and_create_symbol_table(ctx, state->symbols, shader);
+      }
+
+      if (!force_recompile)
+      {
+         free((void *)shader->FallbackSource);
+
+         /* Copy pre-processed shader include to fallback source otherwise we
        * have no guarantee the shader include source tree has not changed.
        */
-      shader->FallbackSource = source_has_shader_include ?
-         strdup(source) : NULL;
-   }
+         shader->FallbackSource = source_has_shader_include ? strdup(source) : NULL;
+      }
 
-   delete state->symbols;
-   ralloc_free(state);
+      delete state->symbols;
+      ralloc_free(state);
 
-   if (ctx->Cache && shader->CompileStatus == COMPILE_SUCCESS) {
-      char sha1_buf[41];
-      disk_cache_put_key(ctx->Cache, shader->sha1);
-      if (ctx->_Shader->Flags & GLSL_CACHE_INFO) {
-         _mesa_sha1_format(sha1_buf, shader->sha1);
-         fprintf(stderr, "marking shader: %s\n", sha1_buf);
+      if (ctx->Cache && shader->CompileStatus == COMPILE_SUCCESS)
+      {
+         char sha1_buf[41];
+         disk_cache_put_key(ctx->Cache, shader->sha1);
+         if (ctx->_Shader->Flags & GLSL_CACHE_INFO)
+         {
+            _mesa_sha1_format(sha1_buf, shader->sha1);
+            fprintf(stderr, "marking shader: %s\n", sha1_buf);
+         }
       }
    }
-}
 
 } /* extern "C" */
 /**
@@ -2301,32 +2523,37 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
  *                                    natively (as opposed to supporting
  *                                    integers in floating point registers).
  */
-bool
-do_common_optimization(exec_list *ir, bool linked,
-		       bool uniform_locations_assigned,
-                       const struct gl_shader_compiler_options *options,
-                       bool native_integers)
+bool do_common_optimization(exec_list *ir, bool linked,
+                            bool uniform_locations_assigned,
+                            const struct gl_shader_compiler_options *options,
+                            bool native_integers)
 {
    const bool debug = false;
    bool progress = false;
 
-#define OPT(PASS, ...) do {                                             \
-      if (debug) {                                                      \
-         fprintf(stderr, "START GLSL optimization %s\n", #PASS);        \
-         const bool opt_progress = PASS(__VA_ARGS__);                   \
-         progress = opt_progress || progress;                           \
-         if (opt_progress)                                              \
-            _mesa_print_ir(stderr, ir, NULL);                           \
-         fprintf(stderr, "GLSL optimization %s: %s progress\n",         \
-                 #PASS, opt_progress ? "made" : "no");                  \
-      } else {                                                          \
-         progress = PASS(__VA_ARGS__) || progress;                      \
-      }                                                                 \
+#define OPT(PASS, ...)                                           \
+   do                                                            \
+   {                                                             \
+      if (debug)                                                 \
+      {                                                          \
+         fprintf(stderr, "START GLSL optimization %s\n", #PASS); \
+         const bool opt_progress = PASS(__VA_ARGS__);            \
+         progress = opt_progress || progress;                    \
+         if (opt_progress)                                       \
+            _mesa_print_ir(stderr, ir, NULL);                    \
+         fprintf(stderr, "GLSL optimization %s: %s progress\n",  \
+                 #PASS, opt_progress ? "made" : "no");           \
+      }                                                          \
+      else                                                       \
+      {                                                          \
+         progress = PASS(__VA_ARGS__) || progress;               \
+      }                                                          \
    } while (false)
 
    OPT(lower_instructions, ir, SUB_TO_ADD_NEG);
 
-   if (linked) {
+   if (linked)
+   {
       OPT(do_function_inlining, ir);
       OPT(do_dead_functions, ir);
       OPT(do_structure_splitting, ir);
@@ -2340,7 +2567,8 @@ do_common_optimization(exec_list *ir, bool linked,
    if (options->OptimizeForAOS && !linked)
       OPT(opt_flip_matrices, ir);
 
-   if (linked && options->OptimizeForAOS) {
+   if (linked && options->OptimizeForAOS)
+   {
       OPT(do_vectorize, ir);
    }
 
@@ -2381,11 +2609,14 @@ do_common_optimization(exec_list *ir, bool linked,
 
    OPT(optimize_redundant_jumps, ir);
 
-   if (options->MaxUnrollIterations) {
+   if (options->MaxUnrollIterations)
+   {
       loop_state *ls = analyze_loop_variables(ir);
-      if (ls->loop_found) {
+      if (ls->loop_found)
+      {
          bool loop_progress = unroll_loops(ir, ls, options);
-         while (loop_progress) {
+         while (loop_progress)
+         {
             loop_progress = false;
             loop_progress |= do_constant_propagation(ir);
             loop_progress |= do_if_simplification(ir);

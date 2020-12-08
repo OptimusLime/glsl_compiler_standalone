@@ -1601,7 +1601,7 @@ if with_llvm
     if cc.get_id() == 'msvc'
       cpp_args += '/GR-'
     else
-      cpp_args += '-fno-rtti'
+      # cpp_args += '-fno-rtti'
     endif
   endif
 elif with_amd_vk or with_gallium_radeonsi or with_gallium_swr

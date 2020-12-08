@@ -1,0 +1,54 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/compiler/glsl/glsl_compiler.exe",
+            "args": [
+                "tests/test_vertex.vert",
+                "--version",
+                "330",
+                "--dump-ast",
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            // "miDebuggerPath": "/path/to/gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        // {
+        //     "name": "(Windows) Attach",
+        //     "type": "cppvsdbg",
+        //     "request": "attach",
+        //     "processId": "${command:pickProcess}"
+        // },
+        {
+            "name": "(Windows) Launch",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/compiler/glsl/glsl_compiler.exe",
+            "args": [
+                "tests/test_vertex.vert",
+                "--version",
+                "300",
+                "--dump-ast",
+            ],
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false
+        }
+    ]
+}
